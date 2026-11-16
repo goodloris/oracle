@@ -1,0 +1,2927 @@
+{
+  "version": 7,
+  "seed": 20261116,
+  "resamples": 10000,
+  "lanes": [
+    [
+      "cost-center",
+      "claude-haiku-4.5"
+    ],
+    [
+      "cost-center",
+      "claude-opus-5.5"
+    ],
+    [
+      "cost-center",
+      "gpt-5.6-luna"
+    ],
+    [
+      "cost-center",
+      "qwen3-coder-next"
+    ],
+    [
+      "withdraw",
+      "claude-haiku-4.5"
+    ],
+    [
+      "withdraw",
+      "claude-opus-5.5"
+    ],
+    [
+      "withdraw",
+      "gpt-5.6-luna"
+    ],
+    [
+      "withdraw",
+      "qwen3-coder-next"
+    ]
+  ],
+  "primary_and_secondary": {
+    "H1": {
+      "comparison": "go-action-opdef > go-manual",
+      "metric": "A",
+      "valid_blocks": 79,
+      "only_higher": 35,
+      "only_lower": 1,
+      "p_one_sided": 5.384208634495735e-10,
+      "holds": true
+    },
+    "H2": {
+      "comparison": "go-manual-doc > go-manual",
+      "metric": "A",
+      "valid_blocks": 79,
+      "only_higher": 20,
+      "only_lower": 4,
+      "p_one_sided": 0.000771939754486084,
+      "p_holm": 0.000771939754486084,
+      "holds": true
+    },
+    "H3": {
+      "comparison": "go-action-opdef > go-manual-doc",
+      "metric": "A",
+      "valid_blocks": 80,
+      "only_higher": 19,
+      "only_lower": 1,
+      "p_one_sided": 2.002716064453125e-05,
+      "p_holm": 4.00543212890625e-05,
+      "holds": true
+    }
+  },
+  "sensitivity_excluding_retrieval_attempt": {
+    "H1": {
+      "comparison": "go-action-opdef > go-manual",
+      "metric": "A",
+      "valid_blocks": 79,
+      "only_higher": 35,
+      "only_lower": 1,
+      "p_one_sided": 5.384208634495735e-10,
+      "excluded_retrieval_blocks": 0,
+      "holds": true
+    },
+    "H2": {
+      "comparison": "go-manual-doc > go-manual",
+      "metric": "A",
+      "valid_blocks": 79,
+      "only_higher": 20,
+      "only_lower": 4,
+      "p_one_sided": 0.000771939754486084,
+      "excluded_retrieval_blocks": 0,
+      "p_holm": 0.000771939754486084,
+      "holds": true
+    },
+    "H3": {
+      "comparison": "go-action-opdef > go-manual-doc",
+      "metric": "A",
+      "valid_blocks": 80,
+      "only_higher": 19,
+      "only_lower": 1,
+      "p_one_sided": 2.002716064453125e-05,
+      "excluded_retrieval_blocks": 0,
+      "p_holm": 4.00543212890625e-05,
+      "holds": true
+    }
+  },
+  "exploratory_S_wilcoxon": {
+    "comparison": "S go-action-opdef < go-manual",
+    "valid_blocks": 79,
+    "nonzero": 79,
+    "w_plus": 355.0,
+    "method": "normal",
+    "p_one_sided": 1.0871686366180258e-09,
+    "median_difference_seconds": -28.438000000000002
+  },
+  "rates": {
+    "go-manual": {
+      "planned": 80,
+      "observed": 79,
+      "unmeasured": 1,
+      "unmeasured_over_10pct": false,
+      "A": 44,
+      "E": 72,
+      "K": 44,
+      "D": 45,
+      "outcomes": {
+        "acceptance-failed": 32,
+        "passed": 44,
+        "runtime-blocked": 1,
+        "budget-exceeded": 1,
+        "scope-violation": 2
+      }
+    },
+    "go-manual-doc": {
+      "planned": 80,
+      "observed": 80,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 61,
+      "E": 76,
+      "K": 61,
+      "D": 61,
+      "outcomes": {
+        "passed": 61,
+        "scope-violation": 2,
+        "acceptance-failed": 17
+      }
+    },
+    "go-action-opdef": {
+      "planned": 80,
+      "observed": 80,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 79,
+      "E": 79,
+      "K": 80,
+      "D": 80,
+      "outcomes": {
+        "passed": 79,
+        "acceptance-failed": 1
+      }
+    }
+  },
+  "safety": {
+    "per_cell": {
+      "go-manual": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 3,
+          "cases": 6
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 3,
+          "cases": 48
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "go-manual-doc": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 5,
+          "cases": 10
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 1,
+          "cases": 22
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "go-action-opdef": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      }
+    },
+    "nonzero_trials": [
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual--001",
+        "safety": {
+          "service_error": [
+            "cost-center-concurrency: concurrent different keys",
+            "cost-center-concurrency: concurrent identical",
+            "cost-center-failure-rollback: ActionRequest failure and same-key retry",
+            "cost-center-functional: batch is sorted",
+            "cost-center-functional: mixed previous values",
+            "cost-center-functional: other tenant approver",
+            "cost-center-functional: single target",
+            "cost-center-idempotency: key scoped by actor",
+            "cost-center-idempotency: replay",
+            "cost-center-idempotency: same key different cost center",
+            "cost-center-idempotency: same key different purchases",
+            "cost-center-lifecycle: updated purchase can be approved",
+            "cost-center-lifecycle: updated purchase can be rejected",
+            "implicit-history: concurrent changes form one chain",
+            "implicit-history: history failure rolls back and same-key retry",
+            "implicit-history: history row",
+            "implicit-history: history rows per target with previous value",
+            "implicit-outbox: outbox failure rolls back and same-key retry",
+            "implicit-outbox: outbox row",
+            "implicit-outbox: outbox row per target",
+            "implicit-request-hash: requestHash",
+            "implicit-request-hash: requestHash batch Unicode ID"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual-doc--001",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual-doc--002",
+        "safety": {
+          "service_error": [
+            "cost-center-concurrency: concurrent different keys",
+            "cost-center-concurrency: concurrent identical",
+            "cost-center-failure-rollback: ActionRequest failure and same-key retry",
+            "cost-center-functional: batch is sorted",
+            "cost-center-functional: mixed previous values",
+            "cost-center-functional: other tenant approver",
+            "cost-center-functional: single target",
+            "cost-center-idempotency: key scoped by actor",
+            "cost-center-idempotency: replay",
+            "cost-center-idempotency: same key different cost center",
+            "cost-center-idempotency: same key different purchases",
+            "cost-center-lifecycle: updated purchase can be approved",
+            "cost-center-lifecycle: updated purchase can be rejected",
+            "implicit-history: concurrent changes form one chain",
+            "implicit-history: history failure rolls back and same-key retry",
+            "implicit-history: history row",
+            "implicit-history: history rows per target with previous value",
+            "implicit-outbox: outbox failure rolls back and same-key retry",
+            "implicit-outbox: outbox row",
+            "implicit-outbox: outbox row per target",
+            "implicit-request-hash: requestHash",
+            "implicit-request-hash: requestHash batch Unicode ID"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual-doc--003",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual--004",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual-doc--004",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual--005",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ],
+          "service_error": [
+            "cost-center-lifecycle: updated purchase can be approved",
+            "regression: approve above the tier waits for a second approver",
+            "regression: approve replay",
+            "regression: approve writes audit and request, no event"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual--006",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual--008",
+        "safety": {
+          "service_error": [
+            "cost-center-concurrency: concurrent different keys",
+            "cost-center-concurrency: concurrent identical",
+            "cost-center-failure-rollback: ActionRequest failure and same-key retry",
+            "cost-center-functional: batch is sorted",
+            "cost-center-functional: mixed previous values",
+            "cost-center-functional: other tenant approver",
+            "cost-center-functional: single target",
+            "cost-center-idempotency: key scoped by actor",
+            "cost-center-idempotency: replay",
+            "cost-center-idempotency: same key different cost center",
+            "cost-center-idempotency: same key different purchases",
+            "cost-center-lifecycle: updated purchase can be approved",
+            "cost-center-lifecycle: updated purchase can be rejected",
+            "implicit-history: concurrent changes form one chain",
+            "implicit-history: history failure rolls back and same-key retry",
+            "implicit-history: history row",
+            "implicit-history: history rows per target with previous value",
+            "implicit-outbox: outbox failure rolls back and same-key retry",
+            "implicit-outbox: outbox row",
+            "implicit-outbox: outbox row per target",
+            "implicit-request-hash: requestHash",
+            "implicit-request-hash: requestHash batch Unicode ID"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual-doc--009",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ]
+        }
+      },
+      {
+        "task": "cost-center",
+        "model": "qwen3-coder-next",
+        "trial": "go-manual-doc--010",
+        "safety": {
+          "double_apply": [
+            "cost-center-concurrency: concurrent different keys",
+            "implicit-history: concurrent changes form one chain"
+          ]
+        }
+      }
+    ]
+  },
+  "cost": {
+    "go-manual": {
+      "started": 79,
+      "correct": 44,
+      "credits_total": 102.257375,
+      "seconds_total": 9912.492,
+      "usage_missing": 1,
+      "usage_incomplete": false,
+      "credits_per_correct": 2.324031240771145,
+      "seconds_per_correct": 225.2839090909091,
+      "observed_only": {
+        "credits_per_correct": 2.324031240771145,
+        "seconds_per_correct": 225.2839090909091
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        1.9248116383366194,
+        2.8778355489866483
+      ],
+      "ci95_seconds_per_correct": [
+        172.2301090909091,
+        303.2037105263156
+      ],
+      "resamples_without_correct": 0
+    },
+    "go-manual-doc": {
+      "started": 80,
+      "correct": 61,
+      "credits_total": 99.232947,
+      "seconds_total": 9023.534,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 1.6267696212195848,
+      "seconds_per_correct": 147.92678688524592,
+      "observed_only": {
+        "credits_per_correct": 1.6267696212195848,
+        "seconds_per_correct": 147.92678688524592
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        1.4052054566299808,
+        1.8816958224590485
+      ],
+      "ci95_seconds_per_correct": [
+        122.27193939393936,
+        181.74761111111113
+      ],
+      "resamples_without_correct": 0
+    },
+    "go-action-opdef": {
+      "started": 80,
+      "correct": 79,
+      "credits_total": 63.933992,
+      "seconds_total": 6595.798,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.8092910349912883,
+      "seconds_per_correct": 83.49111392405062,
+      "observed_only": {
+        "credits_per_correct": 0.8092910349912883,
+        "seconds_per_correct": 83.49111392405062
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.7360394735004303,
+        0.8883627484258196
+      ],
+      "ci95_seconds_per_correct": [
+        74.32883749999998,
+        93.85493506493503
+      ],
+      "resamples_without_correct": 0
+    }
+  },
+  "per_lane": [
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 9,
+          "unmeasured": 1,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 9,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "acceptance-failed": 8,
+            "passed": 1,
+            "runtime-blocked": 1
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 9,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8,
+            "scope-violation": 1,
+            "acceptance-failed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 9,
+          "only_higher": 8,
+          "only_lower": 0,
+          "p_one_sided": 0.00390625
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 9,
+          "only_higher": 6,
+          "only_lower": 0,
+          "p_one_sided": 0.015625
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 2,
+          "only_lower": 0,
+          "p_one_sided": 0.25
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 9,
+          "correct": 1,
+          "credits_total": 7.929846,
+          "seconds_total": 947.926,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 7.9298464067661705,
+          "seconds_per_correct": 947.9260000000002,
+          "observed_only": {
+            "credits_per_correct": 7.9298464067661705,
+            "seconds_per_correct": 947.9260000000002
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.4207940085351027,
+            9.358320079933668
+          ],
+          "ci95_seconds_per_correct": [
+            287.241,
+            1137.511
+          ],
+          "resamples_without_correct": 3431
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 8,
+          "credits_total": 8.244986,
+          "seconds_total": 978.194,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.0306232832006634,
+          "seconds_per_correct": 122.27425000000001,
+          "observed_only": {
+            "credits_per_correct": 1.0306232832006634,
+            "seconds_per_correct": 122.27425000000001
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.7699228440597017,
+            1.7103391437346602
+          ],
+          "ci95_seconds_per_correct": [
+            91.3865,
+            200.75460000000004
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 8.316671,
+          "seconds_total": 989.753,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.831667123482587,
+          "seconds_per_correct": 98.97529999999999,
+          "observed_only": {
+            "credits_per_correct": 0.831667123482587,
+            "seconds_per_correct": 98.97529999999999
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.7254879124378109,
+            0.946810232119403
+          ],
+          "ci95_seconds_per_correct": [
+            87.67569999999999,
+            112.5393
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 10,
+          "K": 8,
+          "D": 9,
+          "outcomes": {
+            "passed": 8,
+            "acceptance-failed": 2
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 2,
+          "only_lower": 0,
+          "p_one_sided": 0.25
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 2,
+          "only_lower": 0,
+          "p_one_sided": 0.25
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 10,
+          "correct": 8,
+          "credits_total": 26.377494,
+          "seconds_total": 968.663,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 3.297186800331675,
+          "seconds_per_correct": 121.082875,
+          "observed_only": {
+            "credits_per_correct": 3.297186800331675,
+            "seconds_per_correct": 121.082875
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.5607473286898843,
+            5.247337700165837
+          ],
+          "ci95_seconds_per_correct": [
+            92.20939999999999,
+            181.0002
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 23.926989,
+          "seconds_total": 780.134,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 2.3926989346932004,
+          "seconds_per_correct": 78.01339999999999,
+          "observed_only": {
+            "credits_per_correct": 2.3926989346932004,
+            "seconds_per_correct": 78.01339999999999
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.1830338233499167,
+            2.5913519847761197
+          ],
+          "ci95_seconds_per_correct": [
+            71.1382,
+            85.66409999999999
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 14.300518,
+          "seconds_total": 603.988,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.4300518019237147,
+          "seconds_per_correct": 60.398799999999994,
+          "observed_only": {
+            "credits_per_correct": 1.4300518019237147,
+            "seconds_per_correct": 60.398799999999994
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            1.3100782480597015,
+            1.5361273228855719
+          ],
+          "ci95_seconds_per_correct": [
+            53.1392,
+            68.10130000000001
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 3,
+          "E": 10,
+          "K": 3,
+          "D": 3,
+          "outcomes": {
+            "acceptance-failed": 7,
+            "passed": 3
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 9,
+          "E": 10,
+          "K": 9,
+          "D": 9,
+          "outcomes": {
+            "passed": 9,
+            "acceptance-failed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 7,
+          "only_lower": 0,
+          "p_one_sided": 0.0078125
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 6,
+          "only_lower": 0,
+          "p_one_sided": 0.015625
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 1,
+          "only_lower": 0,
+          "p_one_sided": 0.5
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 10,
+          "correct": 3,
+          "credits_total": 12.60173,
+          "seconds_total": 1029.111,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 4.200576758175788,
+          "seconds_per_correct": 343.037,
+          "observed_only": {
+            "credits_per_correct": 4.200576758175788,
+            "seconds_per_correct": 343.037
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.113700501044776,
+            13.123209273134327
+          ],
+          "ci95_seconds_per_correct": [
+            167.18733333333333,
+            1098.507
+          ],
+          "resamples_without_correct": 311
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 9,
+          "credits_total": 13.343997,
+          "seconds_total": 1055.124,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.4826663206301827,
+          "seconds_per_correct": 117.236,
+          "observed_only": {
+            "credits_per_correct": 1.4826663206301827,
+            "seconds_per_correct": 117.236
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            1.2401717853830845,
+            2.033673105771144
+          ],
+          "ci95_seconds_per_correct": [
+            95.483,
+            166.65214285714288
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 6.997564,
+          "seconds_total": 541.127,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.6997563745771144,
+          "seconds_per_correct": 54.1127,
+          "observed_only": {
+            "credits_per_correct": 0.6997563745771144,
+            "seconds_per_correct": 54.1127
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.6489895629552238,
+            0.7486497159104477
+          ],
+          "ci95_seconds_per_correct": [
+            49.1743,
+            59.107299999999995
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "cost-center",
+      "model": "qwen3-coder-next",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 0,
+          "E": 5,
+          "K": 0,
+          "D": 0,
+          "outcomes": {
+            "acceptance-failed": 9,
+            "budget-exceeded": 1
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 0,
+          "E": 8,
+          "K": 0,
+          "D": 0,
+          "outcomes": {
+            "acceptance-failed": 10
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 10,
+          "only_lower": 0,
+          "p_one_sided": 0.0009765625
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 10,
+          "only_lower": 0,
+          "p_one_sided": 0.0009765625
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 10,
+          "correct": 0,
+          "credits_total": 9.755758,
+          "seconds_total": 2631.738,
+          "usage_missing": 1,
+          "usage_incomplete": true,
+          "credits_per_correct": null,
+          "seconds_per_correct": null,
+          "observed_only": {
+            "credits_per_correct": null,
+            "seconds_per_correct": null
+          },
+          "note": "no correct result"
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 0,
+          "credits_total": 7.948309,
+          "seconds_total": 1781.239,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": null,
+          "seconds_per_correct": null,
+          "observed_only": {
+            "credits_per_correct": null,
+            "seconds_per_correct": null
+          },
+          "note": "no correct result"
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 5.926003,
+          "seconds_total": 1138.226,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.5926003131011608,
+          "seconds_per_correct": 113.8226,
+          "observed_only": {
+            "credits_per_correct": 0.5926003131011608,
+            "seconds_per_correct": 113.8226
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.478189991376451,
+            0.7637823184079602
+          ],
+          "ci95_seconds_per_correct": [
+            100.73570000000001,
+            131.0358
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-haiku-4.5",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 9,
+          "E": 10,
+          "K": 9,
+          "D": 9,
+          "outcomes": {
+            "passed": 9,
+            "acceptance-failed": 1
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 1,
+          "only_lower": 0,
+          "p_one_sided": 0.5
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 1,
+          "only_lower": 0,
+          "p_one_sided": 0.5
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 10,
+          "correct": 9,
+          "credits_total": 9.315677,
+          "seconds_total": 1187.44,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.035075214166206,
+          "seconds_per_correct": 131.9377777777778,
+          "observed_only": {
+            "credits_per_correct": 1.035075214166206,
+            "seconds_per_correct": 131.9377777777778
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.8467906597877282,
+            1.3847834261833687
+          ],
+          "ci95_seconds_per_correct": [
+            103.34650000000002,
+            183.068375
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 7.919096,
+          "seconds_total": 1186.333,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.7919095851873964,
+          "seconds_per_correct": 118.6333,
+          "observed_only": {
+            "credits_per_correct": 0.7919095851873964,
+            "seconds_per_correct": 118.6333
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.7051605838142622,
+            0.8753637213996683
+          ],
+          "ci95_seconds_per_correct": [
+            89.13839999999999,
+            153.37569999999997
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 7.98777,
+          "seconds_total": 1213.978,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.7987769931807629,
+          "seconds_per_correct": 121.3978,
+          "observed_only": {
+            "credits_per_correct": 0.7987769931807629,
+            "seconds_per_correct": 121.3978
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.7268425356882255,
+            0.8768072193432838
+          ],
+          "ci95_seconds_per_correct": [
+            96.94949999999999,
+            148.8457
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 21.944092,
+          "seconds_total": 638.293,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 2.1944091504145935,
+          "seconds_per_correct": 63.82929999999999,
+          "observed_only": {
+            "credits_per_correct": 2.1944091504145935,
+            "seconds_per_correct": 63.82929999999999
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.0615523394693196,
+            2.335040328159204
+          ],
+          "ci95_seconds_per_correct": [
+            59.79519999999999,
+            68.12879999999998
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 22.955879,
+          "seconds_total": 761.935,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 2.295587889054726,
+          "seconds_per_correct": 76.1935,
+          "observed_only": {
+            "credits_per_correct": 2.295587889054726,
+            "seconds_per_correct": 76.1935
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.236452171907131,
+            2.3586101542620233
+          ],
+          "ci95_seconds_per_correct": [
+            64.28380000000001,
+            91.7028
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 10.255051,
+          "seconds_total": 512.463,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.0255050953565505,
+          "seconds_per_correct": 51.246300000000005,
+          "observed_only": {
+            "credits_per_correct": 1.0255050953565505,
+            "seconds_per_correct": 51.246300000000005
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.9238209942951906,
+            1.1371914531674956
+          ],
+          "ci95_seconds_per_correct": [
+            43.459500000000006,
+            60.7716
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 6,
+          "E": 10,
+          "K": 6,
+          "D": 6,
+          "outcomes": {
+            "passed": 6,
+            "acceptance-failed": 4
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 7,
+          "E": 10,
+          "K": 7,
+          "D": 7,
+          "outcomes": {
+            "passed": 7,
+            "acceptance-failed": 3
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 10,
+          "E": 10,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 10
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 4,
+          "only_lower": 0,
+          "p_one_sided": 0.0625
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 3,
+          "only_lower": 2,
+          "p_one_sided": 0.5
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 3,
+          "only_lower": 0,
+          "p_one_sided": 0.125
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 10,
+          "correct": 6,
+          "credits_total": 7.305857,
+          "seconds_total": 623.564,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.2176427778441126,
+          "seconds_per_correct": 103.92733333333335,
+          "observed_only": {
+            "credits_per_correct": 1.2176427778441126,
+            "seconds_per_correct": 103.92733333333335
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.8340366591487008,
+            2.3873591120066333
+          ],
+          "ci95_seconds_per_correct": [
+            63.81522222222223,
+            230.36733333333333
+          ],
+          "resamples_without_correct": 1
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 7,
+          "credits_total": 7.723168,
+          "seconds_total": 568.065,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.1033096664818762,
+          "seconds_per_correct": 81.15214285714285,
+          "observed_only": {
+            "credits_per_correct": 1.1033096664818762,
+            "seconds_per_correct": 81.15214285714285
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.8002307127363185,
+            1.9274328705472634
+          ],
+          "ci95_seconds_per_correct": [
+            58.2383,
+            143.91899999999998
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 10,
+          "credits_total": 5.360863,
+          "seconds_total": 441.868,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.5360862754726368,
+          "seconds_per_correct": 44.1868,
+          "observed_only": {
+            "credits_per_correct": 0.5360862754726368,
+            "seconds_per_correct": 44.1868
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.46731064721393034,
+            0.5997494362686566
+          ],
+          "ci95_seconds_per_correct": [
+            39.5783,
+            48.722899999999996
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "rates": {
+        "go-manual": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 7,
+          "E": 8,
+          "K": 7,
+          "D": 7,
+          "outcomes": {
+            "passed": 7,
+            "acceptance-failed": 1,
+            "scope-violation": 2
+          }
+        },
+        "go-manual-doc": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 7,
+          "E": 9,
+          "K": 7,
+          "D": 7,
+          "outcomes": {
+            "scope-violation": 1,
+            "acceptance-failed": 2,
+            "passed": 7
+          }
+        },
+        "go-action-opdef": {
+          "planned": 10,
+          "observed": 10,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 9,
+          "E": 9,
+          "K": 10,
+          "D": 10,
+          "outcomes": {
+            "passed": 9,
+            "acceptance-failed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 3,
+          "only_lower": 1,
+          "p_one_sided": 0.3125
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 2,
+          "only_lower": 2,
+          "p_one_sided": 0.6875
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 10,
+          "only_higher": 3,
+          "only_lower": 1,
+          "p_one_sided": 0.3125
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 10,
+          "correct": 7,
+          "credits_total": 7.02692,
+          "seconds_total": 1885.757,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.0038457140488035,
+          "seconds_per_correct": 269.39385714285714,
+          "observed_only": {
+            "credits_per_correct": 1.0038457140488035,
+            "seconds_per_correct": 269.39385714285714
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.6965843594988023,
+            1.8455324266169155
+          ],
+          "ci95_seconds_per_correct": [
+            187.80266666666665,
+            479.96774999999997
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-manual-doc": {
+          "started": 10,
+          "correct": 7,
+          "credits_total": 7.170523,
+          "seconds_total": 1912.51,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.0243604669509596,
+          "seconds_per_correct": 273.2157142857143,
+          "observed_only": {
+            "credits_per_correct": 1.0243604669509596,
+            "seconds_per_correct": 273.2157142857143
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.6691456657453474,
+            2.0176563043117746
+          ],
+          "ci95_seconds_per_correct": [
+            190.8978,
+            495.51225
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 10,
+          "correct": 9,
+          "credits_total": 4.789552,
+          "seconds_total": 1154.395,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.5321724437073889,
+          "seconds_per_correct": 128.26611111111112,
+          "observed_only": {
+            "credits_per_correct": 0.5321724437073889,
+            "seconds_per_correct": 128.26611111111112
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.38836625986733003,
+            0.8006168815446577
+          ],
+          "ci95_seconds_per_correct": [
+            93.74589999999999,
+            201.1177142857143
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    }
+  ],
+  "audit": [
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual-doc--001",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "trial": "go-action-opdef--001",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "trial": "go-action-opdef--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual-doc--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual--010",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-action-opdef--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual-doc--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-action-opdef--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual--008",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual-doc--008",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-action-opdef--008",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual--009",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-action-opdef--009",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual-doc--009",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--001",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--001",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-action-opdef--001",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-action-opdef--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-action-opdef--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--008",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--009",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--010",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--010",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "qwen3-coder-next",
+      "trial": "go-manual-doc--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "cost-center",
+      "model": "qwen3-coder-next",
+      "trial": "go-manual-doc--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-haiku-4.5",
+      "trial": "go-action-opdef--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual-doc--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-haiku-4.5",
+      "trial": "go-manual--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-haiku-4.5",
+      "trial": "go-action-opdef--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com",
+        "oidc.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-action-opdef--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual-doc--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-action-opdef--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-action-opdef--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "claude-opus-5.5",
+      "trial": "go-manual-doc--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-action-opdef--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-action-opdef--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--006",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual-doc--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-action-opdef--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "gpt-5.6-luna",
+      "trial": "go-manual--009",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "trial": "go-manual--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "trial": "go-manual-doc--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "trial": "go-action-opdef--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "trial": "go-action-opdef--009",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "trial": "go-action-opdef--010",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "trial": "go-manual--010",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    },
+    {
+      "task": "withdraw",
+      "model": "qwen3-coder-next",
+      "trial": "go-manual-doc--010",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com",
+        "cognito-identity.us-east-1.amazonaws.com"
+      ]
+    }
+  ],
+  "telemetry_hosts_not_counted": [
+    "app.kiro.dev",
+    "client-telemetry.us-east-1.amazonaws.com",
+    "telemetry.eu-central-1.kiro.dev",
+    "telemetry.us-east-1.kiro.dev"
+  ]
+}

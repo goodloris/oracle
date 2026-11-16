@@ -247,3 +247,13 @@ v8b 有一个 send-back 任务：二审人在 72 小时内把 pending-second 的
   - `v8a-s2-delivery-site-qwen3-coder-next`：`58181c43daaf24207d6c4638a4f33823c711a25fd4a5461def01664ebf2bf21d`
 - [x] 两阶段边界（`python3 -c "import sys; sys.path.insert(0,'harness'); import analyze_v8a as a; print(a.boundaries())"`）：α₁ = 0.0015253，c₁ = 2.9626，α₂ = 0.0245，c₂ = 1.9686；`harness/analyze_v8a_check.py` 本机与主机都 `all_ok`。
 - [x] 预算：第一阶段守卫 360 credit，两阶段合计上限 560 credit。
+
+### 附录 B（2026-11-17 02:48，第一阶段运行中；尚未查看任何验收结果，各通道都还在生成，没有一个 trial 完成验收）：预算调整
+
+截至目前，已生成 56 个 trial，实测每块（4 组）的 credit 为：opus 约 12、luna 约 6.3、qwen 约 5.2。drafted-review 组比冻结时的估算贵很多，opus 每次约 5.4。据此推算第一阶段约 376 credit，超过了冻结的守卫值 360；如果维持 360，最后一批 trial 会被预算守卫截断，导致 H1 的有效对数下降，而这只是出于预算原因，与实验无关。
+
+调整如下：
+- 第一阶段守卫由 360 改为 **420**；
+- 两阶段合计上限由 560 改为 **650**。第二阶段按实测单价推算约 227 credit。
+
+该调整只涉及预算，不改动任何计划、假设、检验、边界或停止规则，也没有基于任何结局数据做出。操作上的做法是：终止运行中驱动的守卫子进程，换成一个等价的守卫，阈值改为 420，其余逻辑不变。

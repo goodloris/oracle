@@ -1,0 +1,2 @@
+{"event": "start", "proxy": "127.0.0.1:18900", "allow": ["cognito-identity.us-east-1.amazonaws.com", "management.us-east-1.kiro.dev", "oidc.us-east-1.amazonaws.com", "runtime.us-east-1.kiro.dev"], "discover": false}
+{"ts": 1794838660.865, "event": "stop", "returncode": 0, "interrupted": false}

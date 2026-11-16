@@ -1,0 +1,41 @@
+{
+  "ready": true,
+  "cli_version": "fake-kiro-cli 0.0.0 (v8a hand-off control, no model)",
+  "invocation": {
+    "status": "completed",
+    "usage": {
+      "credits": 0
+    },
+    "turn_started": true,
+    "run_finished": true,
+    "reported_model": "claude-opus-5.5",
+    "event_count": 4,
+    "agent_messages": [
+      "READY"
+    ],
+    "errors": [],
+    "engine": "kiro",
+    "generation_seconds": 0.045,
+    "requested_model": "claude-opus-5.5",
+    "reasoning_effort": "medium",
+    "sandbox": "read-only",
+    "command": [
+      "/private/tmp/v8a-gen/v8a-xh1-delivery-site-20261116/tools/fake_kiro.py",
+      "chat",
+      "--no-interactive",
+      "--output-format",
+      "stream-json",
+      "--agent-engine",
+      "v3",
+      "--agent",
+      "poc-v3-generator",
+      "--model",
+      "claude-opus-5.5",
+      "--effort",
+      "medium",
+      "--trust-tools="
+    ],
+    "returncode": 0,
+    "timed_out": false
+  }
+}

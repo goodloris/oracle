@@ -1,0 +1,1162 @@
+{
+  "task": "return",
+  "harness_sha": "86176765ef1b553508e866642a39585ab728d220",
+  "dirty": false,
+  "static": {
+    "clues_present": true,
+    "task_text_has_no_forbidden_words": true,
+    "manual_given_prompts_differ_only_in_capability": true,
+    "adapter_stage_prompt_equals_given_prompt": true,
+    "every_prompt_starts_with_the_requirements": true,
+    "drafted_export_is_given_without_the_entry": true,
+    "reference_catalog_is_public_plus_one_entry": true,
+    "reference_catalog_validates_with_the_task_entry": true,
+    "platform_is_public_or_documented_overlay": true,
+    "kits_hold_only_service_sources": true,
+    "no_other_task_operation_in_exports": true,
+    "drafted_export_has_no_entry": true,
+    "kit_plan_views_hold_nothing_derived_from_the_entry": true,
+    "vendored_worker_equals_public": true
+  },
+  "entry_oracle": {
+    "controls": [
+      {
+        "name": "reference",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-field-order",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-literals",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-identifier",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-position-and-zero-values",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "field-name",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "name"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-kind",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "kind"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-role",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "role"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-subject",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "subject"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-from",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "from"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-to",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "to"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-tier",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "tier"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-status",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "status"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-column",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "column"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-param",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "param"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-response",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "response"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-inputs",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "inputs"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-fingerprint",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "fingerprint"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-record",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "record"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-event",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "event"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-event-name",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "event"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-separation",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "separation"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-confirmAmount",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "confirmAmount"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-denial",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "denial"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-catalog",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "catalog"
+        ],
+        "valid": true
+      },
+      {
+        "name": "missing-entry",
+        "kind": "missing",
+        "ok": true,
+        "wrong": [
+          "name",
+          "kind",
+          "role",
+          "subject",
+          "from",
+          "to",
+          "tier",
+          "status",
+          "column",
+          "param",
+          "response",
+          "inputs",
+          "fingerprint",
+          "record",
+          "event",
+          "separation",
+          "confirmAmount",
+          "denial"
+        ],
+        "valid": true
+      },
+      {
+        "name": "not-compiling",
+        "kind": "missing",
+        "ok": true,
+        "wrong": [
+          "name",
+          "kind",
+          "role",
+          "subject",
+          "from",
+          "to",
+          "tier",
+          "status",
+          "column",
+          "param",
+          "response",
+          "inputs",
+          "fingerprint",
+          "record",
+          "event",
+          "separation",
+          "confirmAmount",
+          "denial",
+          "catalog"
+        ],
+        "valid": false
+      }
+    ],
+    "fields_covered": [
+      "catalog",
+      "column",
+      "confirmAmount",
+      "denial",
+      "event",
+      "fingerprint",
+      "from",
+      "inputs",
+      "kind",
+      "name",
+      "param",
+      "record",
+      "response",
+      "role",
+      "separation",
+      "status",
+      "subject",
+      "tier",
+      "to"
+    ],
+    "every_field_has_a_variant": true,
+    "ok": true
+  },
+  "controls": [
+    {
+      "variant": "ref-manual",
+      "kind": "reference",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.882,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-given",
+      "kind": "reference",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.141,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-drafted",
+      "kind": "reference",
+      "cell": "drafted",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": [],
+        "entry": {
+          "C": true,
+          "C_draft": true,
+          "wrong": []
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 8.258,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-drafted-review",
+      "kind": "reference",
+      "cell": "drafted-review",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": [],
+        "entry": {
+          "C": true,
+          "C_draft": true,
+          "wrong": []
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 8.462,
+      "safety_cases": {}
+    },
+    {
+      "variant": "drafted-review-fixes",
+      "kind": "reference",
+      "cell": "drafted-review",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": [],
+        "entry": {
+          "C": true,
+          "C_draft": false,
+          "wrong": []
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 8.723,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-audit",
+      "kind": "convention-negative",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-audit"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "RECORD_NOT_WRITTEN"
+          ],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 6.956,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "FINGERPRINT_EXTRA_INPUT"
+          ],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.366,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_WRITTEN"
+          ],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.312,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.201,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-failure-rollback",
+          "return-functional",
+          "return-idempotency",
+          "return-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.335,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-separation-manual",
+      "kind": "explicit-negative",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "return-eligibility"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.034,
+      "safety_cases": {
+        "service_error": [
+          "implicit-uniform-denial: own, wrong state or first approver denied like missing",
+          "return-eligibility: ineligible by the first approver"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-given",
+      "kind": "explicit-negative",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-failure-rollback",
+          "return-functional",
+          "return-idempotency",
+          "return-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.024,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-drafted",
+      "kind": "explicit-negative",
+      "cell": "drafted",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-failure-rollback",
+          "return-functional",
+          "return-idempotency",
+          "return-lifecycle"
+        ],
+        "safety": [],
+        "entry": {
+          "C": true,
+          "C_draft": true,
+          "wrong": []
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 8.138,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-no-event",
+      "kind": "entry-negative",
+      "cell": "drafted",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [],
+        "entry": {
+          "C": false,
+          "C_draft": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:2fb3c14524d8ef8881923ace861234c640d85e52448b3d0393c4a994b30724dd"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:2fb3c14524d8ef8881923ace861234c640d85e52448b3d0393c4a994b30724dd",
+      "evaluation_seconds": 8.61,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-no-separation",
+      "kind": "entry-negative",
+      "cell": "drafted",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "return-eligibility"
+        ],
+        "safety": [
+          "service_error"
+        ],
+        "entry": {
+          "C": false,
+          "C_draft": false,
+          "wrong": [
+            "separation"
+          ]
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:d7ee8a41d7734bc9b180a027b4725989cf2c28e31a496d03b77a8a3b24d39d37"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:d7ee8a41d7734bc9b180a027b4725989cf2c28e31a496d03b77a8a3b24d39d37",
+      "evaluation_seconds": 8.167,
+      "safety_cases": {
+        "service_error": [
+          "implicit-uniform-denial: own, wrong state or first approver denied like missing",
+          "return-eligibility: ineligible by the first approver"
+        ]
+      }
+    },
+    {
+      "variant": "draft-invalid",
+      "kind": "entry-negative",
+      "cell": "drafted",
+      "ok": true,
+      "got": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "C_draft": false,
+          "wrong": [
+            "record"
+          ]
+        }
+      },
+      "verifier": {
+        "skipped": "draft-invalid"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:7c468813cc8b6d28a02076ce4f24134258e13c02c026e7c193918ba6a942970e",
+      "evaluation_seconds": 2.025,
+      "safety_cases": {}
+    },
+    {
+      "variant": "review-invalid",
+      "kind": "entry-negative",
+      "cell": "drafted-review",
+      "ok": true,
+      "got": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "C_draft": true,
+          "wrong": [
+            "record"
+          ]
+        }
+      },
+      "verifier": {
+        "skipped": "draft-invalid"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:7c468813cc8b6d28a02076ce4f24134258e13c02c026e7c193918ba6a942970e",
+      "evaluation_seconds": 2.441,
+      "safety_cases": {}
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "candidate-error"
+      },
+      "verifier": {
+        "skipped": "candidate-error"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 4.012,
+      "safety_cases": {}
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "return-eligibility"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.135,
+      "safety_cases": {
+        "unauthorized_write": [
+          "implicit-uniform-denial: own, wrong state or first approver denied like missing",
+          "return-eligibility: ineligible submitted"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-concurrency"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 20.789,
+      "safety_cases": {
+        "double_apply": [
+          "return-concurrency: concurrent different keys apply once"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.512,
+      "safety_cases": {
+        "side_effect_atomicity": [
+          "implicit-outbox: outbox failure rolls back and same-key retry"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "return-concurrency",
+          "return-eligibility"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.556,
+      "safety_cases": {
+        "service_error": [
+          "implicit-uniform-denial: other tenant denied like missing",
+          "implicit-uniform-denial: own, wrong state or first approver denied like missing",
+          "return-concurrency: concurrent different keys apply once",
+          "return-eligibility: ineligible already returned",
+          "return-eligibility: ineligible approved",
+          "return-eligibility: ineligible missing",
+          "return-eligibility: ineligible other tenant",
+          "return-eligibility: ineligible own"
+        ]
+      }
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-functional",
+          "return-idempotency"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 23.728,
+      "safety_cases": {
+        "undecidable": [
+          "return-functional: Unicode ID",
+          "return-idempotency: same key different purchase"
+        ]
+      }
+    },
+    {
+      "variant": "neg-db-order-regression",
+      "kind": "collation-negative",
+      "cell": "manual",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c",
+      "evaluation_seconds": 7.724,
+      "safety_cases": {}
+    }
+  ],
+  "reference_digest_matches_appctl": true,
+  "all_ok": true
+}

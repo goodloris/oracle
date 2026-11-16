@@ -1,0 +1,34 @@
+diff --git a/internal/candidate/approval.go b/internal/candidate/approval.go
+index b52973e..661e9b8 100644
+--- a/internal/candidate/approval.go
++++ b/internal/candidate/approval.go
+@@ -87,5 +87,5 @@ func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.H
+ 	}, fallback)
+ 	items := protocol.Confirm("countersign", "approver", confirm(exec, opdef.Countersign),
+ 		protocol.Item("reopen", "requester", item(exec, opdef.Reopen), batches))
+-	return protocol.Assign("/purchases/bulk-reassign", reassign(exec), items), nil
++	return protocol.Item("return", "approver", item(exec, opdef.Return), protocol.Assign("/purchases/bulk-reassign", reassign(exec), items)), nil
+ }
+diff --git a/internal/opdef/catalog.go b/internal/opdef/catalog.go
+index 5b3d715..bf77958 100644
+--- a/internal/opdef/catalog.go
++++ b/internal/opdef/catalog.go
+@@ -7,6 +7,7 @@ const (
+ 	Reopen       Name = "reopen.v5"
+ 	Countersign  Name = "countersign.v6"
+ 	BulkReassign Name = "bulk-reassign.v6"
++	Return       Name = "return.v8"
+ )
+ 
+ var catalog = []Operation{
+@@ -41,4 +42,10 @@ var catalog = []Operation{
+ 		Response: "reassignedIds", Inputs: []string{IDs, "assignee"}, Fingerprint: []string{IDs, "assignee"}, Record: AssignmentHistory,
+ 		Event: "purchase.reassigned", Denial: UniformDenial,
+ 	},
++	{
++		Name: Return, Kind: Transition, Role: "approver", Subject: Others,
++		From: "pending-second", To: "returned", Separation: DistinctFromPreviousApprover,
++		Inputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
++		Event: "purchase.returned", Denial: UniformDenial,
++	},
+ }

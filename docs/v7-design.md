@@ -139,7 +139,19 @@ scripts/push_results.sh <run> <dir> ─▶ runs/<run>/results/
 scripts/host_evaluate.sh <run> <lane>  restore → evaluate（端口 1970<lane>）→ summary.json
 ```
 
-主机约束：Go 用 `/opt/poc-oracle/go/bin/go`（`GOTOOLCHAIN=local`，GOPATH/GOMODCACHE/GOCACHE 都在 `/opt/poc-oracle` 下），Python 3.10，容器统一 `poc-oracle-*` 并只绑定 127.0.0.1。**主机数据库镜像待定**：内核 3.10 + runc 链接的 libseccomp 2.3.1 下，`postgres:17-alpine` 在 Docker 默认 seccomp profile 中 initdb 报 EPERM，且无法用按名字的最小 profile 修补（证据见 `docs/evidence/seccomp-2026-11-16/`）；不使用 `seccomp=unconfined`。
+主机约束：Go 用 `/opt/poc-oracle/go/bin/go`（`GOTOOLCHAIN=local`，GOPATH/GOMODCACHE/GOCACHE 都在 `/opt/poc-oracle` 下），Python 3.10，容器统一 `poc-oracle-*` 并只绑定 127.0.0.1。
+
+## 验收数据库与排序
+
+**主机数据库**：`postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341`（image id `4bc6cc20ca7a…`），PostgreSQL 17.2（Debian 17.2-1.pgdg120+1），Docker 内置默认 seccomp profile。实测 `datcollate = datctype = en_US.utf8`，`datlocprovider = c`（glibc），`'v7-Zed' < 'v7-p1'` 为 false（语言排序，与字节序不同）。
+
+**为什么不用 alpine**：主机内核 3.10、runc 1.1.12 动态链接 libseccomp 2.3.1。`postgres:17-alpine` 在默认 profile 下 initdb 报 EPERM：`preadv2`、`pwritev2`（及 `pkey_*`）在默认 profile 中是允许的，但 libseccomp 2.3.1 不认识这些名字，规则被丢弃，调用落到默认动作 EPERM，musl 因而不回退。按名字给它们写 `errnoRet: 38` 的规则同样被丢弃，所以“默认 profile + 少数调用返回 ENOSYS”的最小修改在这台主机上不可行；只改 `defaultErrnoRet` 不是最小修改，`seccomp=unconfined` 不采用。证据见 `docs/evidence/seccomp-2026-11-16/`。选择（2026-11-16，方案 B）：改用主机已有的 Debian/glibc PostgreSQL 17.2 镜像，按 digest 固定，seccomp 保持 Docker 默认。
+
+**计划记录数据库环境**：`plan` 通过 dbrpc 实测 `version()`、`datcollate`、`datctype`、`datlocprovider` 和字节序探针，连同 `POC_PG_IMAGE` 写入计划；`evaluate` 发现实际数据库与计划不同即记为 infrastructure-blocked。
+
+**主机控制是权威结果。** 本机没有 Debian 镜像，本机控制用 `postgres:17-alpine`（musl）。musl 的 `en_US.utf8` 排序等价于字节序（实测 `byte_order: true`），glibc 的 `en_US.utf8` 是语言排序（大小写、标点先忽略）。所以只有主机能暴露“依赖数据库排序”的错误；本机 alpine 控制只作辅助证据。
+
+**排序检查**：契约中“按字典序排序的 ID”指 UTF-8 字节序。Oracle 一律在 Python 侧按 `s.encode()` 排序比较，从不依赖数据库排序；列表接口的顺序不在契约内，只比较内容。fixture 增加了 `Zed`（字节序在 `p1/p2/p3` 之前，语言排序在之后），并放进 T2 的“batch is sorted”“history rows per target with previous value”和两任务共用的回归改派用例（三目标）。正确参考按字节序构造响应：手写改派与成本中心在 `FOR UPDATE` 查询上用 `ORDER BY id COLLATE "C"` 再与字节序的 ids 配对，内核按 id 配对（`fad8adf`）。三项排序负控制（`neg-db-order-*`）去掉 `COLLATE "C"` 或按数据库顺序返回 ID：在字节序数据库上应通过，在语言排序数据库上必须失败，控制按计划中实测的 `byte_order` 选择期望。
 
 ## 与用户给定设计的偏离及理由
 

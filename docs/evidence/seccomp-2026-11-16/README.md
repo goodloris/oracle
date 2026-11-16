@@ -28,3 +28,7 @@
 推断：musl（alpine）的 PostgreSQL 17 写文件时用到 `pwritev2`/`preadv2`（或其一），内核 3.10 没有它们，
 正确答案应是 ENOSYS（musl 会回退）；但 libseccomp 2.3.1 不认识这些名字，这些调用落到默认动作 EPERM，
 于是不回退。Docker profile 只能按名字写规则，无法按编号补救。
+
+## 选择（2026-11-16）
+
+方案 B：不放宽 seccomp，验收主机改用已有的 Debian/glibc 镜像 `postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341`（PostgreSQL 17.2），按 digest 固定（`scripts/host_db.sh`、`scripts/host_env.sh`）。代价是排序规则变为 glibc `en_US.utf8`（语言排序），由 Oracle 的字节序检查与排序负控制覆盖，见 `docs/v7-design.md`“验收数据库与排序”。

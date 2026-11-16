@@ -1,0 +1,5 @@
+private/
+*.seed.json
+fixtures*.json
+__pycache__/
+/server

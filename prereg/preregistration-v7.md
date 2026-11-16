@@ -1,6 +1,6 @@
-# v7 确认性实验预注册（草稿，未冻结）
+# v7 确认性实验预注册（已冻结 2026-11-16）
 
-> **状态：草稿。** 本文尚未冻结。冻结由操作员执行：提交本文件的最终版本，把该提交的 SHA256（`sha256sum prereg/preregistration-v7.md`）和提交时间贴到公开 issue，此后正文不再修改，只能在“附录”追加。冻结前必须填写附录 A 的冻结清单。
+> **状态：已冻结。** 下列冻结清单已填写；此后正文不再修改，只在附录追加。原草稿说明：冻结由操作员执行：提交本文件的最终版本，把该提交的 SHA256（`sha256sum prereg/preregistration-v7.md`）和提交时间贴到公开 issue，此后正文不再修改，只能在“附录”追加。冻结前必须填写附录 A 的冻结清单。
 
 ## 背景
 
@@ -126,10 +126,18 @@ v6 中途触发过月度上限（v6 附录 E/F）。事先约定：
 ### 附录 A：冻结清单（冻结前由操作员填写）
 
 - 公开平台：PR #27 `fad8adfa89edb753c55410518d531e21489f7d9b`（opdef 未变，公开目录摘要仍为 `sha256:98abea36467340ad3702d12341beb3894e649d42d9129cfac4e45e46a9de0055`；私有目录摘要在重新绑定后核实未变）。
-- 私有仓库提交 SHA：`________`；`git ls-files harness tasks benchmark` 的树 hash：`________`。
+- 私有仓库提交 SHA：`67b5d8b8cb9debfcf9cce2e405775ca0c871a6db`（8 个计划的 `harness_sha`）；树 hash：harness `d33f6ca4a7d470276536bb51c659631c32ab926a`，tasks `0e50a317ca62567ec5bef67301d6bf27813fda4a`。
 - Verifier：公开 commit `fad8adfa89edb753c55410518d531e21489f7d9b`（公开目录摘要 `sha256:98abea36467340ad3702d12341beb3894e649d42d9129cfac4e45e46a9de0055`）；私有目录摘要 withdraw `sha256:7a6ebca3d84695e38e6ef90733a64227c9a2cf2b0d8cb61a894efc098b87e262`、cost-center `sha256:ab1f5e79cd6f8bd01a004012f7d832ae329193356da687c12f7490ef64efae5c`（以 `python3 harness/verifier.py --task <t> digest` 的输出为准，并与每个计划的 `verifier.catalog_digest` 一致）。
 - 控制：验收主机 withdraw 17 项、cost-center 18 项全部通过（含排序负控制），私有内核回归在 ICU 与数据库默认排序下均通过；本机 alpine 同样通过（辅助）（证据目录 `docs/evidence/v7-controls-2026-11-16/`）；`harness/analyze_v7_control.py` 通过。
-- 分析脚本：`harness/analyze_v7.py`（本文全部结局、假设、成本指标的唯一实现），冻结时记录其 SHA256：`________`。
+- 分析脚本：`harness/analyze_v7.py`（本文全部结局、假设、成本指标的唯一实现），冻结时记录其 SHA256：`799ef903f63f8b3e73a98614f8c48161b232882172d3ca82d2a7650b41c2da95`。
 - 验收主机数据库：`postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341`（image id `4bc6cc20ca7a…`，PostgreSQL 17.2，Debian 17.2-1.pgdg120+1），Docker 内置默认 seccomp profile。实测 `datcollate` = `datctype` = `en_US.utf8`，`datlocprovider` = `c`（glibc，语言排序，`'v7-Zed' < 'v7-p1'` 为 false）。每个计划的 `database` 字段记录同一实测值，`evaluate` 不一致即判 infrastructure-blocked。选择理由：alpine 镜像在该主机默认 seccomp 下无法 initdb，且不能按名字最小修补（`docs/evidence/seccomp-2026-11-16/`）；不使用 unconfined。主机控制为权威结果，本机 alpine（musl，排序等价字节序）控制为辅助证据。
-- 网络隔离控制在冻结当天重跑并通过，白名单为 `________`。
-- 8 个计划文件的 SHA256：`________`。
+- 网络隔离控制在冻结当天重跑并通过，白名单为 `management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev`（2026-11-16 17:12，22/22 通过，含私有仓库不可读）。
+- 8 个计划文件的 SHA256（均为 30 个 trial，harness `67b5d8b`，数据库 collate `en_US.utf8`）：
+  - `v7-cost-center-claude-haiku-4.5`：`28c56196758530b7cb190cff10e59c26a66aa74914cff7b37c98494ead2cf4f3`
+  - `v7-cost-center-claude-opus-5.5`：`45282d7ffc7c01b7a484a4701ac0245fdd26b5b9a6d423d62b7dbd7a25cde003`
+  - `v7-cost-center-gpt-5.6-luna`：`e07e1dcd1fecfb81e217152151bb75c27041324c3f6052c2d2716b7bcc46214b`
+  - `v7-cost-center-qwen3-coder-next`：`17b6acd91b6172879fa8a71a593ad484a02f9a4b668b4918ea6aaaa66a50bf0b`
+  - `v7-withdraw-claude-haiku-4.5`：`66209100ce77560746d0abec5af26b587bb243d25fa5e4bf1d9290c670b3fbcf`
+  - `v7-withdraw-claude-opus-5.5`：`87a0e45f9c39715090d44a6b7fcbc82fa372305bfcd4289e3b9703edcad03c1a`
+  - `v7-withdraw-gpt-5.6-luna`：`5defa72d5da619367d517fc1ccf9aa48eb155652aece8a47d351324fe53851bc`
+  - `v7-withdraw-qwen3-coder-next`：`8f8d863133980e34a38a2b1ab54a9a095bf1ce45404158c01fd8daac0d5d9f4f`

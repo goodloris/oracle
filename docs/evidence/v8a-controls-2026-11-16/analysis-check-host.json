@@ -1,0 +1,225 @@
+{
+  "boundaries": {
+    "spending": "O'Brien-Fleming-type Lan-DeMets",
+    "alpha": 0.025,
+    "information": [
+      0.5,
+      1.0
+    ],
+    "cumulative_alpha": [
+      0.0015253227579890005,
+      0.02499999999999991
+    ],
+    "c1": 2.9625880427275373,
+    "c2": 1.968595640637417,
+    "alpha1": 0.0015253227579890005,
+    "alpha2": 0.024499771789663734
+  },
+  "checks": [
+    {
+      "check": "tango b=3 c=5 n=48",
+      "ok": true,
+      "difference": -0.0417,
+      "z_margin": 0.9461,
+      "lower": -0.1732,
+      "upper": 0.0855
+    },
+    {
+      "check": "tango b=0 c=0 n=48",
+      "ok": true,
+      "difference": 0.0,
+      "z_margin": 2.3094,
+      "lower": -0.0741,
+      "upper": 0.0741
+    },
+    {
+      "check": "tango b=0 c=4 n=48",
+      "ok": true,
+      "difference": -0.0833,
+      "z_margin": 0.3849,
+      "lower": -0.1955,
+      "upper": -0.0031
+    },
+    {
+      "check": "tango b=10 c=2 n=48",
+      "ok": true,
+      "difference": 0.1667,
+      "z_margin": 3.3673,
+      "lower": 0.0292,
+      "upper": 0.3117
+    },
+    {
+      "check": "tango b=2 c=8 n=96",
+      "ok": true,
+      "difference": -0.0625,
+      "z_margin": 1.0559,
+      "lower": -0.1388,
+      "upper": 0.0025
+    },
+    {
+      "check": "tango ~ wald near the estimate",
+      "ok": true
+    },
+    {
+      "check": "alpha1 = spending(0.5) closed form",
+      "ok": true,
+      "alpha1": 0.0015253227579890005
+    },
+    {
+      "check": "c1 = Phi^-1(1 - alpha1)",
+      "ok": true,
+      "c1": 2.9625880427275373
+    },
+    {
+      "check": "integral: P(Z1>c1 or Z2>c2) = 0.025",
+      "ok": true,
+      "value": 0.025000000000000997
+    },
+    {
+      "check": "monte carlo: P(Z1>c1) = alpha1",
+      "ok": true,
+      "value": 0.0016125
+    },
+    {
+      "check": "monte carlo: overall crossing = 0.025",
+      "ok": true,
+      "value": 0.02481
+    },
+    {
+      "check": "nominal alphas near the stated values",
+      "ok": true,
+      "alpha1": 0.001525,
+      "alpha2": 0.0245,
+      "c1": 2.9626,
+      "c2": 1.9686
+    },
+    {
+      "check": "decision stop-noninferior",
+      "ok": true,
+      "stage1_z": 3.4641,
+      "final_z": null,
+      "stage1_decision": "stop-noninferior",
+      "final_decision": "noninferior"
+    },
+    {
+      "check": "decision stop-futility",
+      "ok": true,
+      "stage1_z": -3.3303,
+      "final_z": null,
+      "stage1_decision": "stop-futility",
+      "final_decision": "worse"
+    },
+    {
+      "check": "decision continue-noninferior",
+      "ok": true,
+      "stage1_z": 2.3094,
+      "final_z": 3.266,
+      "stage1_decision": "continue",
+      "final_decision": "noninferior"
+    },
+    {
+      "check": "decision continue-not-noninferior",
+      "ok": true,
+      "stage1_z": 0.3248,
+      "final_z": 0.4593,
+      "stage1_decision": "continue",
+      "final_decision": "not-noninferior"
+    },
+    {
+      "check": "decision continue-pending",
+      "ok": true,
+      "stage1_z": 2.3094,
+      "final_z": null,
+      "stage1_decision": "continue",
+      "final_decision": "pending-stage2"
+    },
+    {
+      "check": "futility: upper (1-alpha1) bound below -margin",
+      "ok": true,
+      "upper": -0.1448
+    },
+    {
+      "check": "no futility stop when the upper bound reaches -margin",
+      "ok": true,
+      "upper": -0.0568
+    },
+    {
+      "check": "boundary c1 +1e-09",
+      "ok": true,
+      "z": 3.1269438398822866
+    },
+    {
+      "check": "boundary c1 -1e-09",
+      "ok": true,
+      "z": 3.1269438398822866
+    },
+    {
+      "check": "stage-2 data after a stop is refused",
+      "ok": true
+    },
+    {
+      "check": "denominator excludes unmeasured blocks",
+      "ok": true
+    },
+    {
+      "check": "secondary hypotheses use stage-1 blocks only",
+      "ok": true
+    },
+    {
+      "check": "type I at the margin <= 0.025 + 3 se: at margin (q12=0.02, q21=0.12)",
+      "ok": true,
+      "value": 0.02125
+    },
+    {
+      "check": "type I at the margin <= 0.025 + 3 se: at margin (q12=0.00, q21=0.10)",
+      "ok": true,
+      "value": 0.01075
+    },
+    {
+      "check": "analysis of 2 run(s) has both decisions",
+      "ok": true,
+      "stage1_decision": "continue",
+      "final_decision": "pending-stage2"
+    }
+  ],
+  "operating_characteristics": {
+    "at margin (q12=0.02, q21=0.12)": {
+      "P(H1 holds)": 0.02125,
+      "P(stop-noninferior)": 0.0,
+      "P(stop-futility)": 0.0005,
+      "P(continue)": 0.9995
+    },
+    "at margin (q12=0.00, q21=0.10)": {
+      "P(H1 holds)": 0.01075,
+      "P(stop-noninferior)": 0.0,
+      "P(stop-futility)": 0.0,
+      "P(continue)": 1.0
+    },
+    "equal (q12=q21=0.02)": {
+      "P(H1 holds)": 0.9645,
+      "P(stop-noninferior)": 0.0065,
+      "P(stop-futility)": 0.0,
+      "P(continue)": 0.9935
+    },
+    "equal (q12=q21=0.05)": {
+      "P(H1 holds)": 0.77775,
+      "P(stop-noninferior)": 0.02925,
+      "P(stop-futility)": 0.0,
+      "P(continue)": 0.97075
+    },
+    "-3 pp (q12=0.01, q21=0.04)": {
+      "P(H1 holds)": 0.6225,
+      "P(stop-noninferior)": 0.0,
+      "P(stop-futility)": 0.0,
+      "P(continue)": 1.0
+    },
+    "-20 pp (q12=0.00, q21=0.20)": {
+      "P(H1 holds)": 0.0,
+      "P(stop-noninferior)": 0.0,
+      "P(stop-futility)": 0.04375,
+      "P(continue)": 0.95625
+    }
+  },
+  "reps": 4000,
+  "all_ok": true
+}

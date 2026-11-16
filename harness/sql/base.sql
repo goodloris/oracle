@@ -1,13 +1,13 @@
--- v7 disposable POC schema: the v6b world (purchase, approve, reject, reopen, reassign) in one file.
--- Equivalent to the public layers 001_purchase + guard + transactional-action + phase4 + phase5 + phase6b,
--- without the v6a countersign states. Task schemas (tasks/<task>/schema.sql) are applied after it.
+-- v7 disposable POC schema: the v6 world (purchase, tiered approve, reject, reopen, countersign, reassign) in one
+-- file. Equivalent to the public layers 001_purchase + guard + transactional-action + phase4 + phase5 + phase6a +
+-- phase6b + internal/opkernel/testdata/union.sql. Task schemas (tasks/<task>/schema.sql) are applied after it.
 CREATE TABLE "Purchase" (
   id text PRIMARY KEY,
   "tenantId" text NOT NULL,
   "createdBy" text NOT NULL,
   title text NOT NULL CHECK (length(title) BETWEEN 1 AND 200),
   amount integer NOT NULL CHECK (amount > 0),
-  status text NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted','approved','rejected')),
+  status text NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted','approved','rejected','pending-second')),
   "internalNote" text NOT NULL DEFAULT 'supplier-bank-account',
   "assigneeId" text
 );
@@ -27,10 +27,10 @@ CREATE POLICY purchase_create ON "Purchase" FOR INSERT TO app_runtime
 -- The guarded runtime requires exactly three Purchase policies; task schemas replace this one.
 CREATE POLICY purchase_transition ON "Purchase" FOR UPDATE TO app_runtime
  USING ("tenantId" = current_setting('app.tenant', true) AND (
-   (current_setting('app.role', true) = 'approver' AND "createdBy" <> current_setting('app.user', true) AND status = 'submitted')
+   (current_setting('app.role', true) = 'approver' AND "createdBy" <> current_setting('app.user', true) AND status IN ('submitted','pending-second'))
    OR (current_setting('app.role', true) = 'requester' AND "createdBy" = current_setting('app.user', true) AND status = 'rejected')))
  WITH CHECK ("tenantId" = current_setting('app.tenant', true) AND (
-   (current_setting('app.role', true) = 'approver' AND status IN ('approved','rejected','submitted'))
+   (current_setting('app.role', true) = 'approver' AND status IN ('approved','rejected','submitted','pending-second'))
    OR (current_setting('app.role', true) = 'requester' AND "createdBy" = current_setting('app.user', true) AND status = 'submitted')));
 
 CREATE TABLE "TenantMember" (
@@ -56,7 +56,7 @@ CREATE TABLE "ActionRequest" (
   "tenantId" text NOT NULL,
   "actorId" text NOT NULL,
   operation text NOT NULL CONSTRAINT "ActionRequest_operation_check"
-    CHECK (operation IN ('bulk-approve.v3','bulk-reject.v4','reopen.v5','bulk-reassign.v6')),
+    CHECK (operation IN ('bulk-approve.v3','bulk-reject.v4','reopen.v5','countersign.v6','bulk-reassign.v6')),
   key text NOT NULL CHECK (length(key) BETWEEN 1 AND 128),
   "requestHash" text NOT NULL CHECK ("requestHash" ~ '^[0-9a-f]{64}$'),
   response jsonb NOT NULL,
@@ -68,10 +68,10 @@ CREATE TABLE "ApprovalAudit" (
   "purchaseId" text NOT NULL,
   "approvedBy" text NOT NULL,
   operation text NOT NULL CONSTRAINT "ApprovalAudit_operation_check"
-    CHECK (operation IN ('bulk-approve.v3','bulk-reject.v4','reopen.v5')),
+    CHECK (operation IN ('bulk-approve.v3','bulk-reject.v4','reopen.v5','countersign.v6')),
   "idempotencyKey" text NOT NULL,
-  "fromStatus" text NOT NULL CONSTRAINT "ApprovalAudit_fromStatus_check" CHECK ("fromStatus" IN ('submitted','rejected')),
-  "toStatus" text NOT NULL CONSTRAINT "ApprovalAudit_toStatus_check" CHECK ("toStatus" IN ('approved','rejected','submitted')),
+  "fromStatus" text NOT NULL CONSTRAINT "ApprovalAudit_fromStatus_check" CHECK ("fromStatus" IN ('submitted','rejected','pending-second')),
+  "toStatus" text NOT NULL CONSTRAINT "ApprovalAudit_toStatus_check" CHECK ("toStatus" IN ('approved','rejected','submitted','pending-second')),
   "createdAt" timestamptz NOT NULL DEFAULT now(),
   reason text CHECK (reason IS NULL OR length(reason) BETWEEN 1 AND 200),
   PRIMARY KEY ("tenantId","purchaseId","approvedBy",operation,"idempotencyKey"),
@@ -128,3 +128,19 @@ CREATE POLICY assignment_history_read ON "AssignmentHistory" FOR SELECT TO app_r
  ("tenantId"=current_setting('app.tenant',true) AND current_setting('app.role',true) IN ('approver','requester'));
 CREATE POLICY assignment_history_insert ON "AssignmentHistory" FOR INSERT TO app_runtime WITH CHECK
  ("tenantId"=current_setting('app.tenant',true) AND "changedBy"=current_setting('app.user',true) AND current_setting('app.role',true)='approver');
+
+-- Platform guard for every writer, including the legacy per-purchase approve: the tier and the
+-- second approver are enforced on the row transition, so a mistaken handler fails instead of approving.
+CREATE OR REPLACE FUNCTION purchase_tier_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF NEW.status = OLD.status THEN RETURN NEW; END IF;
+ IF (OLD.status = 'submitted' AND NEW.status = 'approved' AND NEW.amount > 50000)
+  OR (NEW.status = 'pending-second' AND (OLD.status <> 'submitted' OR NEW.amount <= 50000))
+  OR (OLD.status = 'pending-second' AND (NEW.status <> 'approved' OR current_setting('app.user', true) IS NOT DISTINCT FROM
+      (SELECT a."approvedBy" FROM "ApprovalAudit" a WHERE a."tenantId" = OLD."tenantId" AND a."purchaseId" = OLD.id
+        AND a."toStatus" = 'pending-second' ORDER BY a."createdAt" DESC LIMIT 1))) THEN
+  RAISE EXCEPTION 'two-level approval transition refused' USING ERRCODE = 'P0001';
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER purchase_tier_guard BEFORE UPDATE OF status ON "Purchase" FOR EACH ROW EXECUTE FUNCTION purchase_tier_guard();

@@ -44,6 +44,10 @@ implement its entry exactly. Changing this file needs owner review.
   "subject": "others",
   "from": "submitted",
   "to": "approved",
+  "tier": {
+    "over": 50000,
+    "to": "pending-second"
+  },
   "response": "approvedIds",
   "inputs": [
     "ids"
@@ -128,6 +132,31 @@ implement its entry exactly. Changing this file needs owner review.
   ],
   "record": "ApprovalAudit",
   "event": "purchase.rejected",
+  "denial": 409
+}
+```
+
+### `countersign.v6`
+
+```json
+{
+  "name": "countersign.v6",
+  "kind": "transition",
+  "role": "approver",
+  "subject": "others",
+  "from": "pending-second",
+  "to": "approved",
+  "inputs": [
+    "ids",
+    "amount"
+  ],
+  "fingerprint": [
+    "ids"
+  ],
+  "record": "ApprovalAudit",
+  "event": "purchase.countersigned",
+  "separation": "distinct-from-previous-approver",
+  "confirmAmount": true,
   "denial": 409
 }
 ```

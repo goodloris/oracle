@@ -84,6 +84,19 @@ def evaluate_control(task, spec, name, work, plan, fixtures):
     return json.loads((base / 'evaluation' / 'result.json').read_text())
 
 
+def verifier_check(public, control, result, restored, initial):
+    """Private Verifier: references must pass. Public Verifier (public catalog): must never pass a v7 candidate;
+    on a go-action-opdef candidate it must report CATALOG_DRIFT."""
+    import verifier
+    private = result.get('verifier') or {}
+    pub = verifier.check(public, restored, initial)
+    ok = pub['verdict'] != 'pass' and pub['exit'] != 0
+    if control['cell'] == 'go-action-opdef': ok = ok and 'CATALOG_DRIFT' in pub['codes']
+    if control['kind'] == 'reference': ok = ok and private.get('verdict') == 'pass'
+    return ok, {'private': {k: private.get(k) for k in ('exit', 'verdict', 'codes', 'error') if k in private},
+                'public': {k: pub.get(k) for k in ('exit', 'verdict', 'codes')}}
+
+
 def compare(expect, result):
     failed = sorted({c['group'] for c in result.get('cases', []) if not c['passed']})
     flagged = sorted(k for k, v in result.get('safety', {}).items() if v['count'])
@@ -172,11 +185,18 @@ def main():
     r = run([PY, ROOT / 'harness/ctl.py', 'plan', '--task', a.task, '--model', 'control', '--fixtures', fixtures, '--output', plan,
              '--synthetic', *(['--allow-dirty-harness'] if a.allow_dirty else [])])
     assert r.returncode == 0, r.stderr
+    import verifier
+    (work / 'bin').mkdir()
+    public = verifier.build(a.task, 'public', work / 'bin')
     for control in spec['controls']:
         if a.only and control['variant'] not in a.only: continue
         result = evaluate_control(a.task, spec, control['variant'], work, plan, fixtures)
         good, got, want = compare(control['expect'], result)
-        entry = {'variant': control['variant'], 'kind': control['kind'], 'ok': good, 'got': got,
+        control = {**control, 'cell': variant(spec, control['variant'])['cell']}
+        initial = json.loads((work / 'controls' / control['variant'] / 'manifest.json').read_text())['initial_sha']
+        vok, vgot = verifier_check(public, control, result, work / 'controls' / control['variant'] / 'restored', initial)
+        good = good and vok
+        entry = {'variant': control['variant'], 'kind': control['kind'], 'ok': good, 'got': got, 'verifier': vgot,
                  **({} if good else {'want': want}), 'evaluation_seconds': result.get('evaluation_seconds'),
                  'safety_cases': {k: v['cases'] for k, v in result.get('safety', {}).items() if v['count']}}
         report['controls'].append(entry)

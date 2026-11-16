@@ -42,4 +42,4 @@ CREATE POLICY cost_center_history_insert ON "CostCenterHistory" FOR INSERT TO ap
  ("tenantId"=current_setting('app.tenant',true) AND "changedBy"=current_setting('app.user',true) AND current_setting('app.role',true)='approver');
 ALTER TABLE "ActionRequest" DROP CONSTRAINT "ActionRequest_operation_check";
 ALTER TABLE "ActionRequest" ADD CONSTRAINT "ActionRequest_operation_check"
- CHECK (operation IN ('bulk-approve.v3','bulk-reject.v4','reopen.v5','bulk-reassign.v6','bulk-cost-center.v7'));
+ CHECK (operation IN ('bulk-approve.v3','bulk-reject.v4','reopen.v5','countersign.v6','bulk-reassign.v6','bulk-cost-center.v7'));

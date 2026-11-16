@@ -54,6 +54,17 @@ func item(exec *opkernel.Executor, name opdef.Name) protocol.ItemHandler {
 	}
 }
 
+func confirm(exec *opkernel.Executor, name opdef.Name) protocol.ConfirmHandler {
+	op := entry(name)
+	return func(ctx context.Context, u app.Identity, key, id string, amount int) (protocol.ItemResult, bool, error) {
+		done, replayed, err := exec.Run(ctx, u, name, key, opkernel.Request{IDs: []string{id}, Amount: amount})
+		if err != nil {
+			return protocol.ItemResult{}, false, adapt(err)
+		}
+		return protocol.ItemResult{ID: done[0], Status: op.To}, replayed, nil
+	}
+}
+
 func reassign(exec *opkernel.Executor) protocol.AssignHandler {
 	op := entry(opdef.BulkReassign)
 	return func(ctx context.Context, u app.Identity, key string, ids []string, assignee string) (protocol.AssignResult, bool, error) {
@@ -74,6 +85,7 @@ func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.H
 		"/purchases/bulk-approve": batch(exec, opdef.BulkApprove),
 		"/purchases/bulk-reject":  batch(exec, opdef.BulkReject),
 	}, fallback)
-	items := protocol.Item("reopen", "requester", item(exec, opdef.Reopen), batches)
+	items := protocol.Confirm("countersign", "approver", confirm(exec, opdef.Countersign),
+		protocol.Item("reopen", "requester", item(exec, opdef.Reopen), batches))
 	return protocol.Assign("/purchases/bulk-reassign", reassign(exec), items), nil
 }

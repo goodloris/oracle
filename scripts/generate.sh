@@ -9,6 +9,8 @@ PRIVATE=$(cd "$(dirname "$0")/.." && pwd -P)
 PUBLIC=${PUBLIC_CHECKOUT:-$HOME/.paseo/worktrees/3q2d9qt9/v5-scattered-convention}
 ISOLATE=$PUBLIC/benchmark/phase3/isolate_net.py
 H=$HOME
+# Model endpoints the proxy tunnels to; re-run discovery + isolation_net_control.py when the account region moves (v6 appendix F).
+export KIRO_ALLOW_HOSTS=${KIRO_ALLOW_HOSTS:-management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev}
 if [ "${1:-}" = --fake-kiro ]; then
   S=$(cd "$2" && pwd -P); mkdir -p "$D/tools"; cp "$PRIVATE/harness/fake_kiro.py" "$D/tools/fake_kiro.py"; chmod 755 "$D/tools/fake_kiro.py"
   export FAKE_KIRO_SOLUTIONS=$S

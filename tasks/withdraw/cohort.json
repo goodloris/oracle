@@ -53,7 +53,7 @@
     },
     "regression": {
       "kind": "explicit",
-      "count": 15
+      "count": 18
     },
     "implicit-audit": {
       "kind": "implicit",
@@ -87,7 +87,7 @@
           ],
           [
             "SCHEMA.sql",
-            "\"toStatus\" IN ('approved','rejected','submitted','withdrawn')"
+            "\"toStatus\" IN ('approved','rejected','submitted','pending-second','withdrawn')"
           ]
         ],
         "go-manual-doc": [

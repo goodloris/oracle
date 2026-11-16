@@ -57,7 +57,7 @@
     },
     "regression": {
       "kind": "explicit",
-      "count": 15
+      "count": 18
     },
     "implicit-history": {
       "kind": "implicit",

@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -231,6 +232,77 @@ func decodeParam(body []byte, name string) ([]string, string, bool) {
 	}
 	ids, err := canonical(ids)
 	return ids, *value, err == nil
+}
+
+// ConfirmHandler receives an identity with the route's role, one valid
+// Idempotency-Key, the path ID and the amount the caller confirmed.
+type ConfirmHandler func(ctx context.Context, u app.Identity, key, id string, amount int) (ItemResult, bool, error)
+
+// Confirm serves POST /purchases/{id}/<verb> for one role. The body must be
+// exactly {"amount":N} with an integer N in 1..2147483647; other requests go to next.
+func Confirm(verb, role string, handle ConfirmHandler, next http.Handler) http.Handler {
+	return confirmSingle(verb, role, next, func(ctx context.Context, w http.ResponseWriter, u app.Identity, key, id string, body []byte) {
+		amount, ok := decodeAmount(body)
+		if !ok {
+			reject(w, 400)
+			return
+		}
+		result, replayed, err := handle(ctx, u, key, id, amount)
+		respond(w, result, replayed, err)
+	})
+}
+
+func confirmSingle(verb, role string, next http.Handler, serve func(context.Context, http.ResponseWriter, app.Identity, string, string, []byte)) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id, found := strings.CutSuffix(strings.TrimPrefix(r.URL.Path, "/purchases/"), "/"+verb)
+		if r.Method != http.MethodPost || !strings.HasPrefix(r.URL.Path, "/purchases/") || !found || id == "" || strings.Contains(id, "/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		u, ok := app.AuthenticateDemo(r.Header.Get("Authorization"))
+		if !ok {
+			reject(w, 401)
+			return
+		}
+		if u.Role != role {
+			reject(w, 403)
+			return
+		}
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxBodyBytes))
+		if err != nil {
+			var large *http.MaxBytesError
+			if errors.As(err, &large) {
+				reject(w, 413)
+			} else {
+				reject(w, 400)
+			}
+			return
+		}
+		keys := r.Header.Values("Idempotency-Key")
+		if len(id) > 100 || !utf8.ValidString(id) || strings.ContainsRune(id, 0) || len(keys) != 1 || !validKey(keys[0]) {
+			reject(w, 400)
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+		serve(ctx, w, u, keys[0], id, body)
+	})
+}
+
+func decodeAmount(body []byte) (int, bool) {
+	if !utf8.Valid(body) {
+		return 0, false
+	}
+	d := json.NewDecoder(bytes.NewReader(body))
+	d.DisallowUnknownFields()
+	var value struct {
+		Amount *json.RawMessage `json:"amount"`
+	}
+	if d.Decode(&value) != nil || d.Decode(new(any)) != io.EOF || value.Amount == nil {
+		return 0, false
+	}
+	n, err := strconv.ParseInt(string(*value.Amount), 10, 32)
+	return int(n), err == nil && n >= 1
 }
 
 func respond(w http.ResponseWriter, result any, replayed bool, err error) {

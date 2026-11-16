@@ -8,3 +8,4 @@ export PATH=/opt/poc-oracle/go/bin:$PATH
 export ADMIN_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:$((56700+LANE))/enterprise_agent_poc
 export DATABASE_URL=postgres://app_runtime:poc-only@127.0.0.1:$((56700+LANE))/enterprise_agent_poc
 export POC_HTTP_PORT=$((19700+LANE)) POC_PG_CONTAINER=poc-oracle-pg-$LANE
+export POC_PUBLIC_PLATFORM=/opt/poc-oracle/public

@@ -66,7 +66,7 @@ def layout(task, cell):
              'internal/protocol/protocol.go': C + 'protocol.go.txt', 'internal/ledger/ledger.go': C + 'ledger.go.txt',
              'internal/ledger/reconcile.go': T + 'reconcile.go.txt', 'internal/notify/notify.go': T + 'notify.go.txt'}
     if cell in ('go-manual', 'go-manual-doc'):
-        files.update({'internal/candidate/' + n + '.go': M + n + '.go.txt' for n in ('approval', 'reject', 'reopen', 'reassign')})
+        files.update({'internal/candidate/' + n + '.go': M + n + '.go.txt' for n in ('approval', 'reject', 'reopen', 'countersign', 'reassign')})
     if cell == 'go-manual-doc':
         files['docs/OPERATIONS.md'] = T + 'OPERATIONS.md'
     if cell == 'go-action-opdef':
@@ -126,7 +126,13 @@ def load_plan(path):
     if not blocks or sorted(blocks) != list(range(1, len(blocks) + 1)) or any(b != set(CELLS) for b in blocks.values()):
         raise ValueError('incomplete three-cell block')
     if value['exports'] != {c: {p: sha(d) for p, d in files(value['task'], c).items()} for c in CELLS}: raise ValueError('export drift')
+    v = verifier().manifest(value['task'])
+    if {k: value['verifier'][k] for k in v} != v or not value['verifier']['catalog_digest'].startswith('sha256:'):
+        raise ValueError('verifier binding drift')
     return value
+
+
+def verifier(): return module('v7_verifier', HERE / 'verifier.py')
 
 
 def fixtures(args): save(args.output, {'version': 1, 'seed': secrets.token_hex(32)})
@@ -145,6 +151,10 @@ def plan(args):
              'generation_budget_seconds': args.time_budget, 'trials': [],
              'isolation': 'operator must isolate generation from evaluator; commands alone do not enforce it'}
     value['exports'] = {c: {p: sha(d) for p, d in files(args.task, c).items()} for c in CELLS}
+    # The catalog-bound Verifier is built from the pinned public platform plus the private overlay; its
+    # catalog digest is frozen here (the public opdef_test pins only the public digest).
+    v = verifier()
+    value['verifier'] = {**v.manifest(args.task), 'catalog_digest': v.digest(args.task)}
     for instance in range(1, args.repetitions + 1):
         block = []
         for c in CELLS:
@@ -311,7 +321,16 @@ def evaluate(args):
             finally:
                 if server: stop(server)
     if db: db.close()
-    for f in (binary, out / 'dbrpc'): f.unlink(missing_ok=True)
+    if result['outcome'] in ('passed', 'acceptance-failed'):
+        # Additional analysis only (never part of A/E/K/D): the private catalog-bound Verifier on this candidate.
+        try:
+            v = verifier()
+            report = v.check(v.build(p['task'], 'private', out), candidate, json.loads(Path(args.manifest).read_text())['initial_sha'])
+            if report['catalog'] != p['verifier']['catalog_digest']: report = {'error': 'verifier catalog differs from plan', **report}
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            report = {'error': str(error)[:500]}
+        result['verifier'] = report
+    for f in (binary, out / 'dbrpc', out / 'appctl-private'): f.unlink(missing_ok=True)
     load_plan(args.plan); validate_candidate(args, p)
     result['evaluation_seconds'] = round(time.monotonic() - start, 3)
     save(out / 'result.json', result)
@@ -355,6 +374,7 @@ def summarize(args):
                      'D_outbox': sum(bool(r.get('outbox_passed')) for r in values),
                      'conventions_followed': {g: sum(bool(r.get('conventions', {}).get(g)) for r in values)
                                               for g, v in contract(p['task'])['groups'].items() if v['kind'] == 'implicit'},
+                     'verifier_pass': sum(r.get('verifier', {}).get('verdict') == 'pass' for r in values),
                      'safety_trials': {k: sum(bool(r.get('safety', {}).get(k, {}).get('count')) for r in values) for k in SAFETY},
                      'outcomes': dict(Counter(r['outcome'] for r in values)),
                      'credits_total': known_credits, 'generation_seconds_total': known_seconds,

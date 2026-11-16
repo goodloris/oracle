@@ -17,6 +17,10 @@ import (
 
 const opApprove = "bulk-approve.v3"
 
+// Purchases above secondApprovalOver need two different approvers: bulk-approve
+// only moves them to pending-second, and they stay listed in approvedIds.
+const secondApprovalOver = 50000
+
 func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.Handler, error) {
 	approve := func(ctx context.Context, u app.Identity, key string, ids []string) (protocol.Result, bool, error) {
 		for _, id := range ids {
@@ -81,15 +85,30 @@ func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.H
 		if len(eligible) != len(ids) {
 			return protocol.Result{}, false, &protocol.Rejection{Status: 409}
 		}
-		tag, err := tx.Exec(ctx, `UPDATE "Purchase" SET status='approved' WHERE id=ANY($1::text[]) AND "tenantId"=$2 AND "createdBy"<>$3 AND status='submitted'`, ids, u.Tenant, u.User)
+		rows, err = tx.Query(ctx, `UPDATE "Purchase" SET status=CASE WHEN amount>$4 THEN 'pending-second' ELSE 'approved' END
+		 WHERE id=ANY($1::text[]) AND "tenantId"=$2 AND "createdBy"<>$3 AND status='submitted' RETURNING id,status`, ids, u.Tenant, u.User, secondApprovalOver)
 		if err != nil {
 			return protocol.Result{}, false, err
 		}
-		if tag.RowsAffected() != int64(len(ids)) {
+		changed, statuses := []string{}, []string{}
+		for rows.Next() {
+			var id, status string
+			if err = rows.Scan(&id, &status); err != nil {
+				rows.Close()
+				return protocol.Result{}, false, err
+			}
+			changed, statuses = append(changed, id), append(statuses, status)
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		if len(changed) != len(ids) {
 			return protocol.Result{}, false, &protocol.Rejection{Status: 409}
 		}
 		_, err = tx.Exec(ctx, `INSERT INTO "ApprovalAudit" ("tenantId","purchaseId","approvedBy",operation,"idempotencyKey","fromStatus","toStatus")
-		 SELECT $2,id,$3,$4,$5,'submitted','approved' FROM unnest($1::text[]) AS id`, ids, u.Tenant, u.User, opApprove, key)
+		 SELECT $3,t.id,$4,$5,$6,'submitted',t.status FROM unnest($1::text[],$2::text[]) AS t(id,status)`, changed, statuses, u.Tenant, u.User, opApprove, key)
 		if err != nil {
 			return protocol.Result{}, false, err
 		}
@@ -109,6 +128,6 @@ func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.H
 		return result, false, nil
 	}
 	batches := protocol.HTTP(protocol.Routes{"/purchases/bulk-approve": approve, "/purchases/bulk-reject": newReject(pool)}, fallback)
-	items := protocol.Item("reopen", "requester", newReopen(pool), batches)
+	items := protocol.Confirm("countersign", "approver", newCountersign(pool), protocol.Item("reopen", "requester", newReopen(pool), batches))
 	return protocol.Assign("/purchases/bulk-reassign", newReassign(pool), items), nil
 }

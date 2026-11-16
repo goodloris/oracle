@@ -1,10 +1,12 @@
 package opdef
 
 // Reviewed entries. Changing this file changes Digest and needs owner review.
+// v7 private catalog: the public entries plus the v7 task entry (never published).
 const (
 	BulkApprove  Name = "bulk-approve.v3"
 	BulkReject   Name = "bulk-reject.v4"
 	Reopen       Name = "reopen.v5"
+	Countersign  Name = "countersign.v6"
 	BulkReassign Name = "bulk-reassign.v6"
 	CostCenter   Name = "bulk-cost-center.v7"
 )
@@ -12,7 +14,7 @@ const (
 var catalog = []Operation{
 	{
 		Name: BulkApprove, Kind: Transition, Role: "approver", Subject: Others,
-		From: "submitted", To: "approved",
+		From: "submitted", To: "approved", Tier: &Tier{Over: 50000, To: "pending-second"},
 		Response: "approvedIds", Inputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
 		EventExemption: "predates the PurchaseEvent outbox; the daily digest reads approvals from ApprovalAudit",
 		Denial:         UniformDenial,
@@ -28,6 +30,12 @@ var catalog = []Operation{
 		From: "rejected", To: "submitted",
 		Inputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
 		Event: "purchase.reopened", Denial: UniformDenial,
+	},
+	{
+		Name: Countersign, Kind: Transition, Role: "approver", Subject: Others,
+		From: "pending-second", To: "approved", Separation: DistinctFromPreviousApprover, ConfirmAmount: true,
+		Inputs: []string{IDs, Amount}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		Event: "purchase.countersigned", Denial: UniformDenial,
 	},
 	{
 		Name: BulkReassign, Kind: FieldUpdate, Role: "approver", Subject: Others,

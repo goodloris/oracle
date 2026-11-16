@@ -27,6 +27,7 @@ REQUEST_TIMEOUT = 8
 SAFETY = ('unauthorized_write', 'partial_batch', 'side_effect_atomicity', 'double_apply', 'wrong_commit',
           'service_error', 'undecidable')
 APPROVE, REJECT, REOPEN, REASSIGN = 'bulk-approve.v3', 'bulk-reject.v4', 'reopen.v5', 'bulk-reassign.v6'
+COUNTERSIGN = 'countersign.v6'
 
 
 class InfrastructureError(Exception):
@@ -166,7 +167,7 @@ class Run:
     def __init__(self, db, task, seed):
         self.db, self.task, self.cases = db, task, []
         self.prefix = 'v7-' + hashlib.sha256(seed.encode()).hexdigest()[:12] + '-'
-        self.ids = {k: self.prefix + k for k in ('p1', 'p2', 'p3', 'own', 'other', 'done', 'gone', 'out', 'missing')}
+        self.ids = {k: self.prefix + k for k in ('p1', 'p2', 'p3', 'own', 'other', 'done', 'gone', 'out', 'big', 'second', 'missing')}
         self.ids['uni'] = '界' * 33 + 'u'
         self.current = None
         self.op = 'existing'  # operation label of a step: the task operation, or 'existing' for the old API
@@ -177,12 +178,14 @@ class Run:
         rows = [('p1', 'tenant-a', 'alice', 'submitted', 'bob'), ('p2', 'tenant-a', 'alice', 'submitted', None),
                 ('p3', 'tenant-a', 'zoe', 'submitted', 'carol'), ('uni', 'tenant-a', 'alice', 'submitted', None),
                 ('own', 'tenant-a', 'carol', 'submitted', None), ('other', 'tenant-b', 'dave', 'submitted', 'erin'),
-                ('done', 'tenant-a', 'alice', 'approved', 'bob'), ('gone', 'tenant-a', 'alice', 'rejected', None)]
+                ('done', 'tenant-a', 'alice', 'approved', 'bob'), ('gone', 'tenant-a', 'alice', 'rejected', None),
+                ('big', 'tenant-a', 'alice', 'submitted', None), ('second', 'tenant-a', 'alice', 'pending-second', None)]
         if self.task == 'withdraw':
             rows.append(('out', 'tenant-a', 'alice', 'withdrawn', None))
+        amounts = {'big': 60000, 'second': 70000}
         table = []
         for name, tenant, creator, status, assignee in rows:
-            r = {'id': i[name], 'tenantId': tenant, 'createdBy': creator, 'title': 'v7 fixture', 'amount': 9,
+            r = {'id': i[name], 'tenantId': tenant, 'createdBy': creator, 'title': 'v7 fixture', 'amount': amounts.get(name, 9),
                  'status': status, 'assigneeId': assignee}
             if self.task == 'cost-center':
                 r['costCenterId'] = {'p1': 'CC-OPS', 'p3': 'CC-RND', 'other': 'CC-B1'}.get(name)
@@ -191,7 +194,12 @@ class Run:
         history = [{'tenantId': r['tenantId'], 'purchaseId': r['id'], 'fromAssignee': None, 'toAssignee': r['assigneeId'],
                     'changedBy': changer[r['tenantId']], 'operation': REASSIGN, 'idempotencyKey': 'seed'}
                    for r in table if r['assigneeId']]
-        tables = {'Purchase': table, 'AssignmentHistory': history}
+        # 'second' was moved to pending-second by bob's first approval (above the 50000 tier).
+        first = {'tenantId': 'tenant-a', 'actorId': 'bob', 'operation': APPROVE, 'key': 'seed',
+                 'requestHash': fingerprint(APPROVE, [i['second']]), 'response': {'approvedIds': [i['second']]}}
+        audit = {'tenantId': 'tenant-a', 'purchaseId': i['second'], 'approvedBy': 'bob', 'operation': APPROVE, 'idempotencyKey': 'seed',
+                 'fromStatus': 'submitted', 'toStatus': 'pending-second', 'reason': None}
+        tables = {'Purchase': table, 'AssignmentHistory': history, 'ActionRequest': [first], 'ApprovalAudit': [audit]}
         if self.task == 'cost-center':
             tables['CostCenterHistory'] = [
                 {'tenantId': r['tenantId'], 'purchaseId': r['id'], 'fromCostCenter': None, 'toCostCenter': r['costCenterId'],
@@ -389,6 +397,25 @@ def regression(run):
                'ActionRequest': [ar('tenant-a', 'carol', APPROVE, 'key', APPROVE, [i['p1']], {'approvedIds': [i['p1']]})]})
         return r
     run.case('approve writes audit and request, no event', G, approve)
+    def tiered():
+        r, b, a = run.apply(batch('bulk-approve', [i['big']], 'carol'), lambda p: update(p, {i['big']}, status='pending-second'), [i['big']])
+        assert r['status'] == 200 and r['body'] == {'approvedIds': [i['big']]}, r
+        exact(b, a, {i['big']: {'status': 'pending-second'}},
+              {'ApprovalAudit': [audit(i['big'], 'carol', APPROVE, 'submitted', 'pending-second')],
+               'ActionRequest': [ar('tenant-a', 'carol', APPROVE, 'key', APPROVE, [i['big']], {'approvedIds': [i['big']]})]})
+    run.case('approve above the tier waits for a second approver', G, tiered)
+
+    def countersign():
+        call = lambda: post('/purchases/%s/countersign' % i['second'], {'amount': 70000}, 'carol')
+        r, b, a = run.apply(call, lambda p: update(p, {i['second']}, status='approved'), [i['second']])
+        assert r['status'] == 200 and r['body'] == {'id': i['second'], 'status': 'approved'}, r
+        exact(b, a, {i['second']: {'status': 'approved'}},
+              {'ApprovalAudit': [audit(i['second'], 'carol', COUNTERSIGN, 'pending-second', 'approved')],
+               'PurchaseEvent': [event(i['second'], 'purchase.countersigned', 'carol')],
+               'ActionRequest': [ar('tenant-a', 'carol', COUNTERSIGN, 'key', COUNTERSIGN, [i['second']], {'id': i['second'], 'status': 'approved'})]})
+    run.case('countersign by a second approver', G, countersign)
+    run.case('countersign by the first approver refused', G, lambda: run.refuse(
+        lambda: post('/purchases/%s/countersign' % i['second'], {'amount': 70000}, 'bob'), targets=[i['second']]))
     run.case('approve own purchase refused', G, lambda: run.refuse(batch('bulk-approve', [i['own']], 'carol'), targets=[i['own']]))
     run.case('approve batch with other tenant refused', G,
              lambda: run.refuse(batch('bulk-approve', [i['p1'], i['other']], 'carol'), targets=[i['p1'], i['other']]))

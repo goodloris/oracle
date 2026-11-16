@@ -168,14 +168,20 @@ func (r ParamResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{r.Field: r.IDs, r.Name: r.Value})
 }
 
-// ParamHandler receives an authenticated approver, one valid Idempotency-Key,
-// canonical (sorted, unique, 1..100) IDs and the request's string parameter.
+// ParamHandler receives an identity with the route's role, one valid
+// Idempotency-Key, canonical (sorted, unique, 1..100) IDs and the request's
+// string parameter.
 type ParamHandler func(ctx context.Context, u app.Identity, key string, ids []string, value string) (ParamResult, bool, error)
 
 // Param serves POST path for approvers: a batch Action with one string parameter.
 // The body must be exactly {"ids":[...],"<name>":"..."} with a 1..100 byte value;
 // other requests go to next.
 func Param(path, name string, handle ParamHandler, next http.Handler) http.Handler {
+	return ParamAs(path, name, "approver", handle, next)
+}
+
+// ParamAs is Param for the given role.
+func ParamAs(path, name, role string, handle ParamHandler, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != path {
 			next.ServeHTTP(w, r)
@@ -186,7 +192,7 @@ func Param(path, name string, handle ParamHandler, next http.Handler) http.Handl
 			reject(w, 401)
 			return
 		}
-		if u.Role != "approver" {
+		if u.Role != role {
 			reject(w, 403)
 			return
 		}

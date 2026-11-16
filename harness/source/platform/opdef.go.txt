@@ -48,8 +48,7 @@ type Record string
 
 const (
 	ApprovalAudit     Record = "ApprovalAudit"     // status transitions (from, to, reason)
-	AssignmentHistory Record = "AssignmentHistory" // assigneeId changes (from, to value)
-	CostCenterHistory Record = "CostCenterHistory" // costCenterId changes (from, to value)
+	AssignmentHistory Record = "AssignmentHistory" // column changes (from, to value)
 )
 
 // Separation is a segregation-of-duties requirement beyond Subject.
@@ -237,8 +236,8 @@ func (o Operation) validate() error {
 			return fmt.Errorf("tier needs Over > 0, To, and a batch response")
 		}
 	case FieldUpdate:
-		if o.Status == "" || o.Column == "" || o.Param == "" || o.Single() || o.From != "" || o.To != "" || o.Tier != nil || (o.Record != AssignmentHistory && o.Record != CostCenterHistory) {
-			return fmt.Errorf("field update needs Status, Column, Param, a batch response and a column history record")
+		if o.Status == "" || o.Column == "" || o.Param == "" || o.Single() || o.From != "" || o.To != "" || o.Tier != nil || o.Record != AssignmentHistory {
+			return fmt.Errorf("field update needs Status, Column, Param, a batch response and AssignmentHistory")
 		}
 	default:
 		return fmt.Errorf("unknown kind %q", o.Kind)

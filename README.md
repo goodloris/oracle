@@ -1,4 +1,6 @@
-# enterprise_agent 私有验收（v7）
+# enterprise_agent 私有验收（v7，v8a 分支）
+
+> **v8a 分支**：v8a 测 Agent 起草目录条目后收益还剩多少、一次固定 AI 审查能挽回多少。四组（manual、given、drafted、drafted-review），任务 `return`、`delivery-site`。设计见 [docs/v8a-design.md](docs/v8a-design.md)，预注册草稿（未冻结）见 [prereg/preregistration-v8a.md](prereg/preregistration-v8a.md)。主机 checkout 为 `/opt/poc-oracle/private-v8a`，运行目录以 `v8a-` 开头，驱动为 `scripts/run_v8a.sh`。下文描述 v7 的布局与流程，v8a 的差别以设计文档为准。
 
 这个仓库**必须保持 private**。这里存放 v7 确认性实验中不能公开的部分：任务、起点、Oracle、参考实现、正反控制和预注册全文。公开的平台代码在 <https://github.com/XUJiahua/enterprise_agent>。
 

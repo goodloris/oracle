@@ -25,7 +25,7 @@ type request struct {
 }
 
 // Static reference tables seeded by the schema; reset keeps them, snapshot includes them.
-var static = map[string]bool{"TenantMember": true, "CostCenter": true}
+var static = map[string]bool{"TenantMember": true, "DeliverySite": true}
 
 func main() {
 	admin := os.Getenv("ADMIN_DATABASE_URL")

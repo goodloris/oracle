@@ -51,8 +51,8 @@ type managed struct{ valid, record, from, to string }
 var columns = map[string]managed{
 	"assigneeId": {`SELECT 1 FROM "TenantMember" WHERE "tenantId"=$1 AND "userId"=$2 AND role='approver' AND active`,
 		"AssignmentHistory", "fromAssignee", "toAssignee"},
-	"costCenterId": {`SELECT 1 FROM "CostCenter" WHERE "tenantId"=$1 AND code=$2 AND active`,
-		"CostCenterHistory", "fromCostCenter", "toCostCenter"},
+	"deliverySiteId": {`SELECT 1 FROM "DeliverySite" WHERE "tenantId"=$1 AND code=$2 AND active`,
+		"DeliverySiteHistory", "fromSite", "toSite"},
 }
 
 // New validates the catalog and requires a guarded, append-only runtime.

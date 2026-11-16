@@ -1,0 +1,672 @@
+{
+  "variants": {
+    "ref-manual": {
+      "cell": "manual",
+      "add": {
+        "internal/candidate/return.go": "ref/manual-return.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items), nil",
+          "new": "\treturn protocol.Item(\"return\", \"approver\", newReturn(pool), protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items)), nil"
+        }
+      ]
+    },
+    "ref-given": {
+      "cell": "given",
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        }
+      ]
+    },
+    "ref-drafted": {
+      "cell": "drafted",
+      "stages": [
+        {
+          "name": "draft"
+        },
+        {
+          "name": "adapter",
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "ref-drafted-review": {
+      "cell": "drafted-review",
+      "stages": [
+        {
+          "name": "draft"
+        },
+        {
+          "name": "review",
+          "unchanged": true
+        },
+        {
+          "name": "adapter",
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "neg-audit": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif _, err = tx.Exec(ctx, `INSERT INTO \"ApprovalAudit\" (\"tenantId\",\"purchaseId\",\"approvedBy\",operation,\"idempotencyKey\",\"fromStatus\",\"toStatus\",reason) VALUES ($1,$2,$3,$4,$5,'pending-second','returned',$6)`,\n\t\t\tu.Tenant, id, u.User, opReturn, key, reason); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-request-hash": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "ledger.Fingerprint(opReturn, []string{id})",
+          "new": "ledger.Fingerprint(opReturn+\"\\n\"+reason, []string{id})"
+        }
+      ]
+    },
+    "neg-outbox": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif _, err = tx.Exec(ctx, `INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.returned',$3,$4)`,\n\t\t\tu.Tenant, id, u.User, key); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-uniform-denial": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User)) {",
+          "new": "\t\tif errors.Is(err, pgx.ErrNoRows) {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 404}\n\t\t}\n\t\tif err == nil && (creator == u.User || status != \"pending-second\" || first == u.User) {"
+        }
+      ]
+    },
+    "neg-explicit-manual": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "result := protocol.ItemResult{ID: id, Status: \"returned\"}",
+          "new": "result := protocol.ItemResult{ID: id, Status: \"sent-back\"}"
+        }
+      ]
+    },
+    "neg-separation-manual": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User)) {",
+          "new": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\")) {"
+        }
+      ]
+    },
+    "neg-explicit-given": {
+      "cell": "given",
+      "add": {
+        "internal/candidate/returnneg.go": "ref/given-return-negative.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Item(\"return\", \"approver\", returnPending(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        }
+      ]
+    },
+    "neg-explicit-drafted": {
+      "cell": "drafted",
+      "stages": [
+        {
+          "name": "draft"
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/returnneg.go": "ref/given-return-negative.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", returnPending(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "crash": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\ttx, err := pool.Begin(ctx)\n",
+          "new": "\t\tgo func() { panic(\"v8a crash control\") }()\n\t\ttx, err := pool.Begin(ctx)\n"
+        }
+      ]
+    },
+    "safety-unauthorized-write": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User)) {",
+          "new": "\t\tif err == nil && creator != u.User && status == \"submitted\" {\n\t\t\t// refused, but the change is committed first\n\t\t\tif _, err = tx.Exec(ctx, `UPDATE \"Purchase\" SET status='returned' WHERE id=$1 AND \"tenantId\"=$2`, id, u.Tenant); err == nil {\n\t\t\t\t_ = tx.Commit(ctx)\n\t\t\t}\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User)) {"
+        }
+      ]
+    },
+    "safety-double-apply": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\t FROM \"Purchase\" p WHERE p.id=$1 AND p.\"tenantId\"=$2 FOR UPDATE OF p`, id, u.Tenant).Scan(&creator, &status, &first)",
+          "new": "\t\t FROM \"Purchase\" p WHERE p.id=$1 AND p.\"tenantId\"=$2`, id, u.Tenant).Scan(&creator, &status, &first)\n\t\tif _, sleepErr := tx.Exec(ctx, `SELECT pg_sleep(0.3)`); sleepErr != nil {\n\t\t\treturn protocol.ItemResult{}, false, sleepErr\n\t\t}"
+        },
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif tag.RowsAffected() != 1 {",
+          "new": "\t\tif tag.RowsAffected() > 1 {"
+        }
+      ]
+    },
+    "safety-side-effect-atomicity": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif _, err = tx.Exec(ctx, `INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.returned',$3,$4)`,\n\t\t\tu.Tenant, id, u.User, key); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\treturn result, false, nil",
+          "new": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\t// the event is written after the business change committed\n\t\tafter, err := pool.Begin(ctx)\n\t\tif err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\tdefer after.Rollback(ctx)\n\t\tif _, err = after.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\tif _, err = after.Exec(ctx, `INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.returned',$3,$4)`,\n\t\t\tu.Tenant, id, u.User, key); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\treturn result, false, after.Commit(ctx)"
+        }
+      ]
+    },
+    "safety-service-error": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User)) {",
+          "new": "\t\tif err == nil && (creator == u.User || status != \"pending-second\" || first == u.User) {"
+        }
+      ]
+    },
+    "safety-undecidable": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/return.go",
+          "old": "import (\n\t\"context\"\n\t\"encoding/json\"\n\t\"errors\"\n",
+          "new": "import (\n\t\"context\"\n\t\"encoding/json\"\n\t\"errors\"\n\t\"strings\"\n\t\"time\"\n"
+        },
+        {
+          "file": "internal/candidate/return.go",
+          "old": "\t\ttx, err := pool.Begin(ctx)\n",
+          "new": "\t\tif strings.HasPrefix(id, \"界\") {\n\t\t\ttime.Sleep(12 * time.Second) // the client gives up first\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\ttx, err := pool.Begin(ctx)\n"
+        }
+      ]
+    },
+    "neg-db-order-regression": {
+      "base": "ref-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/reassign.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id FOR UPDATE`"
+        }
+      ]
+    },
+    "drafted-review-fixes": {
+      "cell": "drafted-review",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+              "new": "\t\tEventExemption: \"the requester is told in person\", Denial: UniformDenial,\n"
+            }
+          ]
+        },
+        {
+          "name": "review"
+        },
+        {
+          "name": "adapter",
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-no-event": {
+      "cell": "drafted",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+              "new": "\t\tEventExemption: \"the requester is told in person\", Denial: UniformDenial,\n"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-no-separation": {
+      "cell": "drafted",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+              "new": "\t\tFrom: \"pending-second\", To: \"returned\",\n"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-invalid": {
+      "cell": "drafted",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\"",
+              "new": "Fingerprint: []string{IDs}, Record: AssignmentHistory,\n\t\tEvent: \"purchase.returned\""
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "review-invalid": {
+      "cell": "drafted-review",
+      "stages": [
+        {
+          "name": "draft"
+        },
+        {
+          "name": "review",
+          "edits": [
+            {
+              "old": "Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\"",
+              "new": "Fingerprint: []string{IDs}, Record: AssignmentHistory,\n\t\tEvent: \"purchase.returned\""
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Item(\"return\", \"approver\", item(exec, opdef.Return), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "variant": "ref-manual",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "ref-given",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "ref-drafted",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed",
+        "entry": {
+          "C": true
+        }
+      }
+    },
+    {
+      "variant": "ref-drafted-review",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed",
+        "entry": {
+          "C": true
+        }
+      }
+    },
+    {
+      "variant": "drafted-review-fixes",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed",
+        "entry": {
+          "C": true,
+          "C_draft": false
+        }
+      },
+      "note": "the draft has an event exemption; the review restores the event"
+    },
+    {
+      "variant": "neg-audit",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-audit"
+        ]
+      }
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ]
+      }
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ]
+      }
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-functional",
+          "return-idempotency",
+          "return-failure-rollback",
+          "return-lifecycle"
+        ]
+      }
+    },
+    {
+      "variant": "neg-separation-manual",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      },
+      "note": "the platform guard refuses the transition; the candidate surfaces it as 503"
+    },
+    {
+      "variant": "neg-explicit-given",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-functional",
+          "return-idempotency",
+          "return-failure-rollback",
+          "return-lifecycle"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-drafted",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-functional",
+          "return-idempotency",
+          "return-failure-rollback",
+          "return-lifecycle"
+        ],
+        "entry": {
+          "C": true
+        }
+      }
+    },
+    {
+      "variant": "draft-no-event",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "draft-no-separation",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ],
+        "entry": {
+          "C": false,
+          "wrong": [
+            "separation"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "draft-invalid",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "record"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "review-invalid",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "C_draft": true,
+          "wrong": [
+            "record"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "expect": {
+        "outcome": "candidate-error"
+      }
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-concurrency"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "return-concurrency",
+          "return-eligibility"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      },
+      "note": "FOR UPDATE applies the UPDATE policy: a purchase the concurrent request just returned reads as missing, which this candidate turns into 503 (same as v7 withdraw)."
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "return-functional",
+          "return-idempotency"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      },
+      "note": "the Unicode target hangs; it is also the second target of \"same key different purchase\""
+    },
+    {
+      "variant": "neg-db-order-regression",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "regression"
+        ]
+      },
+      "note": "the existing hand-written bulk-reassign pairs old assignees by database order (regression case with three targets)"
+    }
+  ]
+}

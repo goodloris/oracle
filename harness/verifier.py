@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Catalog-bound Verifier (`appctl operations`) for v7.
+"""Catalog-bound Verifier (`appctl operations`) for v8a.
 
 The public platform (PR #27 at fad8adf, pinned commit below) is the Verifier's code. The private build overlays the
-v7 catalog (tasks/<task>/catalog.go.txt) and the two vendored platform files that v7 changes
-(harness/source/go-action-opdef/{opdef,opkernel}.go.txt), so the Verifier embeds exactly the catalog
-the go-action-opdef kits carry. The public build is the unmodified public tree; on a v7 candidate it must
+task's platform version (ctl.platform: public opdef/opkernel for return, the deliverySiteId overlay for
+delivery-site) and **the catalog of the trial**: the reference catalog (tasks/<task>/catalog.go.txt) for manual and
+given, the trial's frozen draft for drafted and drafted-review. Rules and platform version are frozen in the plan;
+the catalog digest is recorded per trial. The public build is the unmodified public tree; on a v8a candidate it must
 never return pass (control). The public checkout is read with `git archive` and never modified.
 
-Usage: verifier.py --task T digest            # private catalog digest, as reported by the private appctl
-       verifier.py --task T check --kind private|public --root CANDIDATE --base SHA
+Usage: verifier.py --task T digest [--catalog FILE]   # catalog digest as reported by the private appctl
+       verifier.py --task T check --kind private|public --root CANDIDATE --base SHA [--catalog FILE]
 Needs POC_PUBLIC_PLATFORM (a checkout of the pinned commit) and optionally POC_GO.
 """
 import argparse
@@ -30,9 +31,10 @@ UPSTREAM = {'internal/opdef/catalog.go': '736429c18304e9a46b602e25af2510b4cf4fdb
 
 
 def overlay(task):
-    return {'internal/opdef/catalog.go': 'tasks/%s/catalog.go.txt' % task,
-            'internal/opdef/opdef.go': 'harness/source/go-action-opdef/opdef.go.txt',
-            'internal/opkernel/opkernel.go': 'harness/source/go-action-opdef/opkernel.go.txt'}
+    """Platform files of the task (the catalog is per trial and not part of the overlay)."""
+    sys.path.insert(0, str(ROOT / 'harness'))
+    import ctl
+    return ctl.platform(task)
 
 
 def public():
@@ -52,8 +54,9 @@ def manifest(task):
             'upstream': UPSTREAM}
 
 
-def build(task, kind, out):
-    """Build appctl into out/appctl-<kind>; the source tree is a fresh `git archive` of the pinned commit."""
+def build(task, kind, out, catalog=None):
+    """Build appctl into out/appctl-<kind>; the source tree is a fresh `git archive` of the pinned commit.
+    catalog: catalog.go bytes of the trial (default: the task's reference catalog)."""
     src = public()
     binary = Path(out) / ('appctl-' + kind)
     with tempfile.TemporaryDirectory() as tmp:
@@ -62,6 +65,8 @@ def build(task, kind, out):
         if kind == 'private':
             for p, template in overlay(task).items():
                 (Path(tmp) / p).write_bytes((ROOT / template).read_bytes())
+            (Path(tmp) / 'internal/opdef/catalog.go').write_bytes(catalog if catalog is not None else
+                                                                  (ROOT / 'tasks' / task / 'catalog.go.txt').read_bytes())
         subprocess.run([os.environ.get('POC_GO', 'go'), 'build', '-o', str(binary), './cmd/appctl'], cwd=tmp, check=True,
                        capture_output=True, timeout=600)
     return binary
@@ -78,10 +83,10 @@ def check(binary, root, base):
             **({'error': report['error']} if 'error' in report else {})}
 
 
-def digest(task):
+def digest(task, catalog=None):
     """The private catalog digest as reported by the private appctl itself (checked on an empty repository)."""
     with tempfile.TemporaryDirectory() as tmp:
-        binary = build(task, 'private', tmp)
+        binary = build(task, 'private', tmp, catalog)
         repo = Path(tmp) / 'empty'
         repo.mkdir()
         subprocess.run(['git', 'init', '-q', str(repo)], check=True)
@@ -89,13 +94,14 @@ def digest(task):
                         '--allow-empty', '-m', 'empty'], check=True)
         base = subprocess.check_output(['git', '-C', str(repo), 'rev-parse', 'HEAD'], text=True).strip()
         result = check(binary, repo, base)
-    if not result['catalog'] or result['catalog'] == PUBLIC_CATALOG_DIGEST: raise ValueError('private build did not embed the v7 catalog')
+    if not result['catalog'] or result['catalog'] == PUBLIC_CATALOG_DIGEST: raise ValueError('private build did not embed the task catalog')
     return result['catalog']
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--task', choices=('withdraw', 'cost-center'), required=True)
+    p.add_argument('--task', choices=('return', 'delivery-site'), required=True)
+    p.add_argument('--catalog', help='catalog.go of a trial (default: the reference catalog)')
     sub = p.add_subparsers(dest='command', required=True)
     sub.add_parser('digest')
     c = sub.add_parser('check')
@@ -104,10 +110,11 @@ def main():
     c.add_argument('--base', required=True)
     a = p.parse_args()
     if a.command == 'digest':
-        print(json.dumps({'task': a.task, 'catalog': digest(a.task), **manifest(a.task)}))
+        catalog = Path(a.catalog).read_bytes() if a.catalog else None
+        print(json.dumps({'task': a.task, 'catalog': digest(a.task, catalog), **manifest(a.task)}))
         return 0
     with tempfile.TemporaryDirectory() as tmp:
-        print(json.dumps(check(build(a.task, a.kind, tmp), a.root, a.base)))
+        print(json.dumps(check(build(a.task, a.kind, tmp, Path(a.catalog).read_bytes() if a.catalog else None), a.root, a.base)))
     return 0
 
 

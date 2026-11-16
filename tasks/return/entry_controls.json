@@ -1,0 +1,392 @@
+{
+  "note": "Edits apply to tasks/return/catalog.go.txt (the reference catalog); source=base uses the public catalog (no entry). expect_wrong: logical fields (harness/entry_oracle.py).",
+  "controls": [
+    {
+      "name": "reference",
+      "kind": "equivalent",
+      "edits": [],
+      "expect_wrong": [],
+      "expect_valid": true
+    },
+    {
+      "name": "eq-field-order",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Return, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tDenial: UniformDenial, Event: \"purchase.returned\",\n\t\tRecord: ApprovalAudit, Fingerprint: []string{IDs}, Inputs: []string{IDs, Reason},\n\t\tSeparation: DistinctFromPreviousApprover, To: \"returned\", From: \"pending-second\",\n\t\tSubject: Others, Role: \"approver\", Kind: Transition, Name: Return,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-literals",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Return, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tName: \"return.v8\", Kind: \"transition\", Role: \"approver\", Subject: \"others\",\n\t\tFrom: \"pending-second\", To: \"returned\", Separation: \"distinct-from-previous-approver\",\n\t\tInputs: []string{\"ids\", \"reason\"}, Fingerprint: []string{\"ids\"}, Record: \"ApprovalAudit\",\n\t\tEvent: \"purchase.returned\", Denial: 409,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-identifier",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\tReturn       Name = \"return.v8\"\n",
+          "new": "\tSendBack     Name = \"return.v8\"\n"
+        },
+        {
+          "old": "Name: Return,",
+          "new": "Name: SendBack,"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-position-and-zero-values",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Return, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n\t},\n",
+          "new": ""
+        },
+        {
+          "old": "var catalog = []Operation{\n",
+          "new": "var catalog = []Operation{\n\t{\n\t\tName: Return, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover, Tier: nil, ConfirmAmount: false, Response: \"\",\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "field-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\tReturn       Name = \"return.v8\"\n",
+          "new": "\tReturn       Name = \"send-back.v8\"\n"
+        }
+      ],
+      "expect_wrong": [
+        "name"
+      ]
+    },
+    {
+      "name": "field-kind",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Name: Return, Kind: Transition,",
+          "new": "Name: Return, Kind: FieldUpdate,"
+        }
+      ],
+      "expect_wrong": [
+        "kind"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-role",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Return, Kind: Transition, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Return, Kind: Transition, Role: \"requester\", Subject: Others,\n"
+        }
+      ],
+      "expect_wrong": [
+        "role"
+      ]
+    },
+    {
+      "name": "field-subject",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Return, Kind: Transition, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Return, Kind: Transition, Role: \"approver\", Subject: Own,\n"
+        }
+      ],
+      "expect_wrong": [
+        "subject"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-from",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"submitted\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n"
+        }
+      ],
+      "expect_wrong": [
+        "from"
+      ]
+    },
+    {
+      "name": "field-to",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"rejected\", Separation: DistinctFromPreviousApprover,\n"
+        }
+      ],
+      "expect_wrong": [
+        "to"
+      ]
+    },
+    {
+      "name": "field-tier",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover, Tier: &Tier{Over: 50000, To: \"approved\"},\n"
+        }
+      ],
+      "expect_wrong": [
+        "tier"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-status",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover, Status: \"pending-second\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "status"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-column",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover, Column: \"status\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "column"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-param",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover, Param: \"note\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "param"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-response",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover, Response: \"returnedIds\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "response"
+      ]
+    },
+    {
+      "name": "field-inputs",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+          "new": "\t\tInputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "inputs"
+      ]
+    },
+    {
+      "name": "field-fingerprint",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+          "new": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs, Reason}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "fingerprint"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-record",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.returned\"",
+          "new": "Fingerprint: []string{IDs}, Record: AssignmentHistory,\n\t\tEvent: \"purchase.returned\""
+        }
+      ],
+      "expect_wrong": [
+        "record"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-event",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+          "new": "\t\tEventExemption: \"the requester is told in person\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-event-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.sent_back\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-separation",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"returned\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "separation"
+      ]
+    },
+    {
+      "name": "field-confirmAmount",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover,\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"returned\", Separation: DistinctFromPreviousApprover, ConfirmAmount: true,\n"
+        }
+      ],
+      "expect_wrong": [
+        "confirmAmount"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-denial",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.returned\", Denial: 403,\n"
+        }
+      ],
+      "expect_wrong": [
+        "denial"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-catalog",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.countersigned\", Denial: UniformDenial,",
+          "new": "\t\tEvent: \"purchase.countersign\", Denial: UniformDenial,"
+        }
+      ],
+      "expect_wrong": [
+        "catalog"
+      ]
+    },
+    {
+      "name": "missing-entry",
+      "kind": "missing",
+      "source": "base",
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial"
+      ],
+      "expect_valid": true
+    },
+    {
+      "name": "not-compiling",
+      "kind": "missing",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.returned\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: purchase.returned, Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial",
+        "catalog"
+      ],
+      "expect_valid": false
+    }
+  ]
+}

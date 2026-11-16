@@ -1,0 +1,391 @@
+{
+  "note": "Edits apply to tasks/delivery-site/catalog.go.txt (the reference catalog); source=base uses the public catalog (no entry). expect_wrong: logical fields (harness/entry_oracle.py).",
+  "controls": [
+    {
+      "name": "reference",
+      "kind": "equivalent",
+      "edits": [],
+      "expect_wrong": [],
+      "expect_valid": true
+    },
+    {
+      "name": "eq-field-order",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n\t\tResponse: \"changedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}, Record: DeliverySiteHistory,\n\t\tEvent: \"purchase.delivery_site_changed\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tEvent: \"purchase.delivery_site_changed\", Record: DeliverySiteHistory, Denial: UniformDenial,\n\t\tFingerprint: []string{IDs, \"site\"}, Inputs: []string{IDs, \"site\"}, Response: \"changedIds\",\n\t\tParam: \"site\", Column: \"deliverySiteId\", Status: \"submitted\",\n\t\tSubject: Own, Role: \"requester\", Kind: FieldUpdate, Name: DeliverySite,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-literals",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n\t\tResponse: \"changedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}, Record: DeliverySiteHistory,\n\t\tEvent: \"purchase.delivery_site_changed\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tName: \"bulk-delivery-site.v8\", Kind: \"field-update\", Role: \"requester\", Subject: \"own\",\n\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n\t\tResponse: \"changedIds\", Inputs: []string{\"ids\", \"site\"}, Fingerprint: []string{\"ids\", \"site\"}, Record: \"DeliverySiteHistory\",\n\t\tEvent: \"purchase.delivery_site_changed\", Denial: 409,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-identifier",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\tDeliverySite Name = \"bulk-delivery-site.v8\"\n",
+          "new": "\tBulkDeliverySite Name = \"bulk-delivery-site.v8\"\n"
+        },
+        {
+          "old": "Name: DeliverySite,",
+          "new": "Name: BulkDeliverySite,"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-position-and-zero-values",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n\t\tResponse: \"changedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}, Record: DeliverySiteHistory,\n\t\tEvent: \"purchase.delivery_site_changed\", Denial: UniformDenial,\n\t},\n",
+          "new": ""
+        },
+        {
+          "old": "var catalog = []Operation{\n",
+          "new": "var catalog = []Operation{\n\t{\n\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\", Separation: NoSeparation, ConfirmAmount: false, Tier: nil, From: \"\", To: \"\",\n\t\tResponse: \"changedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}, Record: DeliverySiteHistory,\n\t\tEvent: \"purchase.delivery_site_changed\", Denial: UniformDenial,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "field-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\tDeliverySite Name = \"bulk-delivery-site.v8\"\n",
+          "new": "\tDeliverySite Name = \"bulk-site.v8\"\n"
+        }
+      ],
+      "expect_wrong": [
+        "name"
+      ]
+    },
+    {
+      "name": "field-kind",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n",
+          "new": "\t\tName: DeliverySite, Kind: Transition, Role: \"requester\", Subject: Own,\n"
+        }
+      ],
+      "expect_wrong": [
+        "kind"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-role",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n",
+          "new": "\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"approver\", Subject: Own,\n"
+        }
+      ],
+      "expect_wrong": [
+        "role"
+      ]
+    },
+    {
+      "name": "field-subject",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n",
+          "new": "\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Others,\n"
+        }
+      ],
+      "expect_wrong": [
+        "subject"
+      ]
+    },
+    {
+      "name": "field-from",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\", From: \"submitted\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "from"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-to",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\", To: \"submitted\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "to"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-tier",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\", Tier: &Tier{Over: 1, To: \"approved\"},\n"
+        }
+      ],
+      "expect_wrong": [
+        "tier"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-status",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n",
+          "new": "\t\tStatus: \"pending-second\", Column: \"deliverySiteId\", Param: \"site\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "status"
+      ]
+    },
+    {
+      "name": "field-column",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"assigneeId\", Param: \"site\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "column"
+      ]
+    },
+    {
+      "name": "field-param",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Param: \"site\",\n\t\tResponse: \"changedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}",
+          "new": "Param: \"deliverySite\",\n\t\tResponse: \"changedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}"
+        }
+      ],
+      "expect_wrong": [
+        "param"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-response",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tResponse: \"changedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}, Record: DeliverySiteHistory,\n",
+          "new": "\t\tResponse: \"updatedIds\", Inputs: []string{IDs, \"site\"}, Fingerprint: []string{IDs, \"site\"}, Record: DeliverySiteHistory,\n"
+        }
+      ],
+      "expect_wrong": [
+        "response"
+      ]
+    },
+    {
+      "name": "field-inputs",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Inputs: []string{IDs, \"site\"}, Fingerprint",
+          "new": "Inputs: []string{\"site\", IDs}, Fingerprint"
+        }
+      ],
+      "expect_wrong": [
+        "inputs"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-fingerprint",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Fingerprint: []string{IDs, \"site\"}",
+          "new": "Fingerprint: []string{IDs}"
+        }
+      ],
+      "expect_wrong": [
+        "fingerprint"
+      ]
+    },
+    {
+      "name": "field-record",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Record: DeliverySiteHistory,",
+          "new": "Record: AssignmentHistory,"
+        }
+      ],
+      "expect_wrong": [
+        "record"
+      ]
+    },
+    {
+      "name": "field-event",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.delivery_site_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEventExemption: \"the requester changed it themselves\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-event-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.delivery_site_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.site_changed\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-separation",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own,\n",
+          "new": "\t\tName: DeliverySite, Kind: FieldUpdate, Role: \"requester\", Subject: Own, Separation: DistinctFromPreviousApprover,\n"
+        }
+      ],
+      "expect_wrong": [
+        "separation"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-confirmAmount",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"deliverySiteId\", Param: \"site\", ConfirmAmount: true,\n"
+        }
+      ],
+      "expect_wrong": [
+        "confirmAmount"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-denial",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.delivery_site_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.delivery_site_changed\", Denial: 404,\n"
+        }
+      ],
+      "expect_wrong": [
+        "denial"
+      ],
+      "expect_valid": false
+    },
+    {
+      "name": "field-catalog",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.reassigned\", Denial: UniformDenial,",
+          "new": "\t\tEventExemption: \"assignees read AssignmentHistory\", Denial: UniformDenial,"
+        }
+      ],
+      "expect_wrong": [
+        "catalog"
+      ]
+    },
+    {
+      "name": "missing-entry",
+      "kind": "missing",
+      "source": "base",
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial"
+      ],
+      "expect_valid": true
+    },
+    {
+      "name": "not-compiling",
+      "kind": "missing",
+      "edits": [
+        {
+          "old": "Record: DeliverySiteHistory,",
+          "new": "Record: SiteHistory,"
+        }
+      ],
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial",
+        "catalog"
+      ],
+      "expect_valid": false
+    }
+  ]
+}

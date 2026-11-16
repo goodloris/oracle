@@ -1,0 +1,282 @@
+{
+  "version": 8,
+  "task": "bulk-delivery-site-v8",
+  "operation": "bulk-delivery-site.v8",
+  "title": "bulk delivery-site",
+  "adapter": "protocol.ParamAs",
+  "existing": "bulk-approve, countersign, bulk-reject, reopen and bulk-reassign",
+  "requirements": "本版本在既有批量审批（POST /purchases/bulk-approve）、会签（POST /purchases/{id}/countersign）、批量驳回（POST /purchases/bulk-reject）、重新提交（POST /purchases/{id}/reopen）与批量改派（POST /purchases/bulk-reassign）的基础上，新增批量修改收货地点：申请人可以为自己提交的采购单一次性改选收货地点。接口为 POST /purchases/bulk-delivery-site，请求体严格为 {\"ids\":[...],\"site\":\"CODE\"}，ids 为 1..100 个不重复的采购单 ID，site 为 1..100 字节。只有已认证的 requester 可以调用。每个目标必须是调用者本人在当前租户中创建、状态为 submitted 的采购单；site 必须是当前租户 DeliverySite 表中 active 的 code。成功后把全部目标的 Purchase.deliverySiteId 设为 site，status 及其他列都不变；任一目标不符合条件或 site 不合法时返回 4xx，数据库全部不变（全批原子）。请求体、身份、报文上限和 Idempotency-Key 校验由共享 HTTP 适配器 protocol.ParamAs 完成（路径 /purchases/bulk-delivery-site，参数名 site，role 为 requester），新路径通过它注册。成功返回 200，响应为 {\"changedIds\":[按字典序排序的 ID],\"site\":CODE}。首次成功 Idempotency-Replayed=false；同一 actor 以同一 key 重放同一请求（ID 集合与 site 都相同）时，返回相同状态和响应字节，header=true，不产生新写入；同 key 不同请求（ID 集合或 site 不同）返回 409。不同 actor 使用同名 key 互不影响。幂等结果与修改在同一事务中写入 ActionRequest：operation 为 \"bulk-delivery-site.v8\"，tenantId、actorId、key 分别为当前租户、当前用户和 Idempotency-Key 原值，response 为响应 JSON 对象，每个成功的新请求恰好一行。ActionRequest 写入失败时返回 503 且数据库全部不变，故障移除后同 key 可重试。并发：同 key 同请求两次均 200 且只提交一次；不同 key 把同一批采购单改到不同收货地点时两次都 200，最终这些采购单的 deliverySiteId 都等于其中一个请求的 site。修改后的采购单仍可被批量审批、批量驳回。approver 调用返回 403，未认证返回 401；客户端上下文头不能覆盖认证身份。批量审批、会签、批量驳回、重新提交、批量改派与原有 API 行为保持不变。",
+  "groups": {
+    "site-functional": {
+      "kind": "explicit",
+      "count": 4
+    },
+    "site-authorization": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "site-eligibility": {
+      "kind": "explicit",
+      "count": 5
+    },
+    "site-value": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "site-input": {
+      "kind": "explicit",
+      "count": 7
+    },
+    "site-idempotency": {
+      "kind": "explicit",
+      "count": 4
+    },
+    "site-concurrency": {
+      "kind": "explicit",
+      "count": 2
+    },
+    "site-failure-rollback": {
+      "kind": "explicit",
+      "count": 1
+    },
+    "site-lifecycle": {
+      "kind": "explicit",
+      "count": 2
+    },
+    "regression": {
+      "kind": "explicit",
+      "count": 18
+    },
+    "implicit-history": {
+      "kind": "implicit",
+      "count": 4
+    },
+    "implicit-request-hash": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-outbox": {
+      "kind": "implicit",
+      "count": 3
+    },
+    "implicit-uniform-denial": {
+      "kind": "implicit",
+      "count": 2
+    }
+  },
+  "conventions": {
+    "implicit-history": {
+      "rule": "Every target gets exactly one DeliverySiteHistory row in the same transaction: tenantId, purchaseId, fromSite=the deliverySiteId before the change (null if none), toSite=site, changedBy=actor, operation=bulk-delivery-site.v8, idempotencyKey=key; concurrent changes of one purchase form exactly one chain; a history write failure rolls everything back.",
+      "sources": {
+        "manual": [
+          [
+            "SCHEMA.sql",
+            "CREATE TABLE \"DeliverySiteHistory\""
+          ],
+          [
+            "internal/ledger/reconcile.go",
+            "func DeliverySiteDrift("
+          ],
+          [
+            "internal/candidate/reassign.go",
+            "INSERT INTO \"AssignmentHistory\""
+          ],
+          [
+            "internal/ledger/reconcile.go",
+            "ApprovalAudit records status transitions only"
+          ]
+        ],
+        "given": [
+          [
+            "internal/opkernel/opkernel.go",
+            "\"DeliverySiteHistory\", \"fromSite\", \"toSite\""
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Record: DeliverySiteHistory"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opkernel/opkernel.go",
+            "\"DeliverySiteHistory\", \"fromSite\", \"toSite\""
+          ],
+          [
+            "internal/opdef/opdef.go",
+            "DeliverySiteHistory Record = \"DeliverySiteHistory\" // deliverySiteId changes"
+          ],
+          [
+            "internal/ledger/reconcile.go",
+            "func DeliverySiteDrift("
+          ]
+        ]
+      }
+    },
+    "implicit-request-hash": {
+      "rule": "ActionRequest.requestHash equals ledger.Fingerprint(\"bulk-delivery-site.v8\"+\"\\n\"+site, ids), so ledger.Verify accepts the rows.",
+      "sources": {
+        "manual": [
+          [
+            "internal/candidate/reassign.go",
+            "ledger.Fingerprint(opReassign+\"\\n\"+assignee, ids)"
+          ],
+          [
+            "internal/ledger/ledger.go",
+            "as operation+\"\\n\"+value"
+          ],
+          [
+            "internal/ledger/ledger.go",
+            "Fingerprint(domain, ids) != hash"
+          ]
+        ],
+        "given": [
+          [
+            "internal/opkernel/opkernel.go",
+            "func Fingerprint("
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Fingerprint: []string{IDs, \"site\"}"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opkernel/opkernel.go",
+            "func Fingerprint("
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Fingerprint: []string{IDs, \"assignee\"}"
+          ],
+          [
+            "internal/ledger/ledger.go",
+            "as operation+\"\\n\"+value"
+          ]
+        ]
+      }
+    },
+    "implicit-outbox": {
+      "rule": "Every target gets exactly one PurchaseEvent row in the same transaction: type=purchase.delivery_site_changed, purchaseId, actorId=actor, idempotencyKey=key; an outbox write failure rolls everything back.",
+      "sources": {
+        "manual": [
+          [
+            "internal/notify/notify.go",
+            "case \"purchase.delivery_site_changed\":"
+          ],
+          [
+            "internal/candidate/reassign.go",
+            "'purchase.reassigned'"
+          ],
+          [
+            "internal/notify/notify.go",
+            "Approvals predate the outbox"
+          ]
+        ],
+        "given": [
+          [
+            "internal/opdef/catalog.go",
+            "Event: \"purchase.delivery_site_changed\""
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"PurchaseEvent\""
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/notify/notify.go",
+            "case \"purchase.delivery_site_changed\":"
+          ],
+          [
+            "internal/opdef/opdef.go",
+            "Event is required by default"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"PurchaseEvent\""
+          ]
+        ]
+      }
+    },
+    "implicit-uniform-denial": {
+      "rule": "Unknown, other-tenant and inactive delivery sites all get the same 4xx status, so a response never reveals which codes exist in which tenant or state.",
+      "sources": {
+        "manual": [
+          [
+            "internal/candidate/reassign.go",
+            "is refused like an ineligible target."
+          ],
+          [
+            "SCHEMA.sql",
+            "CREATE POLICY delivery_site_read"
+          ]
+        ],
+        "given": [
+          [
+            "internal/opdef/opdef.go",
+            "const UniformDenial = 409"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "return nil, &Rejection{op.Denial}"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opdef/opdef.go",
+            "const UniformDenial = 409"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "return nil, &Rejection{op.Denial}"
+          ]
+        ]
+      }
+    }
+  },
+  "forbidden_in_task": [
+    "ApprovalAudit",
+    "AssignmentHistory",
+    "DeliverySiteHistory",
+    "history",
+    "历史",
+    "审计",
+    "audit",
+    "requestHash",
+    "Fingerprint",
+    "指纹",
+    "ledger",
+    "PurchaseEvent",
+    "event",
+    "事件",
+    "outbox",
+    "notify",
+    "通知",
+    "区分",
+    "存在",
+    "indistinguish",
+    "uniform",
+    "same 4xx",
+    "相同的 4xx",
+    "reconcil",
+    "对账",
+    "drift",
+    "catalog",
+    "目录",
+    "opdef",
+    "opkernel",
+    "separation",
+    "Distinct",
+    "subject",
+    "record",
+    "exemption",
+    "confirmAmount",
+    "inputs",
+    "transition",
+    "field-update",
+    "FieldUpdate",
+    "denial",
+    "tier",
+    "kind"
+  ]
+}

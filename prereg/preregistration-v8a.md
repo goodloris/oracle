@@ -1,6 +1,6 @@
-# v8a 确认性实验预注册（草稿，未冻结）
+# v8a 确认性实验预注册（已冻结 2026-11-17）
 
-> **状态：草稿，未冻结。** 冻结由操作员执行：填写附录 A 的冻结清单，提交本文件的最终版本，把该提交中本文件的 SHA256（`sha256sum prereg/preregistration-v8a.md`）和提交时间贴到公开 issue。此后正文不再修改，只能在附录中追加。
+> **状态：已冻结（2026-11-17）。** 原说明： 冻结由操作员执行：填写附录 A 的冻结清单，提交本文件的最终版本，把该提交中本文件的 SHA256（`sha256sum prereg/preregistration-v8a.md`）和提交时间贴到公开 issue。此后正文不再修改，只能在附录中追加。
 
 ## 背景与问题
 
@@ -220,18 +220,30 @@ v8b 有一个 send-back 任务：二审人在 72 小时内把 pending-second 的
 
 ### 附录 A：冻结清单（冻结前由操作员填写，现为空）
 
-- [ ] 公开平台 commit：`fad8adfa89edb753c55410518d531e21489f7d9b`（公开目录摘要 `sha256:98abea36467340ad3702d12341beb3894e649d42d9129cfac4e45e46a9de0055`），主机 `/opt/poc-oracle/public` 已核对。
-- [ ] 私有仓库提交 SHA（6 个计划的 `harness_sha`）：`________`；树 hash：harness `________`，tasks `________`。
-- [ ] 平台版本：T1 `opdef.go` `da9bc050…`、`opkernel.go` `55228e1b…`（公开原样）；T2 叠加 `opdef.go` `________`、`opkernel.go` `________`。
-- [ ] 参考目录摘要（`python3 harness/verifier.py --task <t> digest`，与计划 `verifier.reference_catalog_digest` 一致）：return `________`，delivery-site `________`。
-- [ ] 提示词文件 `harness/prompts.json` SHA256：`________`；审查者 claude-opus-5.5、effort medium。
-- [ ] 条目正确性 Oracle `harness/entry_oracle.py` SHA256：`________`；`harness/catalogcheck.py` SHA256：`________`；阶段包装 `harness/stages.py` SHA256：`________`。
-- [ ] 分析脚本 `harness/analyze_v8a.py` SHA256：`________`；`harness/analyze_v8a_check.py` 通过。
-- [ ] 控制：验收主机 return `__` 项、delivery-site `__` 项全部通过（含条目正确性控制 2 × 27、排序负控制、私有内核回归）；本机 alpine 同样通过（辅助）；证据目录 `docs/evidence/v8a-controls-<日期>/`。
-- [ ] 跨主机假 kiro 流程：每任务四组各 1 个 trial 全部通过（证据目录同上）。
-- [ ] 验收主机数据库：`postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341`（PostgreSQL 17.2 Debian/glibc，`en_US.utf8`，语言排序），每个计划的 `database` 字段与实测一致。
-- [ ] 网络白名单 `KIRO_ALLOW_HOSTS=cognito-identity.us-east-1.amazonaws.com,oidc.us-east-1.amazonaws.com,management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev`（顺序不变），冻结当天重跑网络隔离控制并通过（含两个私有仓库不可读）：`____`/`____`。
-- [ ] 第一阶段 6 个计划文件的 SHA256（每个 32 个 trial，块 1–8，种子 20261116）：`v8a-return-claude-opus-5.5`、`v8a-return-gpt-5.6-luna`、`v8a-return-qwen3-coder-next`、`v8a-delivery-site-claude-opus-5.5`、`v8a-delivery-site-gpt-5.6-luna`、`v8a-delivery-site-qwen3-coder-next`：`________`。
-- [ ] 第二阶段 6 个计划文件的 SHA256（每个 16 个 trial，given + drafted-review，块 9–16，种子 20261117，`STAGE=2 FIRST_INSTANCE=9 scripts/host_prepare.sh v8a-s2-<task>-<model> <task> <model> 8`），与第一阶段同一 `harness_sha`：`________`。kit 已 prepare，未执行。
-- [ ] 两阶段边界（`python3 -c "import sys; sys.path.insert(0,'harness'); import analyze_v8a as a; print(a.boundaries())"`）：α₁ = 0.0015253，c₁ = 2.9626，α₂ = 0.0245，c₂ = 1.9686；`harness/analyze_v8a_check.py` 本机与主机都 `all_ok`。
-- [ ] 预算：第一阶段守卫 360 credit，两阶段合计上限 560 credit。
+- [x] 公开平台 commit：`fad8adfa89edb753c55410518d531e21489f7d9b`（公开目录摘要 `sha256:98abea36467340ad3702d12341beb3894e649d42d9129cfac4e45e46a9de0055`），主机 `/opt/poc-oracle/public` 已核对。
+- [x] 私有仓库提交 SHA（12 个计划的 `harness_sha`）：`9deabda1b54f692852222078094d91562dca7ff0`；树 hash：harness `eb55af6f3b39143e55a5d7a0685dc628d0e42f71`，tasks `2204b0a9d017b5b49cc41065f02875857186c697`。
+- [x] 平台版本：T1 `opdef.go` `da9bc050…`、`opkernel.go` `55228e1b…`（公开原样）；T2 叠加 `opdef.go` `93c49f89d52c7a0085829a9f04458a637056001d133ad9b28fc5faa3867b08ba`、`opkernel.go` `ad38304d9d0e10049b1c580f482e0e0ba95f92082af8c5558fc86da243d77612`。
+- [x] 参考目录摘要（与 12 个计划的 `verifier.reference_catalog_digest` 一致）：return `sha256:9e2131d8e2800c04122028003b44ec0775cf56f75e17eec139e74cea5777ca5c`，delivery-site `sha256:3988e28f6bc66c0a8c54f65d369d577c6c0b9f8ca5339748b6a295b1fe34a2fe`。
+- [x] 提示词文件 `harness/prompts.json` SHA256：`5ca9adc34a00a6260346847f082cbf55bead75fb60da57ce36e1e85f2ba3ffd8`；审查者 claude-opus-5.5、effort medium。
+- [x] 条目正确性 Oracle `harness/entry_oracle.py` SHA256：`fc83a01d7d69a9090d02065e82a10d6596e7cf0f2cd2c0622dba32e904eeb006`；`harness/catalogcheck.py` SHA256：`02c56216ee91c41bf82b3a6b611ed9d090007d5b007a55707fa9c33ed739af75`；阶段包装 `harness/stages.py` SHA256：`ea8e3844ce4b7f87683635d41a7a1ad49327b4cc6a602434994cb7a0ce250d1e`。
+- [x] 分析脚本 `harness/analyze_v8a.py` SHA256：`e0d5a9cc27e171a62f79bb12f8d428097f223b02bb97070f1c8a475ba12b240d`；`harness/analyze_v8a_check.py` 通过。
+- [x] 控制：验收主机 return 24 项、delivery-site 24 项全部通过（含条目正确性控制 2 × 27、排序负控制、私有内核回归）；本机 alpine 同样通过（辅助）；证据目录 `docs/evidence/v8a-controls-2026-11-16/`。
+- [x] 跨主机假 kiro 流程：每任务四组各 1 个 trial 全部通过（证据目录同上）。
+- [x] 验收主机数据库：`postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341`（PostgreSQL 17.2 Debian/glibc，`en_US.utf8`，语言排序），每个计划的 `database` 字段与实测一致。
+- [x] 网络白名单 `KIRO_ALLOW_HOSTS=cognito-identity.us-east-1.amazonaws.com,oidc.us-east-1.amazonaws.com,management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev`（顺序不变），冻结当天重跑网络隔离控制并通过（含两个私有仓库不可读）：2026-11-17 02:10 / 23/23 通过。
+- [x] 第一阶段 6 个计划文件的 SHA256（每个 32 个 trial，块 1–8，种子 20261116）：`v8a-return-claude-opus-5.5`、`v8a-return-gpt-5.6-luna`、`v8a-return-qwen3-coder-next`、`v8a-delivery-site-claude-opus-5.5`、`v8a-delivery-site-gpt-5.6-luna`、`v8a-delivery-site-qwen3-coder-next`：
+  - `v8a-return-claude-opus-5.5`：`21287c8a19b6e7fec229e81b5f6aedb61e7722bfb90bad31d37493e314ff0f33`
+  - `v8a-return-gpt-5.6-luna`：`7534b01e4554259b56f4746687aed1a3e8241d6573235b710d8118094ca8e356`
+  - `v8a-return-qwen3-coder-next`：`1de80c510062f5d72b5676c963a6a0819bb223babdddb9b75b815b0c957d5b93`
+  - `v8a-delivery-site-claude-opus-5.5`：`346a7753c6f824a0e4b60eb08964d786caf72a12cfa8e5d2f197cf64e2b02a50`
+  - `v8a-delivery-site-gpt-5.6-luna`：`549d32b103308da33d8ae11b69ae18ea03ee89325edd7539cbb45b910d5fb7f0`
+  - `v8a-delivery-site-qwen3-coder-next`：`ef739887cf6bf66a2337b8fb8ac021c56eeaa18d15e730f0a2a8949adc18307f`
+- [x] 第二阶段 6 个计划文件的 SHA256（每个 16 个 trial，given + drafted-review，块 9–16，种子 20261117，`STAGE=2 FIRST_INSTANCE=9 scripts/host_prepare.sh v8a-s2-<task>-<model> <task> <model> 8`），与第一阶段同一 `harness_sha`：kit 已 prepare，未执行。
+  - `v8a-s2-return-claude-opus-5.5`：`52ccbc5a765bdfbfd076433631b6a5e2a9cab28b5da31e9aedf55dde5565e471`
+  - `v8a-s2-return-gpt-5.6-luna`：`d1da7f0c3b9af3b26edc3a55f91fdcb588dfbe270c36352c0d161d7ee06d22ca`
+  - `v8a-s2-return-qwen3-coder-next`：`6f06493977a655a2fdaf3c778dc619add3e9ef98f54711aec1cfe52ea0a22477`
+  - `v8a-s2-delivery-site-claude-opus-5.5`：`76e7a8a512a8949ae5eefad3497b6c2266dfbd03b013d04d170daaed6548f9ba`
+  - `v8a-s2-delivery-site-gpt-5.6-luna`：`b592ed996a287ebdc07cefb4b6fa366d652f291c020528a863d54ac6eac286a5`
+  - `v8a-s2-delivery-site-qwen3-coder-next`：`58181c43daaf24207d6c4638a4f33823c711a25fd4a5461def01664ebf2bf21d`
+- [x] 两阶段边界（`python3 -c "import sys; sys.path.insert(0,'harness'); import analyze_v8a as a; print(a.boundaries())"`）：α₁ = 0.0015253，c₁ = 2.9626，α₂ = 0.0245，c₂ = 1.9686；`harness/analyze_v8a_check.py` 本机与主机都 `all_ok`。
+- [x] 预算：第一阶段守卫 360 credit，两阶段合计上限 560 credit。

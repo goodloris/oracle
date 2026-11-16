@@ -1,0 +1,35 @@
+package main
+
+import (
+	"context"
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/candidate"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"time"
+)
+
+func main() {
+	port := os.Getenv("POC_HTTP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	if n, err := strconv.Atoi(port); err != nil || n < 1 || n > 65535 {
+		log.Fatal("invalid port")
+	}
+	ctx := context.Background()
+	core, err := app.New(ctx, os.Getenv("DATABASE_URL"), "guarded", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer core.Pool.Close()
+	handler, err := candidate.New(ctx, core.Pool, core)
+	if err != nil {
+		log.Fatal(err)
+	}
+	server := &http.Server{Addr: "127.0.0.1:" + port, Handler: handler,
+		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 30 * time.Second}
+	log.Fatal(server.ListenAndServe())
+}

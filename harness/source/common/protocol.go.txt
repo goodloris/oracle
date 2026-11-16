@@ -1,0 +1,338 @@
+package protocol
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+	"unicode/utf8"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+const MaxBodyBytes = 65536
+
+// Result is encoded as a single-field object, e.g. {"approvedIds":[...]}.
+type Result struct {
+	Field string
+	IDs   []string
+}
+
+func (r Result) MarshalJSON() ([]byte, error) { return json.Marshal(map[string][]string{r.Field: r.IDs}) }
+
+type Rejection struct{ Status int }
+
+func (r *Rejection) Error() string { return fmt.Sprintf("action rejected: %d", r.Status) }
+
+// Handler receives an authenticated approver, one valid Idempotency-Key and
+// canonical (sorted, unique, 1..100) IDs.
+type Handler func(context.Context, app.Identity, string, []string) (Result, bool, error)
+
+// Routes maps an exact POST path to its Action handler.
+type Routes map[string]Handler
+
+// HTTP is the shared adapter for every batch Action endpoint; other requests
+// go to the original server.
+func HTTP(routes Routes, fallback http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handle, found := routes[r.URL.Path]
+		if r.Method != http.MethodPost || !found {
+			fallback.ServeHTTP(w, r)
+			return
+		}
+		u, ok := app.AuthenticateDemo(r.Header.Get("Authorization"))
+		if !ok {
+			reject(w, 401)
+			return
+		}
+		if u.Role != "approver" {
+			reject(w, 403)
+			return
+		}
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxBodyBytes))
+		if err != nil {
+			var large *http.MaxBytesError
+			if errors.As(err, &large) {
+				reject(w, 413)
+			} else {
+				reject(w, 400)
+			}
+			return
+		}
+		ids, ok := decode(body)
+		keys := r.Header.Values("Idempotency-Key")
+		if !ok || len(keys) != 1 || !validKey(keys[0]) {
+			reject(w, 400)
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+		result, replayed, err := handle(ctx, u, keys[0], ids)
+		respond(w, result, replayed, err)
+	})
+}
+
+// ItemResult is the response of a single-target Action: {"id":...,"status":...}.
+type ItemResult struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
+}
+
+// ItemHandler receives an identity with the route's role, one valid
+// Idempotency-Key, the path ID and the request reason.
+type ItemHandler func(ctx context.Context, u app.Identity, key, id, reason string) (ItemResult, bool, error)
+
+// Item serves POST /purchases/{id}/<verb> for one role. The body must be
+// exactly {"reason":"..."} with 1..200 bytes of reason; other requests go to next.
+func Item(verb, role string, handle ItemHandler, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id, found := strings.CutSuffix(strings.TrimPrefix(r.URL.Path, "/purchases/"), "/"+verb)
+		if r.Method != http.MethodPost || !strings.HasPrefix(r.URL.Path, "/purchases/") || !found || id == "" || strings.Contains(id, "/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		u, ok := app.AuthenticateDemo(r.Header.Get("Authorization"))
+		if !ok {
+			reject(w, 401)
+			return
+		}
+		if u.Role != role {
+			reject(w, 403)
+			return
+		}
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxBodyBytes))
+		if err != nil {
+			var large *http.MaxBytesError
+			if errors.As(err, &large) {
+				reject(w, 413)
+			} else {
+				reject(w, 400)
+			}
+			return
+		}
+		reason, ok := decodeReason(body)
+		keys := r.Header.Values("Idempotency-Key")
+		if !ok || len(id) > 100 || !utf8.ValidString(id) || strings.ContainsRune(id, 0) || len(keys) != 1 || !validKey(keys[0]) {
+			reject(w, 400)
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+		result, replayed, err := handle(ctx, u, keys[0], id, reason)
+		respond(w, result, replayed, err)
+	})
+}
+
+// AssignResult is encoded as {"<Field>":[...],"assignee":...}.
+type AssignResult struct {
+	Field    string
+	IDs      []string
+	Assignee string
+}
+
+func (r AssignResult) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{r.Field: r.IDs, "assignee": r.Assignee})
+}
+
+// AssignHandler receives an authenticated approver, one valid Idempotency-Key,
+// canonical (sorted, unique, 1..100) IDs and the requested assignee user ID.
+type AssignHandler func(ctx context.Context, u app.Identity, key string, ids []string, assignee string) (AssignResult, bool, error)
+
+// Assign serves POST path for approvers. The body must be exactly
+// {"ids":[...],"assignee":"..."} with a 1..100 byte assignee; other requests go to next.
+func Assign(path string, handle AssignHandler, next http.Handler) http.Handler {
+	return Param(path, "assignee", func(ctx context.Context, u app.Identity, key string, ids []string, value string) (ParamResult, bool, error) {
+		result, replayed, err := handle(ctx, u, key, ids, value)
+		return ParamResult{Field: result.Field, IDs: result.IDs, Name: "assignee", Value: result.Assignee}, replayed, err
+	}, next)
+}
+
+// ParamResult is encoded as {"<Field>":[...],"<Name>":Value}.
+type ParamResult struct {
+	Field string
+	IDs   []string
+	Name  string
+	Value string
+}
+
+func (r ParamResult) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{r.Field: r.IDs, r.Name: r.Value})
+}
+
+// ParamHandler receives an authenticated approver, one valid Idempotency-Key,
+// canonical (sorted, unique, 1..100) IDs and the request's string parameter.
+type ParamHandler func(ctx context.Context, u app.Identity, key string, ids []string, value string) (ParamResult, bool, error)
+
+// Param serves POST path for approvers: a batch Action with one string parameter.
+// The body must be exactly {"ids":[...],"<name>":"..."} with a 1..100 byte value;
+// other requests go to next.
+func Param(path, name string, handle ParamHandler, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != path {
+			next.ServeHTTP(w, r)
+			return
+		}
+		u, ok := app.AuthenticateDemo(r.Header.Get("Authorization"))
+		if !ok {
+			reject(w, 401)
+			return
+		}
+		if u.Role != "approver" {
+			reject(w, 403)
+			return
+		}
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxBodyBytes))
+		if err != nil {
+			var large *http.MaxBytesError
+			if errors.As(err, &large) {
+				reject(w, 413)
+			} else {
+				reject(w, 400)
+			}
+			return
+		}
+		ids, value, ok := decodeParam(body, name)
+		keys := r.Header.Values("Idempotency-Key")
+		if !ok || len(keys) != 1 || !validKey(keys[0]) {
+			reject(w, 400)
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+		result, replayed, err := handle(ctx, u, keys[0], ids, value)
+		respond(w, result, replayed, err)
+	})
+}
+
+func decodeParam(body []byte, name string) ([]string, string, bool) {
+	if !utf8.Valid(body) {
+		return nil, "", false
+	}
+	d := json.NewDecoder(bytes.NewReader(body))
+	var fields map[string]json.RawMessage
+	if d.Decode(&fields) != nil || d.Decode(new(any)) != io.EOF || len(fields) != 2 || fields["ids"] == nil || fields[name] == nil {
+		return nil, "", false
+	}
+	var ids []string
+	var value *string
+	if json.Unmarshal(fields["ids"], &ids) != nil || ids == nil || json.Unmarshal(fields[name], &value) != nil || value == nil {
+		return nil, "", false
+	}
+	if len(*value) < 1 || len(*value) > 100 || strings.ContainsRune(*value, 0) {
+		return nil, "", false
+	}
+	ids, err := canonical(ids)
+	return ids, *value, err == nil
+}
+
+func respond(w http.ResponseWriter, result any, replayed bool, err error) {
+	if err != nil {
+		var rejected *Rejection
+		var pg *pgconn.PgError
+		switch {
+		case errors.As(err, &rejected):
+			reject(w, rejected.Status)
+		case errors.As(err, &pg) && pg.Code == "23505":
+			reject(w, 409)
+		default:
+			log.Printf("Action transaction failed: %v", err)
+			reject(w, 503)
+		}
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if replayed {
+		w.Header().Set("Idempotency-Replayed", "true")
+	} else {
+		w.Header().Set("Idempotency-Replayed", "false")
+	}
+	w.WriteHeader(200)
+	_ = json.NewEncoder(w).Encode(result)
+}
+
+func decodeReason(body []byte) (string, bool) {
+	if !utf8.Valid(body) {
+		return "", false
+	}
+	d := json.NewDecoder(bytes.NewReader(body))
+	d.DisallowUnknownFields()
+	var value struct {
+		Reason *string `json:"reason"`
+	}
+	if d.Decode(&value) != nil || d.Decode(new(any)) != io.EOF || value.Reason == nil {
+		return "", false
+	}
+	reason := *value.Reason
+	return reason, len(reason) >= 1 && len(reason) <= 200 && !strings.ContainsRune(reason, 0)
+}
+
+func reject(w http.ResponseWriter, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": http.StatusText(status)})
+}
+
+func decode(body []byte) ([]string, bool) {
+	if !utf8.Valid(body) {
+		return nil, false
+	}
+	d := json.NewDecoder(bytes.NewReader(body))
+	if token, err := d.Token(); err != nil || token != json.Delim('{') {
+		return nil, false
+	}
+	if key, err := d.Token(); err != nil || key != "ids" {
+		return nil, false
+	}
+	var raw []json.RawMessage
+	if d.Decode(&raw) != nil {
+		return nil, false
+	}
+	if token, err := d.Token(); err != nil || token != json.Delim('}') {
+		return nil, false
+	}
+	if d.Decode(new(any)) != io.EOF {
+		return nil, false
+	}
+	ids := make([]string, len(raw))
+	for i, value := range raw {
+		if len(value) == 0 || value[0] != '"' || json.Unmarshal(value, &ids[i]) != nil {
+			return nil, false
+		}
+	}
+	ids, err := canonical(ids)
+	return ids, err == nil
+}
+
+func canonical(ids []string) ([]string, error) {
+	if len(ids) < 1 || len(ids) > 100 {
+		return nil, &Rejection{400}
+	}
+	result := append([]string(nil), ids...)
+	sort.Strings(result)
+	for i, id := range result {
+		if len(id) == 0 || len(id) > 100 || !utf8.ValidString(id) || (i > 0 && result[i-1] == id) {
+			return nil, &Rejection{400}
+		}
+	}
+	return result, nil
+}
+
+func validKey(key string) bool {
+	if len(key) < 1 || len(key) > 128 {
+		return false
+	}
+	for _, c := range key {
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || strings.ContainsRune("._:-", c)) {
+			return false
+		}
+	}
+	return true
+}

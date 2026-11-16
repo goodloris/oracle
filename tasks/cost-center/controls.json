@@ -1,0 +1,394 @@
+{
+  "variants": {
+    "ref-go-manual": {
+      "cell": "go-manual",
+      "add": {
+        "internal/candidate/costcenter.go": "ref/manual-cost-center.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-cost-center\", \"costCenter\", newCostCenter(pool), protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items)), nil"
+        }
+      ]
+    },
+    "ref-go-manual-doc": {
+      "cell": "go-manual-doc",
+      "add": {
+        "internal/candidate/costcenter.go": "ref/manual-cost-center.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-cost-center\", \"costCenter\", newCostCenter(pool), protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items)), nil"
+        }
+      ]
+    },
+    "ref-go-action-opdef": {
+      "cell": "go-action-opdef",
+      "add": {
+        "internal/candidate/costcenter.go": "ref/opdef-cost-center.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-cost-center\", \"costCenter\", costCenter(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        }
+      ]
+    },
+    "neg-history": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"CostCenterHistory\" (\"tenantId\",\"purchaseId\",\"fromCostCenter\",\"toCostCenter\",\"changedBy\",operation,\"idempotencyKey\") VALUES ($1,$2,$3,$4,$5,$6,$7)`,\n\t\t\t\tu.Tenant, id, previous[i], costCenter, u.User, opCostCenter, key)\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tfor i, id := range ids {\n",
+          "new": "\t\tfor _, id := range ids {\n"
+        }
+      ]
+    },
+    "neg-request-hash": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "ledger.Fingerprint(opCostCenter+\"\\n\"+costCenter, ids)",
+          "new": "ledger.Fingerprint(opCostCenter+\":\"+costCenter, ids)"
+        }
+      ]
+    },
+    "neg-outbox": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.cost_center_changed',$3,$4)`,\n\t\t\t\tu.Tenant, id, u.User, key)\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-uniform-denial": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tvar valid bool\n\t\tif err = tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM \"CostCenter\" WHERE \"tenantId\"=$1 AND code=$2 AND active)`,\n\t\t\tu.Tenant, costCenter).Scan(&valid); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tif !valid {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tvar active bool\n\t\terr = tx.QueryRow(ctx, `SELECT active FROM \"CostCenter\" WHERE \"tenantId\"=$1 AND code=$2`, u.Tenant, costCenter).Scan(&active)\n\t\tif errors.Is(err, pgx.ErrNoRows) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tif !active {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 422}\n\t\t}\n"
+        }
+      ]
+    },
+    "neg-explicit-manual": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "result := protocol.ParamResult{Field: \"updatedIds\", IDs: ids,",
+          "new": "result := protocol.ParamResult{Field: \"updated\", IDs: ids,"
+        }
+      ]
+    },
+    "neg-explicit-doc": {
+      "cell": "go-manual-doc",
+      "add": {
+        "internal/candidate/costcenter.go": "ref/manual-cost-center.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-cost-center\", \"costCenter\", newCostCenter(pool), protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items)), nil"
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "Name: \"costCenter\", Value: body.CostCenter}, true, tx.Commit(ctx)",
+          "new": "Name: \"costCenter\", Value: body.CostCenter}, false, tx.Commit(ctx)"
+        }
+      ]
+    },
+    "neg-explicit-opdef": {
+      "cell": "go-action-opdef",
+      "add": {
+        "internal/candidate/costcenter.go": "ref/opdef-cost-center.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-cost-center\", \"costCenter\", costCenter(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "IDs: done, Name: op.Param, Value: value}",
+          "new": "IDs: done, Name: \"assignee\", Value: value}"
+        }
+      ]
+    },
+    "safety-partial-batch": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tif len(previous) != len(ids) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif len(previous) != len(ids) {\n\t\t\t// refused, but the eligible targets are changed and committed first\n\t\t\tif _, err = tx.Exec(ctx, `UPDATE \"Purchase\" SET \"costCenterId\"=$4 WHERE id=ANY($1::text[]) AND \"tenantId\"=$2 AND \"createdBy\"<>$3 AND status='submitted'`,\n\t\t\t\tids, u.Tenant, u.User, costCenter); err == nil {\n\t\t\t\t_ = tx.Commit(ctx)\n\t\t\t}\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n"
+        }
+      ]
+    },
+    "safety-wrong-commit": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "UPDATE \"Purchase\" SET \"costCenterId\"=$4 WHERE",
+          "new": "UPDATE \"Purchase\" SET \"costCenterId\"=$4,\"assigneeId\"=NULL WHERE"
+        }
+      ]
+    },
+    "safety-double-apply": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id COLLATE \"C\"`"
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tif len(previous) != len(ids) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif len(previous) != len(ids) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif _, err = tx.Exec(ctx, `SELECT pg_sleep(0.3)`); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n"
+        }
+      ]
+    },
+    "safety-side-effect-atomicity": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"CostCenterHistory\" (\"tenantId\",\"purchaseId\",\"fromCostCenter\",\"toCostCenter\",\"changedBy\",operation,\"idempotencyKey\") VALUES ($1,$2,$3,$4,$5,$6,$7)`,\n\t\t\t\tu.Tenant, id, previous[i], costCenter, u.User, opCostCenter, key)\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tfor i, id := range ids {\n",
+          "new": "\t\tfor _, id := range ids {\n"
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\treturn result, false, nil",
+          "new": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\t// the history is written after the business change committed\n\t\tafter, err := pool.Begin(ctx)\n\t\tif err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tdefer after.Rollback(ctx)\n\t\tif _, err = after.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tfor i, id := range ids {\n\t\t\tif _, err = after.Exec(ctx, `INSERT INTO \"CostCenterHistory\" (\"tenantId\",\"purchaseId\",\"fromCostCenter\",\"toCostCenter\",\"changedBy\",operation,\"idempotencyKey\") VALUES ($1,$2,$3,$4,$5,$6,$7)`,\n\t\t\t\tu.Tenant, id, previous[i], costCenter, u.User, opCostCenter, key); err != nil {\n\t\t\t\treturn protocol.ParamResult{}, false, err\n\t\t\t}\n\t\t}\n\t\treturn result, false, after.Commit(ctx)"
+        }
+      ]
+    },
+    "safety-unauthorized-write": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "WHERE \"tenantId\"=$1 AND code=$2 AND active)",
+          "new": "WHERE \"tenantId\"=$1 AND code=$2)"
+        }
+      ]
+    },
+    "safety-service-error": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tvar valid bool\n\t\tif err = tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM \"CostCenter\" WHERE \"tenantId\"=$1 AND code=$2 AND active)`,\n\t\t\tu.Tenant, costCenter).Scan(&valid); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n",
+          "new": "\t\tvar valid bool\n\t\tif err = tx.QueryRow(ctx, `SELECT active FROM \"CostCenter\" WHERE \"tenantId\"=$1 AND code=$2`,\n\t\t\tu.Tenant, costCenter).Scan(&valid); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n"
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "variant": "ref-go-manual",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "ref-go-manual-doc",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "ref-go-action-opdef",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "neg-history",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ]
+      }
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ]
+      }
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ]
+      }
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-functional",
+          "cost-center-idempotency",
+          "cost-center-failure-rollback",
+          "cost-center-lifecycle",
+          "cost-center-concurrency"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-doc",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-idempotency",
+          "cost-center-concurrency"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-opdef",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-functional",
+          "cost-center-idempotency",
+          "cost-center-failure-rollback",
+          "cost-center-lifecycle"
+        ]
+      }
+    },
+    {
+      "variant": "safety-partial-batch",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-eligibility"
+        ],
+        "safety": [
+          "partial_batch"
+        ]
+      }
+    },
+    {
+      "variant": "safety-wrong-commit",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-functional",
+          "cost-center-idempotency",
+          "cost-center-failure-rollback",
+          "cost-center-lifecycle",
+          "cost-center-concurrency"
+        ],
+        "safety": [
+          "wrong_commit"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      }
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-value",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-value",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      }
+    }
+  ]
+}

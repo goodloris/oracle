@@ -1,0 +1,92 @@
+// Package ledger is the reconciliation side of Action metadata. The nightly
+// reconciliation job calls Verify and Drift over every tenant and pages the
+// owning team for every row they return.
+package ledger
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"sort"
+
+	"github.com/jackc/pgx/v5"
+)
+
+// Fingerprint is the request digest shared by every Action operation: the
+// operation name is the domain separator, IDs are length-prefixed and sorted.
+func Fingerprint(operation string, ids []string) string {
+	sorted := append([]string(nil), ids...)
+	sort.Strings(sorted)
+	h := sha256.New()
+	fmt.Fprint(h, operation, "\n")
+	for _, id := range sorted {
+		fmt.Fprintf(h, "%d:%s", len(id), id)
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+type Mismatch struct{ TenantID, ActorID, Operation, Key string }
+
+type Querier interface {
+	Query(context.Context, string, ...any) (pgx.Rows, error)
+}
+
+// subject returns the digest domain and the IDs a stored response is about.
+// The domain is the operation name. A batch response has one array field; a
+// parameterised batch response (bulk-reassign's "assignee") also carries its one
+// string parameter, which is part of the request and is bound into the domain
+// as operation+"\n"+value. A single-target response is its "id" field; the
+// request reason is not stored in the response and is not part of the digest.
+func subject(operation string, response []byte) (string, []string, bool) {
+	var body map[string]json.RawMessage
+	if json.Unmarshal(response, &body) != nil {
+		return "", nil, false
+	}
+	if raw, ok := body["id"]; ok {
+		var id string
+		return operation, []string{id}, json.Unmarshal(raw, &id) == nil && id != ""
+	}
+	var ids []string
+	arrays, params := 0, 0
+	for _, raw := range body {
+		var value string
+		if json.Unmarshal(raw, &value) == nil {
+			if value == "" {
+				return "", nil, false
+			}
+			operation += "\n" + value
+			params++
+		} else if json.Unmarshal(raw, &ids) == nil {
+			arrays++
+		} else {
+			return "", nil, false
+		}
+	}
+	return operation, ids, arrays == 1 && params <= 1
+}
+
+// Verify returns every ActionRequest whose requestHash differs from
+// Fingerprint(domain, IDs) of the stored response's subject.
+func Verify(ctx context.Context, q Querier) ([]Mismatch, error) {
+	rows, err := q.Query(ctx, `SELECT "tenantId","actorId",operation,key,"requestHash",response FROM "ActionRequest"`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var bad []Mismatch
+	for rows.Next() {
+		var m Mismatch
+		var hash string
+		var response []byte
+		if err = rows.Scan(&m.TenantID, &m.ActorID, &m.Operation, &m.Key, &hash, &response); err != nil {
+			return nil, err
+		}
+		domain, ids, ok := subject(m.Operation, response)
+		if !ok || Fingerprint(domain, ids) != hash {
+			bad = append(bad, m)
+		}
+	}
+	return bad, rows.Err()
+}

@@ -1,0 +1,375 @@
+// Package opkernel executes catalog operations (internal/opdef) in one
+// PostgreSQL transaction. Callers pass only an operation Name and the request
+// values; role, subject, states or column, audit/history, fingerprint, event
+// and denial all come from the reviewed catalog entry. Extension code cannot
+// declare an operation, an event or an exemption.
+//
+// It owns the transaction, complete-target checks, rollback, idempotency and
+// the request fingerprint. It is not a general workflow engine or a sandbox
+// for untrusted extensions.
+package opkernel
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"slices"
+	"sort"
+	"strings"
+	"unicode/utf8"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/opdef"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// Request carries the per-call values. Only fields listed in the entry's
+// Inputs may be set: Reason (reason), Amount (amount), Value (the Param of a
+// field update).
+type Request struct {
+	IDs    []string
+	Reason string
+	Amount int
+	Value  string
+}
+
+// Rejection is a client-visible refusal; adapt it at the service boundary.
+type Rejection struct{ Status int }
+
+func (r *Rejection) Error() string { return fmt.Sprintf("operation rejected: %d", r.Status) }
+
+type Executor struct{ pool *pgxpool.Pool }
+
+// managed lists, per kernel-managed column, a query returning a row iff $2 is
+// an acceptable value in tenant $1, and the history table recording its changes.
+type managed struct{ valid, record, from, to string }
+
+var columns = map[string]managed{
+	"assigneeId": {`SELECT 1 FROM "TenantMember" WHERE "tenantId"=$1 AND "userId"=$2 AND role='approver' AND active`,
+		"AssignmentHistory", "fromAssignee", "toAssignee"},
+	"costCenterId": {`SELECT 1 FROM "CostCenter" WHERE "tenantId"=$1 AND code=$2 AND active`,
+		"CostCenterHistory", "fromCostCenter", "toCostCenter"},
+}
+
+// New validates the catalog and requires a guarded, append-only runtime.
+func New(ctx context.Context, pool *pgxpool.Pool) (*Executor, error) {
+	if pool == nil {
+		return nil, errors.New("missing pool")
+	}
+	if err := opdef.Validate(); err != nil {
+		return nil, err
+	}
+	for _, o := range opdef.All() {
+		if c, ok := columns[o.Column]; o.Kind == opdef.FieldUpdate && (!ok || c.record != string(o.Record)) {
+			return nil, fmt.Errorf("%s: column %s is not managed by the kernel with record %s", o.Name, o.Column, o.Record)
+		}
+	}
+	var guarded bool
+	err := pool.QueryRow(ctx, `SELECT c.relrowsecurity AND c.relforcerowsecurity AND NOT
+ (r.rolsuper OR r.rolbypassrls OR pg_has_role(current_user,c.relowner,'MEMBER'))
+ FROM pg_roles r CROSS JOIN pg_class c WHERE r.rolname=current_user AND c.oid='"Purchase"'::regclass`).Scan(&guarded)
+	if err != nil || !guarded {
+		return nil, fmt.Errorf("opkernel requires non-owner guarded Purchase runtime: %v", err)
+	}
+	var configured bool
+	err = pool.QueryRow(ctx, `SELECT count(*)=4 AND bool_and(c.relrowsecurity AND c.relforcerowsecurity
+	 AND NOT pg_has_role(current_user,c.relowner,'MEMBER')
+	 AND has_table_privilege(current_user,c.oid,'SELECT')
+	 AND has_table_privilege(current_user,c.oid,'INSERT')
+	 AND NOT has_any_column_privilege(current_user,c.oid,'UPDATE')
+	 AND NOT has_table_privilege(current_user,c.oid,'DELETE,TRUNCATE,TRIGGER'))
+	 FROM pg_class c WHERE c.oid IN ('"ActionRequest"'::regclass,'"ApprovalAudit"'::regclass,'"PurchaseEvent"'::regclass,
+	  '"AssignmentHistory"'::regclass)`).Scan(&configured)
+	if err != nil || !configured {
+		return nil, fmt.Errorf("operation tables require non-owner RLS and append-only grants: %v", err)
+	}
+	return &Executor{pool: pool}, nil
+}
+
+func canonical(ids []string) ([]string, error) {
+	if len(ids) < 1 || len(ids) > 100 {
+		return nil, &Rejection{400}
+	}
+	out := append([]string(nil), ids...)
+	sort.Strings(out)
+	for i, id := range out {
+		if len(id) == 0 || len(id) > 100 || !utf8.ValidString(id) || (i > 0 && out[i-1] == id) {
+			return nil, &Rejection{400}
+		}
+	}
+	return out, nil
+}
+
+func validKey(key string) bool {
+	if len(key) < 1 || len(key) > 128 {
+		return false
+	}
+	for _, c := range key {
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || strings.ContainsRune("._:-", c)) {
+			return false
+		}
+	}
+	return true
+}
+
+// Fingerprint is the requestHash: the operation name and, in catalog order,
+// every Fingerprint field other than the targets form the domain
+// (name+"\n"+value...), then the sorted, length-prefixed target IDs. It equals
+// the v6 ledger digest for every catalog entry.
+func Fingerprint(op opdef.Operation, ids []string, req Request) string {
+	h := sha256.New()
+	domain := string(op.Name)
+	for _, f := range op.Fingerprint[1:] {
+		domain += "\n" + field(op, req, f)
+	}
+	sorted := append([]string(nil), ids...)
+	sort.Strings(sorted)
+	fmt.Fprint(h, domain, "\n")
+	for _, id := range sorted {
+		fmt.Fprintf(h, "%d:%s", len(id), id)
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func field(op opdef.Operation, req Request, name string) string {
+	switch name {
+	case opdef.Reason:
+		return req.Reason
+	case opdef.Amount:
+		return fmt.Sprint(req.Amount)
+	case op.Param:
+		return req.Value
+	}
+	panic("unvalidated fingerprint field " + name)
+}
+
+// check rejects request fields the entry does not declare.
+func check(op opdef.Operation, req Request) error {
+	has := func(f string) bool { return slices.Contains(op.Inputs, f) }
+	if (req.Reason != "" && !has(opdef.Reason)) || (req.Amount != 0 && !op.ConfirmAmount) || (req.Value != "" && op.Param == "") {
+		return fmt.Errorf("%s: request sets a field the catalog entry does not accept", op.Name)
+	}
+	return nil
+}
+
+func response(op opdef.Operation, ids, statuses []string, value string) any {
+	switch {
+	case op.Single():
+		return map[string]string{"id": ids[0], "status": statuses[0]}
+	case op.Param != "":
+		return map[string]any{op.Response: ids, op.Param: value}
+	}
+	return map[string][]string{op.Response: ids}
+}
+
+func restore(op opdef.Operation, saved []byte) ([]string, error) {
+	var body map[string]json.RawMessage
+	if err := json.Unmarshal(saved, &body); err != nil {
+		return nil, err
+	}
+	if op.Single() {
+		var id string
+		return []string{id}, json.Unmarshal(body["id"], &id)
+	}
+	var ids []string
+	return ids, json.Unmarshal(body[op.Response], &ids)
+}
+
+// Run executes the catalog entry name for the authenticated user and returns
+// the sorted target IDs; a replay of the same key and request returns the
+// stored IDs with replayed=true. The idempotency scope is name+tenant+actor+key.
+func (e *Executor) Run(ctx context.Context, u app.Identity, name opdef.Name, key string, req Request) ([]string, bool, error) {
+	op, known := opdef.Lookup(name)
+	if !known {
+		return nil, false, fmt.Errorf("operation %q is not in the catalog", name)
+	}
+	if err := check(op, req); err != nil {
+		return nil, false, err
+	}
+	if u.Role != op.Role || u.User == "" || u.Tenant == "" {
+		return nil, false, &Rejection{403}
+	}
+	ids, err := canonical(req.IDs)
+	if err != nil {
+		return nil, false, err
+	}
+	if !validKey(key) || (op.Single() && len(ids) != 1) || (op.ConfirmAmount && req.Amount < 1) ||
+		(op.Param != "" && (req.Value == "" || len(req.Value) > 100 || !utf8.ValidString(req.Value))) ||
+		len(req.Reason) > 200 || !utf8.ValidString(req.Reason) {
+		return nil, false, &Rejection{400}
+	}
+	for _, id := range append([]string{req.Value}, ids...) {
+		if strings.ContainsRune(id, 0) {
+			return nil, false, &Rejection{404}
+		}
+	}
+	tx, err := e.pool.Begin(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err = tx.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {
+		return nil, false, err
+	}
+	lock, _ := json.Marshal([]string{string(op.Name), u.Tenant, u.User, key})
+	if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, string(lock)); err != nil {
+		return nil, false, err
+	}
+	hash := Fingerprint(op, ids, req)
+	var savedHash string
+	var saved []byte
+	err = tx.QueryRow(ctx, `SELECT "requestHash",response FROM "ActionRequest"
+	 WHERE "tenantId"=$1 AND "actorId"=$2 AND operation=$3 AND key=$4`, u.Tenant, u.User, string(op.Name), key).Scan(&savedHash, &saved)
+	if err == nil {
+		if savedHash != hash {
+			return nil, false, &Rejection{op.Denial}
+		}
+		replayed, err := restore(op, saved)
+		if err != nil {
+			return nil, false, err
+		}
+		return replayed, true, tx.Commit(ctx)
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, false, err
+	}
+	var statuses []string
+	if op.Kind == opdef.Transition {
+		statuses, err = transition(ctx, tx, u, op, key, ids, req)
+	} else {
+		statuses, err = update(ctx, tx, u, op, key, ids, req.Value)
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	if op.Event != "" {
+		if _, err = tx.Exec(ctx, `INSERT INTO "PurchaseEvent" ("tenantId","purchaseId",type,"actorId","idempotencyKey")
+		 SELECT $2,id,$3,$4,$5 FROM unnest($1::text[]) AS id`, ids, u.Tenant, op.Event, u.User, key); err != nil {
+			return nil, false, err
+		}
+	}
+	body, err := json.Marshal(response(op, ids, statuses, req.Value))
+	if err != nil {
+		return nil, false, err
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO "ActionRequest" ("tenantId","actorId",operation,key,"requestHash",response)
+	 VALUES ($1,$2,$3,$4,$5,$6::jsonb)`, u.Tenant, u.User, string(op.Name), key, hash, string(body)); err != nil {
+		return nil, false, err
+	}
+	if err = tx.Commit(ctx); err != nil {
+		return nil, false, err
+	}
+	return ids, false, nil
+}
+
+// eligible locks the targets and fails with the uniform denial unless every
+// one qualifies; extra is an additional SQL predicate on p over args from $6.
+func eligible(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation, ids []string, status, extra string, args ...any) ([]*string, error) {
+	column := "NULL::text"
+	if op.Column != "" {
+		column = "p." + pgx.Identifier{op.Column}.Sanitize()
+	}
+	rows, err := tx.Query(ctx, `SELECT p.id,`+column+` FROM "Purchase" p WHERE p.id=ANY($1::text[])
+	 AND p."tenantId"=$2 AND (p."createdBy"=$3)=$4 AND p.status=$5`+extra+` ORDER BY p.id FOR UPDATE OF p`,
+		append([]any{ids, u.Tenant, u.User, op.Subject == opdef.Own, status}, args...)...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var previous []*string
+	for rows.Next() {
+		var id string
+		var old *string
+		if err = rows.Scan(&id, &old); err != nil {
+			return nil, err
+		}
+		previous = append(previous, old)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(previous) != len(ids) {
+		return nil, &Rejection{op.Denial}
+	}
+	return previous, nil
+}
+
+func transition(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation, key string, ids []string, req Request) ([]string, error) {
+	extra := ` AND (NOT $6 OR p.amount=$7)
+	 AND (NOT $8 OR (SELECT a."approvedBy" FROM "ApprovalAudit" a WHERE a."tenantId"=p."tenantId" AND a."purchaseId"=p.id
+	  AND a."toStatus"=$5 ORDER BY a."createdAt" DESC LIMIT 1) IS DISTINCT FROM $3)`
+	if _, err := eligible(ctx, tx, u, op, ids, op.From, extra, op.ConfirmAmount, req.Amount,
+		op.Separation == opdef.DistinctFromPreviousApprover); err != nil {
+		return nil, err
+	}
+	over, overTo := 0, ""
+	if op.Tier != nil {
+		over, overTo = op.Tier.Over, op.Tier.To
+	}
+	rows, err := tx.Query(ctx, `UPDATE "Purchase" SET status=CASE WHEN $7>0 AND amount>$7 THEN $8 ELSE $4 END WHERE id=ANY($1::text[])
+	 AND "tenantId"=$2 AND ("createdBy"=$3)=$6 AND status=$5 RETURNING id,status`, ids, u.Tenant, u.User, op.To, op.From, op.Subject == opdef.Own, over, overTo)
+	if err != nil {
+		return nil, err
+	}
+	byID := map[string]string{}
+	for rows.Next() {
+		var id, status string
+		if err = rows.Scan(&id, &status); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		byID[id] = status
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(byID) != len(ids) {
+		return nil, &Rejection{op.Denial}
+	}
+	statuses := make([]string, len(ids))
+	for i, id := range ids {
+		statuses[i] = byID[id]
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO "ApprovalAudit" ("tenantId","purchaseId","approvedBy",operation,"idempotencyKey","fromStatus","toStatus",reason)
+	 SELECT $3,t.id,$4,$5,$6,$7,t.status,NULLIF($8,'') FROM unnest($1::text[],$2::text[]) AS t(id,status)`,
+		ids, statuses, u.Tenant, u.User, string(op.Name), key, op.From, req.Reason)
+	return statuses, err
+}
+
+func update(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation, key string, ids []string, value string) ([]string, error) {
+	var one int
+	c := columns[op.Column]
+	if err := tx.QueryRow(ctx, c.valid, u.Tenant, value).Scan(&one); errors.Is(err, pgx.ErrNoRows) {
+		return nil, &Rejection{op.Denial}
+	} else if err != nil {
+		return nil, err
+	}
+	previous, err := eligible(ctx, tx, u, op, ids, op.Status, "")
+	if err != nil {
+		return nil, err
+	}
+	target := pgx.Identifier{op.Column}.Sanitize()
+	tag, err := tx.Exec(ctx, `UPDATE "Purchase" SET `+target+`=$4 WHERE id=ANY($1::text[])
+	 AND "tenantId"=$2 AND ("createdBy"=$3)=$6 AND status=$5`, ids, u.Tenant, u.User, value, op.Status, op.Subject == opdef.Own)
+	if err != nil {
+		return nil, err
+	}
+	if tag.RowsAffected() != int64(len(ids)) {
+		return nil, &Rejection{op.Denial}
+	}
+	// ponytail: one history table per managed column (columns above); a generic
+	// field-history table would remove the per-column entry.
+	_, err = tx.Exec(ctx, `INSERT INTO `+pgx.Identifier{c.record}.Sanitize()+` ("tenantId","purchaseId",`+pgx.Identifier{c.from}.Sanitize()+`,`+
+		pgx.Identifier{c.to}.Sanitize()+`,"changedBy",operation,"idempotencyKey")
+	 SELECT $2,t.id,t.old,$4,$5,$6,$7 FROM unnest($1::text[],$3::text[]) AS t(id,old)`, ids, u.Tenant, previous, value, u.User, string(op.Name), key)
+	statuses := make([]string, len(ids))
+	for i := range statuses {
+		statuses[i] = op.Status
+	}
+	return statuses, err
+}

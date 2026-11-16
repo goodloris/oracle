@@ -1,0 +1,79 @@
+// Purchase service Actions, served by the platform operation kernel. Every
+// operation is a reviewed entry of the protected catalog (internal/opdef);
+// this package only adapts HTTP to opkernel.Executor.Run.
+package candidate
+
+import (
+	"context"
+	"errors"
+	"net/http"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/opdef"
+	"github.com/XUJiahua/enterprise_agent/internal/opkernel"
+	"github.com/XUJiahua/enterprise_agent/internal/protocol"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// adapt turns a kernel refusal into the protocol refusal; other errors are 503.
+func adapt(err error) error {
+	var rejected *opkernel.Rejection
+	if errors.As(err, &rejected) {
+		return &protocol.Rejection{Status: rejected.Status}
+	}
+	return err
+}
+
+func entry(name opdef.Name) opdef.Operation {
+	op, ok := opdef.Lookup(name)
+	if !ok {
+		panic("operation missing from catalog: " + string(name))
+	}
+	return op
+}
+
+func batch(exec *opkernel.Executor, name opdef.Name) protocol.Handler {
+	op := entry(name)
+	return func(ctx context.Context, u app.Identity, key string, ids []string) (protocol.Result, bool, error) {
+		done, replayed, err := exec.Run(ctx, u, name, key, opkernel.Request{IDs: ids})
+		if err != nil {
+			return protocol.Result{}, false, adapt(err)
+		}
+		return protocol.Result{Field: op.Response, IDs: done}, replayed, nil
+	}
+}
+
+func item(exec *opkernel.Executor, name opdef.Name) protocol.ItemHandler {
+	op := entry(name)
+	return func(ctx context.Context, u app.Identity, key, id, reason string) (protocol.ItemResult, bool, error) {
+		done, replayed, err := exec.Run(ctx, u, name, key, opkernel.Request{IDs: []string{id}, Reason: reason})
+		if err != nil {
+			return protocol.ItemResult{}, false, adapt(err)
+		}
+		return protocol.ItemResult{ID: done[0], Status: op.To}, replayed, nil
+	}
+}
+
+func reassign(exec *opkernel.Executor) protocol.AssignHandler {
+	op := entry(opdef.BulkReassign)
+	return func(ctx context.Context, u app.Identity, key string, ids []string, assignee string) (protocol.AssignResult, bool, error) {
+		done, replayed, err := exec.Run(ctx, u, opdef.BulkReassign, key, opkernel.Request{IDs: ids, Value: assignee})
+		if err != nil {
+			return protocol.AssignResult{}, false, adapt(err)
+		}
+		return protocol.AssignResult{Field: op.Response, IDs: done, Assignee: assignee}, replayed, nil
+	}
+}
+
+func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.Handler, error) {
+	exec, err := opkernel.New(ctx, pool)
+	if err != nil {
+		return nil, err
+	}
+	batches := protocol.HTTP(protocol.Routes{
+		"/purchases/bulk-approve": batch(exec, opdef.BulkApprove),
+		"/purchases/bulk-reject":  batch(exec, opdef.BulkReject),
+	}, fallback)
+	items := protocol.Item("reopen", "requester", item(exec, opdef.Reopen), batches)
+	return protocol.Assign("/purchases/bulk-reassign", reassign(exec), items), nil
+}

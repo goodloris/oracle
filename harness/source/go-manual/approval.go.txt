@@ -1,0 +1,114 @@
+// Hand-written batch Actions of the purchase service.
+package candidate
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strings"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/ledger"
+	"github.com/XUJiahua/enterprise_agent/internal/protocol"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const opApprove = "bulk-approve.v3"
+
+func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.Handler, error) {
+	approve := func(ctx context.Context, u app.Identity, key string, ids []string) (protocol.Result, bool, error) {
+		for _, id := range ids {
+			if strings.ContainsRune(id, 0) {
+				return protocol.Result{}, false, &protocol.Rejection{Status: 404}
+			}
+		}
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		defer tx.Rollback(ctx)
+		_, err = tx.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		lock, _ := json.Marshal([]string{opApprove, u.Tenant, u.User, key})
+		if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, string(lock)); err != nil {
+			return protocol.Result{}, false, err
+		}
+		hash := ledger.Fingerprint(opApprove, ids)
+		var savedHash string
+		var saved []byte
+		err = tx.QueryRow(ctx, `SELECT "requestHash",response FROM "ActionRequest"
+		 WHERE "tenantId"=$1 AND "actorId"=$2 AND operation=$3 AND key=$4`, u.Tenant, u.User, opApprove, key).Scan(&savedHash, &saved)
+		if err == nil {
+			if savedHash != hash {
+				return protocol.Result{}, false, &protocol.Rejection{Status: 409}
+			}
+			var body map[string][]string
+			if err = json.Unmarshal(saved, &body); err != nil {
+				return protocol.Result{}, false, err
+			}
+			if err = tx.Commit(ctx); err != nil {
+				return protocol.Result{}, false, err
+			}
+			return protocol.Result{Field: "approvedIds", IDs: body["approvedIds"]}, true, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return protocol.Result{}, false, err
+		}
+		rows, err := tx.Query(ctx, `SELECT id FROM "Purchase" WHERE id=ANY($1::text[]) AND "tenantId"=$2 AND "createdBy"<>$3 AND status='submitted' ORDER BY id FOR UPDATE`, ids, u.Tenant, u.User)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		eligible := []string{}
+		for rows.Next() {
+			var id string
+			if err = rows.Scan(&id); err != nil {
+				rows.Close()
+				return protocol.Result{}, false, err
+			}
+			eligible = append(eligible, id)
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		// Ineligible targets (missing, other tenant, wrong owner or state) all get the same
+		// 409; unlike the legacy per-purchase handlers in internal/app, Actions never reveal existence.
+		if len(eligible) != len(ids) {
+			return protocol.Result{}, false, &protocol.Rejection{Status: 409}
+		}
+		tag, err := tx.Exec(ctx, `UPDATE "Purchase" SET status='approved' WHERE id=ANY($1::text[]) AND "tenantId"=$2 AND "createdBy"<>$3 AND status='submitted'`, ids, u.Tenant, u.User)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		if tag.RowsAffected() != int64(len(ids)) {
+			return protocol.Result{}, false, &protocol.Rejection{Status: 409}
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO "ApprovalAudit" ("tenantId","purchaseId","approvedBy",operation,"idempotencyKey","fromStatus","toStatus")
+		 SELECT $2,id,$3,$4,$5,'submitted','approved' FROM unnest($1::text[]) AS id`, ids, u.Tenant, u.User, opApprove, key)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		result := protocol.Result{Field: "approvedIds", IDs: ids}
+		response, err := json.Marshal(result)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO "ActionRequest" ("tenantId","actorId",operation,key,"requestHash",response)
+		 VALUES ($1,$2,$3,$4,$5,$6::jsonb)`, u.Tenant, u.User, opApprove, key, hash, string(response))
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		if err = tx.Commit(ctx); err != nil {
+			return protocol.Result{}, false, err
+		}
+		return result, false, nil
+	}
+	batches := protocol.HTTP(protocol.Routes{"/purchases/bulk-approve": approve, "/purchases/bulk-reject": newReject(pool)}, fallback)
+	items := protocol.Item("reopen", "requester", newReopen(pool), batches)
+	return protocol.Assign("/purchases/bulk-reassign", newReassign(pool), items), nil
+}

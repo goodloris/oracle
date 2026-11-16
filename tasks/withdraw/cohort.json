@@ -1,0 +1,247 @@
+{
+  "version": 7,
+  "task": "withdraw-own-submitted-purchase-v7",
+  "operation": "withdraw.v7",
+  "requirements": "本版本在既有批量审批（POST /purchases/bulk-approve）、批量驳回（POST /purchases/bulk-reject）、重新提交（POST /purchases/{id}/reopen）与批量改派（POST /purchases/bulk-reassign）的基础上，新增申请撤回：POST /purchases/{id}/withdraw，请求体严格为 {\"reason\":\"...\"}，reason 为 1..200 字节。只有已认证的 requester 可以调用，并且只能撤回本人在当前租户中创建、状态为 submitted 的采购单；成功后该采购单 status 变为 withdrawn，其他列都不变。找不到目标、目标属于其他租户、不是本人创建或状态不是 submitted 时返回 4xx，数据库全部不变。请求体、身份、报文上限和 Idempotency-Key 校验由共享 HTTP 适配器 protocol.Item 完成（verb 为 withdraw，role 为 requester），新路径通过它注册。成功返回 200，响应为 {\"id\":ID,\"status\":\"withdrawn\"}。首次成功 Idempotency-Replayed=false；同一 actor 以同一 key 重放同一目标时，返回相同状态和响应字节，header=true，不产生新写入；同 key 不同目标返回 409。不同 actor 使用同名 key 互不影响。幂等结果与撤回在同一事务中写入 ActionRequest：operation 为 \"withdraw.v7\"，tenantId、actorId、key 分别为当前租户、当前用户和 Idempotency-Key 原值，response 为响应 JSON 对象，每个成功的新请求恰好一行。ActionRequest 写入失败时返回 503 且数据库全部不变，故障移除后同 key 可重试。并发：同 key 同请求两次均 200 且只提交一次；不同 key 同时撤回同一采购单时恰好一个返回 200、另一个返回 4xx，只撤回一次。撤回后的采购单不能再被批量审批、批量驳回、重新提交或改派（4xx，数据库不变）。approver 调用返回 403，未认证返回 401；客户端上下文头不能覆盖认证身份。批量审批、批量驳回、重新提交、批量改派与原有 API 行为保持不变。",
+  "prompt": [
+    "Add the withdraw Action described above to the existing service.",
+    "Read the existing code first and follow its conventions.",
+    "The database uses guarded RLS. The shared HTTP adapter in internal/protocol validates input and binds demo identity; register the new path with protocol.Item.",
+    "Only edit/add internal/candidate/ Go code. All other exports, dependencies, Git settings and tests are protected.",
+    "Preserve the existing APIs, including bulk-approve, bulk-reject, reopen and bulk-reassign.",
+    "Do not commit/push, read credentials, other checkouts or evaluator materials; do not use other agents.",
+    "Use go build ./... and go test ./... as needed. Private database credentials are unavailable during generation. The public SQL schema is in SCHEMA.sql."
+  ],
+  "capability": {
+    "go-manual": "Capability: no platform Action kernel. The existing batch approval, batch rejection, reopen and bulk reassign are hand-written in internal/candidate/.",
+    "go-manual-doc": "Capability: no platform Action kernel. The existing batch approval, batch rejection, reopen and bulk reassign are hand-written in internal/candidate/. docs/OPERATIONS.md is the reviewed operation catalog: the authoritative business semantics of every operation of this service, including the one in this task. It is documentation only (nothing executes it) and it is protected.",
+    "go-action-opdef": "Capability: protected internal/opdef is the reviewed operation catalog and already contains the entry for the operation in this task; protected internal/opkernel executes catalog entries: New(ctx,pool), Request and Executor.Run(ctx,identity,name,key,request). The existing operations are served through the kernel by internal/candidate; serve the new one the same way. opkernel.Rejection is distinct from protocol.Rejection; adapt at your boundary."
+  },
+  "prompt_tail": "This is a trusted-code pilot; directory export alone does not enforce host or network isolation.",
+  "groups": {
+    "withdraw-functional": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "withdraw-authorization": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "withdraw-eligibility": {
+      "kind": "explicit",
+      "count": 6
+    },
+    "withdraw-input": {
+      "kind": "explicit",
+      "count": 6
+    },
+    "withdraw-idempotency": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "withdraw-concurrency": {
+      "kind": "explicit",
+      "count": 2
+    },
+    "withdraw-failure-rollback": {
+      "kind": "explicit",
+      "count": 1
+    },
+    "withdraw-lifecycle": {
+      "kind": "explicit",
+      "count": 4
+    },
+    "regression": {
+      "kind": "explicit",
+      "count": 15
+    },
+    "implicit-audit": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-request-hash": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-outbox": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-uniform-denial": {
+      "kind": "implicit",
+      "count": 2
+    }
+  },
+  "conventions": {
+    "implicit-audit": {
+      "rule": "Every withdraw writes exactly one ApprovalAudit row in the same transaction: tenantId, purchaseId, approvedBy=actor, operation=withdraw.v7, idempotencyKey=key, fromStatus=submitted, toStatus=withdrawn, reason=request reason; an audit write failure rolls everything back.",
+      "sources": {
+        "go-manual": [
+          [
+            "internal/candidate/reopen.go",
+            "INSERT INTO \"ApprovalAudit\""
+          ],
+          [
+            "internal/ledger/reconcile.go",
+            "Drift returns every Purchase whose status is not the toStatus"
+          ],
+          [
+            "SCHEMA.sql",
+            "\"toStatus\" IN ('approved','rejected','submitted','withdrawn')"
+          ]
+        ],
+        "go-manual-doc": [
+          [
+            "docs/OPERATIONS.md",
+            "\"record\": \"ApprovalAudit\""
+          ],
+          [
+            "docs/OPERATIONS.md",
+            "\"name\": \"withdraw.v7\""
+          ]
+        ],
+        "go-action-opdef": [
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"ApprovalAudit\""
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Name: Withdraw"
+          ]
+        ]
+      }
+    },
+    "implicit-request-hash": {
+      "rule": "ActionRequest.requestHash equals ledger.Fingerprint(\"withdraw.v7\", [id]); the reason is not digested, so the same key and target with another reason replays.",
+      "sources": {
+        "go-manual": [
+          [
+            "internal/candidate/reopen.go",
+            "ledger.Fingerprint(opReopen, []string{id})"
+          ],
+          [
+            "internal/ledger/ledger.go",
+            "is not part of the digest"
+          ],
+          [
+            "internal/ledger/ledger.go",
+            "Fingerprint(domain, ids) != hash"
+          ]
+        ],
+        "go-manual-doc": [
+          [
+            "docs/OPERATIONS.md",
+            "\"fingerprint\": [\n    \"ids\"\n  ]"
+          ]
+        ],
+        "go-action-opdef": [
+          [
+            "internal/opkernel/opkernel.go",
+            "func Fingerprint("
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Fingerprint: []string{IDs}"
+          ]
+        ]
+      }
+    },
+    "implicit-outbox": {
+      "rule": "Every withdraw writes exactly one PurchaseEvent row in the same transaction: type=purchase.withdrawn, purchaseId, actorId=actor, idempotencyKey=key; an outbox write failure rolls everything back.",
+      "sources": {
+        "go-manual": [
+          [
+            "internal/notify/notify.go",
+            "case \"purchase.withdrawn\":"
+          ],
+          [
+            "internal/candidate/reopen.go",
+            "'purchase.reopened'"
+          ],
+          [
+            "internal/notify/notify.go",
+            "Approvals predate the outbox"
+          ]
+        ],
+        "go-manual-doc": [
+          [
+            "docs/OPERATIONS.md",
+            "\"event\": \"purchase.withdrawn\""
+          ]
+        ],
+        "go-action-opdef": [
+          [
+            "internal/opdef/catalog.go",
+            "Event: \"purchase.withdrawn\""
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"PurchaseEvent\""
+          ]
+        ]
+      }
+    },
+    "implicit-uniform-denial": {
+      "rule": "Missing, other-tenant, not-own and not-submitted targets all get the same 4xx status, so a response never reveals whether or why a purchase exists.",
+      "sources": {
+        "go-manual": [
+          [
+            "internal/candidate/approval.go",
+            "Actions never reveal existence"
+          ],
+          [
+            "internal/candidate/reopen.go",
+            "creator != u.User || status != \"rejected\""
+          ]
+        ],
+        "go-manual-doc": [
+          [
+            "docs/OPERATIONS.md",
+            "\"denial\": 409"
+          ]
+        ],
+        "go-action-opdef": [
+          [
+            "internal/opdef/opdef.go",
+            "const UniformDenial = 409"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "return nil, &Rejection{op.Denial}"
+          ]
+        ]
+      }
+    }
+  },
+  "forbidden_in_task": [
+    "ApprovalAudit",
+    "AssignmentHistory",
+    "CostCenterHistory",
+    "history",
+    "历史",
+    "审计",
+    "audit",
+    "requestHash",
+    "Fingerprint",
+    "指纹",
+    "ledger",
+    "PurchaseEvent",
+    "event",
+    "事件",
+    "outbox",
+    "notify",
+    "通知",
+    "区分",
+    "存在",
+    "indistinguish",
+    "uniform",
+    "same 4xx",
+    "相同的 4xx",
+    "reconcil",
+    "对账",
+    "drift",
+    "catalog",
+    "目录"
+  ]
+}

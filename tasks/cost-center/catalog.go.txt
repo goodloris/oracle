@@ -1,0 +1,44 @@
+package opdef
+
+// Reviewed entries. Changing this file changes Digest and needs owner review.
+const (
+	BulkApprove  Name = "bulk-approve.v3"
+	BulkReject   Name = "bulk-reject.v4"
+	Reopen       Name = "reopen.v5"
+	BulkReassign Name = "bulk-reassign.v6"
+	CostCenter   Name = "bulk-cost-center.v7"
+)
+
+var catalog = []Operation{
+	{
+		Name: BulkApprove, Kind: Transition, Role: "approver", Subject: Others,
+		From: "submitted", To: "approved",
+		Response: "approvedIds", Inputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		EventExemption: "predates the PurchaseEvent outbox; the daily digest reads approvals from ApprovalAudit",
+		Denial:         UniformDenial,
+	},
+	{
+		Name: BulkReject, Kind: Transition, Role: "approver", Subject: Others,
+		From: "submitted", To: "rejected",
+		Response: "rejectedIds", Inputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		Event: "purchase.rejected", Denial: UniformDenial,
+	},
+	{
+		Name: Reopen, Kind: Transition, Role: "requester", Subject: Own,
+		From: "rejected", To: "submitted",
+		Inputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		Event: "purchase.reopened", Denial: UniformDenial,
+	},
+	{
+		Name: BulkReassign, Kind: FieldUpdate, Role: "approver", Subject: Others,
+		Status: "submitted", Column: "assigneeId", Param: "assignee",
+		Response: "reassignedIds", Inputs: []string{IDs, "assignee"}, Fingerprint: []string{IDs, "assignee"}, Record: AssignmentHistory,
+		Event: "purchase.reassigned", Denial: UniformDenial,
+	},
+	{
+		Name: CostCenter, Kind: FieldUpdate, Role: "approver", Subject: Others,
+		Status: "submitted", Column: "costCenterId", Param: "costCenter",
+		Response: "updatedIds", Inputs: []string{IDs, "costCenter"}, Fingerprint: []string{IDs, "costCenter"}, Record: CostCenterHistory,
+		Event: "purchase.cost_center_changed", Denial: UniformDenial,
+	},
+}

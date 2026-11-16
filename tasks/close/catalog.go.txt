@@ -1,0 +1,52 @@
+package opdef
+
+// Reviewed entries. Changing this file changes Digest and needs owner review.
+// v8b private catalog: the public entries plus the v8b task entry (never published).
+const (
+	BulkApprove  Name = "bulk-approve.v3"
+	BulkReject   Name = "bulk-reject.v4"
+	Reopen       Name = "reopen.v5"
+	Countersign  Name = "countersign.v6"
+	BulkReassign Name = "bulk-reassign.v6"
+	BulkClose    Name = "bulk-close.v8"
+)
+
+var catalog = []Operation{
+	{
+		Name: BulkApprove, Kind: Transition, Role: "approver", Subject: Others,
+		From: "submitted", To: "approved", Tier: &Tier{Over: 50000, To: "pending-second"},
+		Response: "approvedIds", Inputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		EventExemption: "predates the PurchaseEvent outbox; the daily digest reads approvals from ApprovalAudit",
+		Denial:         UniformDenial,
+	},
+	{
+		Name: BulkReject, Kind: Transition, Role: "approver", Subject: Others,
+		From: "submitted", To: "rejected",
+		Response: "rejectedIds", Inputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		Event: "purchase.rejected", Denial: UniformDenial,
+	},
+	{
+		Name: Reopen, Kind: Transition, Role: "requester", Subject: Own,
+		From: "rejected", To: "submitted",
+		Inputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		Event: "purchase.reopened", Denial: UniformDenial,
+	},
+	{
+		Name: Countersign, Kind: Transition, Role: "approver", Subject: Others,
+		From: "pending-second", To: "approved", Separation: DistinctFromPreviousApprover, ConfirmAmount: true,
+		Inputs: []string{IDs, Amount}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		Event: "purchase.countersigned", Denial: UniformDenial,
+	},
+	{
+		Name: BulkReassign, Kind: FieldUpdate, Role: "approver", Subject: Others,
+		Status: "submitted", Column: "assigneeId", Param: "assignee",
+		Response: "reassignedIds", Inputs: []string{IDs, "assignee"}, Fingerprint: []string{IDs, "assignee"}, Record: AssignmentHistory,
+		Event: "purchase.reassigned", Denial: UniformDenial,
+	},
+	{
+		Name: BulkClose, Kind: Transition, Role: "approver", Subject: Others,
+		From: "approved", To: "closed", Requires: FullyReceived,
+		Response: "closedIds", Inputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
+		Event: "purchase.closed", Denial: UniformDenial,
+	},
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""v7 private controller: fixtures / plan / prepare / export / restore / evaluate / summarize.
+"""v8b private controller: fixtures / plan / prepare / export / restore / evaluate / summarize.
 
 Plan, manifest, job and receipt formats are those of the public phase 3 worker
 (benchmark/phase3/generation_worker.py, vendored byte-identical), so a kit runs unchanged in the
@@ -27,8 +27,10 @@ HERE = ROOT / 'harness'
 WORKER = 'benchmark/phase3/generation_worker.py'
 # Provenance only: the public commit the vendored base sources (harness/source/common) were copied from.
 PUBLIC_BASE = '71a213de04c4644b837184b1888ff22b77c5090d'
-TASKS = ('withdraw', 'cost-center')
-CELLS = ('go-manual', 'go-manual-doc', 'go-action-opdef')
+TASKS = ('close', 'send-back', 'amend')
+# v8b compares two cells: hand-written (manual) and platform-given semantics executed by the kernel (given).
+CELLS = ('go-manual', 'go-action-opdef')
+VERSION = 8
 OBSERVED = {'passed', 'acceptance-failed', 'candidate-error', 'budget-exceeded', 'scope-violation'}
 UNMEASURED = {'runtime-blocked', 'provider-error', 'protocol-error', 'infrastructure-blocked'}
 SAFETY = ('unauthorized_write', 'partial_batch', 'side_effect_atomicity', 'double_apply', 'wrong_commit',
@@ -65,10 +67,8 @@ def layout(task, cell):
              'internal/app/server.go': C + 'server.go.txt', 'internal/app/demo_identity.go': C + 'demo_identity.go.txt',
              'internal/protocol/protocol.go': C + 'protocol.go.txt', 'internal/ledger/ledger.go': C + 'ledger.go.txt',
              'internal/ledger/reconcile.go': T + 'reconcile.go.txt', 'internal/notify/notify.go': T + 'notify.go.txt'}
-    if cell in ('go-manual', 'go-manual-doc'):
+    if cell == 'go-manual':
         files.update({'internal/candidate/' + n + '.go': M + n + '.go.txt' for n in ('approval', 'reject', 'reopen', 'countersign', 'reassign')})
-    if cell == 'go-manual-doc':
-        files['docs/OPERATIONS.md'] = T + 'OPERATIONS.md'
     if cell == 'go-action-opdef':
         files.update({'internal/opdef/opdef.go': O + 'opdef.go.txt', 'internal/opdef/catalog.go': T + 'catalog.go.txt',
                       'internal/opkernel/opkernel.go': O + 'opkernel.go.txt', 'internal/candidate/approval.go': O + 'approval.go.txt'})
@@ -105,8 +105,8 @@ def trials(plan, ident=None):
 
 def load_plan(path):
     value = json.loads(Path(path).read_text())
-    if value.get('version') != 7 or value.get('kind') not in ('model-trial', 'synthetic-smoke') or value.get('task') not in TASKS:
-        raise ValueError('v7 cohort plan required')
+    if value.get('version') != VERSION or value.get('kind') not in ('model-trial', 'synthetic-smoke') or value.get('task') not in TASKS:
+        raise ValueError('v8b cohort plan required')
     if set(value['frozen']) != set(frozen_paths(value['task'])): raise ValueError('incomplete harness manifest')
     for p, h in value['frozen'].items():
         if digest(ROOT / p) != h: raise ValueError('evaluator drift: ' + p)
@@ -125,7 +125,7 @@ def load_plan(path):
         if t['prompt'] != prompt(value['task'], t['cell']) or sha(t['prompt'].encode()) != t['prompt_sha256']:
             raise ValueError('prompt tamper')
     if not blocks or sorted(blocks) != list(range(1, len(blocks) + 1)) or any(b != set(CELLS) for b in blocks.values()):
-        raise ValueError('incomplete three-cell block')
+        raise ValueError('incomplete block')
     if value['exports'] != {c: {p: sha(d) for p, d in files(value['task'], c).items()} for c in CELLS}: raise ValueError('export drift')
     v = verifier().manifest(value['task'])
     if {k: value['verifier'][k] for k in v} != v or not value['verifier']['catalog_digest'].startswith('sha256:'):
@@ -133,13 +133,13 @@ def load_plan(path):
     return value
 
 
-def verifier(): return module('v7_verifier', HERE / 'verifier.py')
+def verifier(): return module('v8b_verifier', HERE / 'verifier.py')
 
 
 def database_env():
     """Measured evaluation database (version, collation, ctype) plus the operator-declared image (POC_PG_IMAGE)."""
     import tempfile
-    oracle = module('v7_oracle_env', HERE / 'oracle.py')
+    oracle = module('v8b_oracle_env', HERE / 'oracle.py')
     with tempfile.TemporaryDirectory() as tmp:
         db = oracle.Database(dbrpc(Path(tmp)))
         try:
@@ -158,7 +158,7 @@ def plan(args):
     private = json.loads(Path(args.fixtures).read_text())
     if private.get('version') != 1 or len(private.get('seed', '')) < 32: raise ValueError('private seed required')
     if args.repetitions not in range(1, 101) or args.time_budget < 1: raise ValueError('invalid repetitions/budget')
-    value = {'version': 7, 'kind': 'synthetic-smoke' if args.synthetic else 'model-trial', 'task': args.task,
+    value = {'version': VERSION, 'kind': 'synthetic-smoke' if args.synthetic else 'model-trial', 'task': args.task,
              'operation': contract(args.task)['operation'], 'base_sha': PUBLIC_BASE, 'harness_sha': git(ROOT, 'rev-parse', 'HEAD'),
              'frozen': {p: digest(ROOT / p) for p in frozen_paths(args.task)}, 'fixtures_sha256': digest(args.fixtures),
              'seed': args.seed, 'model': args.model, 'reasoning_effort': args.reasoning_effort, 'engine': args.engine,
@@ -193,8 +193,8 @@ def export_candidate(args):
         path = candidate / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(data)
     process(['git', 'init', '-q', '-b', 'candidate'], cwd=candidate)
     process(['git', 'add', '.'], cwd=candidate)
-    process(['git', '-c', 'user.name=POC Export', '-c', 'user.email=poc@example.invalid', 'commit', '-q', '-m', 'v7 shared base'], cwd=candidate)
-    save(manifest, {'version': 7, 'trial_id': t['id'], 'plan_sha256': digest(args.plan), 'initial_sha': git(candidate, 'rev-parse', 'HEAD'),
+    process(['git', '-c', 'user.name=POC Export', '-c', 'user.email=poc@example.invalid', 'commit', '-q', '-m', 'v8b shared base'], cwd=candidate)
+    save(manifest, {'version': VERSION, 'trial_id': t['id'], 'plan_sha256': digest(args.plan), 'initial_sha': git(candidate, 'rev-parse', 'HEAD'),
                     'source_base_sha': p['base_sha'], 'files': p['exports'][t['cell']]})
 
 
@@ -206,7 +206,7 @@ def prepare(args):
     export_candidate(argparse.Namespace(plan=args.plan, trial=args.trial, candidate=out / 'candidate', manifest=out / 'manifest.json'))
     (out / 'plan.json').write_bytes(Path(args.plan).read_bytes())
     (out / 'worker.py').write_bytes((ROOT / WORKER).read_bytes())
-    save(out / 'job.json', {'version': 7, 'kind': p['kind'], 'plan_sha256': digest(args.plan), 'trial': t,
+    save(out / 'job.json', {'version': VERSION, 'kind': p['kind'], 'plan_sha256': digest(args.plan), 'trial': t,
                             'manifest_sha256': digest(out / 'manifest.json'), 'worker_sha256': digest(out / 'worker.py'),
                             'model': p['model'], 'reasoning_effort': p['reasoning_effort'],
                             'generation_budget_seconds': p['generation_budget_seconds'], 'engine': p['engine']})
@@ -217,7 +217,7 @@ def validate_candidate(args, p):
     if candidate == ROOT or candidate.is_relative_to(ROOT) or manifest.is_relative_to(candidate):
         raise ValueError('invalid candidate/attestation boundary')
     m = json.loads(manifest.read_text()); initial = m['initial_sha']
-    if (m.get('version') != 7 or m['trial_id'] != t['id'] or m['plan_sha256'] != digest(args.plan)
+    if (m.get('version') != VERSION or m['trial_id'] != t['id'] or m['plan_sha256'] != digest(args.plan)
             or m['source_base_sha'] != p['base_sha'] or m['files'] != p['exports'][t['cell']]):
         raise ValueError('export attestation mismatch')
     if git(candidate, 'rev-list', '--count', initial) != '1' or git(candidate, 'remote'): raise ValueError('export history/remote violation')
@@ -301,9 +301,9 @@ def evaluate(args):
     port = os.environ.get('POC_HTTP_PORT', '8080')
     with socket.socket() as probe:
         if probe.connect_ex(('127.0.0.1', int(port))) == 0: raise ValueError('evaluation port occupied')
-    result = {'version': 7, 'task': p['task'], **{k: r[k] for k in ('kind', 'plan_sha256', 'trial', 'candidate_sha', 'manifest_sha256', 'generation')},
+    result = {'version': VERSION, 'task': p['task'], **{k: r[k] for k in ('kind', 'plan_sha256', 'trial', 'candidate_sha', 'manifest_sha256', 'generation')},
               'cases': [], 'passed': False}
-    oracle = module('v7_oracle', HERE / 'oracle.py')
+    oracle = module('v8b_oracle', HERE / 'oracle.py')
     server = None; db = None; binary = out / 'server'; start = time.monotonic()
     try:
         process([go(), 'version'], timeout=10)
@@ -366,14 +366,14 @@ def summarize(args):
         if not Path(directory).is_dir(): raise ValueError('result directory does not exist: ' + str(directory))
         for path in Path(directory).rglob('result.json'):
             r = json.loads(path.read_text()); ident = r['trial']['id']
-            # Version 3 records are worker generation outcomes; version 7 are evaluations.
-            if r.get('version') not in (3, 7) or r['kind'] != p['kind'] or r['plan_sha256'] != digest(args.plan) or r['trial'] != known.get(ident):
+            # Version 3 records are worker generation outcomes; version 8 are evaluations.
+            if r.get('version') not in (3, VERSION) or r['kind'] != p['kind'] or r['plan_sha256'] != digest(args.plan) or r['trial'] != known.get(ident):
                 raise ValueError('foreign trial/cohort')
             if ident in records: raise ValueError('duplicate/conflicting trial: ' + ident)
             if r['outcome'] not in OBSERVED | UNMEASURED: raise ValueError('unknown outcome')
             if (r.get('passed') is True) != (r['outcome'] == 'passed'): raise ValueError('inconsistent pass flag')
             if r['outcome'] in ('passed', 'acceptance-failed'):
-                if r['version'] != 7: raise ValueError('acceptance outcome without evaluation')
+                if r['version'] != VERSION: raise ValueError('acceptance outcome without evaluation')
                 scored = score(p['task'], r.get('cases', []))
                 if any(r.get(k) != v for k, v in scored.items()): raise ValueError('score mismatch')
             records[ident] = r
@@ -400,7 +400,7 @@ def summarize(args):
                      'credits_total': known_credits, 'generation_seconds_total': known_seconds,
                      'credits_per_correct': None if known_credits is None or not passed else round(known_credits / passed, 4),
                      'seconds_per_correct': None if known_seconds is None or not passed else round(known_seconds / passed, 3)})
-    value = {'version': 7, 'kind': p['kind'], 'task': p['task'], 'plan_sha256': digest(args.plan), 'rows': rows,
+    value = {'version': VERSION, 'kind': p['kind'], 'task': p['task'], 'plan_sha256': digest(args.plan), 'rows': rows,
              'note': 'A/E/K/D and safety are reported separately. Cost per correct result = total over observed trials / passed trials '
                      '(unknown if any observed trial lacks usage). Synthetic controls are not model evidence.'}
     if args.output: save(args.output, value)
@@ -432,7 +432,7 @@ def main():
         return {'fixtures': fixtures, 'plan': plan, 'prepare': prepare, 'export': export_candidate, 'restore': restore,
                 'evaluate': evaluate, 'summarize': summarize}[args.command](args) or 0
     except Exception as error:
-        print('v7 error: ' + str(error), file=sys.stderr); return 1
+        print('v8b error: ' + str(error), file=sys.stderr); return 1
 
 
 if __name__ == '__main__':

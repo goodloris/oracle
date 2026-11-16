@@ -5,16 +5,18 @@
 # image (option B); it must match POC_PG_IMAGE in scripts/host_env.sh.
 IMAGE=${POC_PG_IMAGE:-postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341}
 # Usage: host_db.sh up|down <lane> [host]
+# Lanes and ports are shared with v8a (run one after the other). Containers carry the label poc.owner=v8b; up refuses
+# to start while another container holds the name, and down removes only a v8b container.
 set -eu
 ACTION=$1; LANE=$2; HOST=${3:-root@10.30.11.112}
 case "$LANE" in 1|2|3|4) ;; *) echo "lane must be 1..4" >&2; exit 2 ;; esac
 NAME=poc-oracle-pg-$LANE; PORT=$((56700+LANE))
 if [ "$ACTION" = up ]; then
-  ssh -o BatchMode=yes "$HOST" "docker run -d --rm --name $NAME -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=enterprise_agent_poc \
+  ssh -o BatchMode=yes "$HOST" "docker run -d --rm --name $NAME --label poc.owner=v8b -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=enterprise_agent_poc \
     -p 127.0.0.1:$PORT:5432 $IMAGE >/dev/null && for i in \$(seq 60); do docker exec $NAME pg_isready -U postgres -d enterprise_agent_poc -q && \
     docker exec $NAME psql -U postgres -d enterprise_agent_poc -Atc 'select 1' >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1"
   echo "$NAME up on 127.0.0.1:$PORT"
 else
-  ssh -o BatchMode=yes "$HOST" "docker rm -f $NAME >/dev/null 2>&1 || true"
+  ssh -o BatchMode=yes "$HOST" "if [ \"\$(docker inspect -f '{{index .Config.Labels \"poc.owner\"}}' $NAME 2>/dev/null)\" = v8b ]; then docker rm -f $NAME >/dev/null; elif docker inspect $NAME >/dev/null 2>&1; then echo '$NAME is not a v8b container; left running' >&2; exit 1; fi"
   echo "$NAME removed"
 fi

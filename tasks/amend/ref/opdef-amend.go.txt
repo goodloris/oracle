@@ -1,0 +1,25 @@
+package candidate
+
+import (
+	"context"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/opdef"
+	"github.com/XUJiahua/enterprise_agent/internal/opkernel"
+	"github.com/XUJiahua/enterprise_agent/internal/protocol"
+)
+
+func amendments(exec *opkernel.Executor) protocol.AmendHandler {
+	op := entry(opdef.BulkAmend)
+	return func(ctx context.Context, u app.Identity, key string, ids []string, amounts map[string]int, reason string) (protocol.AmendResult, bool, error) {
+		done, replayed, err := exec.Run(ctx, u, opdef.BulkAmend, key, opkernel.Request{IDs: ids, Amounts: amounts, Reason: reason})
+		if err != nil {
+			return protocol.AmendResult{}, false, adapt(err)
+		}
+		items := make([]protocol.AmendItem, len(done))
+		for i, id := range done {
+			items[i] = protocol.AmendItem{ID: id, Amount: amounts[id]}
+		}
+		return protocol.AmendResult{Field: op.Response, Items: items}, replayed, nil
+	}
+}

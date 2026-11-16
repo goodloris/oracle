@@ -1,0 +1,443 @@
+{
+  "variants": {
+    "ref-go-manual": {
+      "cell": "go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items), nil",
+          "new": "\treturn protocol.Amend(\"/purchases/bulk-amend\", newAmend(pool), protocol.Assign(\"/purchases/bulk-reassign\", newReassign(pool), items)), nil"
+        }
+      ],
+      "add": {
+        "internal/candidate/amend.go": "ref/manual-amend.go.txt"
+      }
+    },
+    "ref-go-action-opdef": {
+      "cell": "go-action-opdef",
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Amend(\"/purchases/bulk-amend\", amendments(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        }
+      ],
+      "add": {
+        "internal/candidate/amend.go": "ref/opdef-amend.go.txt"
+      }
+    },
+    "neg-history": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"AmendmentHistory\" (\"tenantId\",\"purchaseId\",\"fromAmount\",\"toAmount\",\"changedBy\",operation,\"idempotencyKey\",reason) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,\n\t\t\t\tu.Tenant, id, from, to, u.User, opAmend, key, reason)\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-request-hash": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "fmt.Sprintf(\"%s=%d\", id, amounts[id])",
+          "new": "fmt.Sprintf(\"%s:%d\", id, amounts[id])"
+        }
+      ]
+    },
+    "neg-outbox": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.amended',$3,$4)`,\n\t\t\t\tu.Tenant, id, u.User, key)\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-uniform-denial": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\tif !ok || int64(to)*100 > int64(from)*(100+maxIncreasePercent) || (from > secondApprovalOver) != (to > secondApprovalOver) {\n\t\t\t\treturn protocol.AmendResult{}, false, &protocol.Rejection{Status: 409}\n\t\t\t}\n",
+          "new": "\t\t\tif !ok {\n\t\t\t\treturn protocol.AmendResult{}, false, &protocol.Rejection{Status: 409}\n\t\t\t}\n\t\t\tif int64(to)*100 > int64(from)*(100+maxIncreasePercent) || (from > secondApprovalOver) != (to > secondApprovalOver) {\n\t\t\t\t// An unacceptable amount is a validation problem of the request.\n\t\t\t\treturn protocol.AmendResult{}, false, &protocol.Rejection{Status: 422}\n\t\t\t}\n"
+        }
+      ]
+    },
+    "neg-explicit-manual": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "result := protocol.AmendResult{Field: \"amended\", Items: items}",
+          "new": "result := protocol.AmendResult{Field: \"items\", Items: items}"
+        }
+      ]
+    },
+    "neg-explicit-opdef": {
+      "base": "ref-go-action-opdef",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\treturn protocol.AmendResult{}, false, adapt(err)",
+          "new": "\t\t\tif rejected, ok := adapt(err).(*protocol.Rejection); ok && rejected.Status == 409 {\n\t\t\t\treturn protocol.AmendResult{}, false, &protocol.Rejection{Status: 422}\n\t\t\t}\n\t\t\treturn protocol.AmendResult{}, false, adapt(err)"
+        }
+      ]
+    },
+    "crash": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\treturn func(ctx context.Context, u app.Identity, key string, ids []string, amounts map[string]int, reason string) (protocol.AmendResult, bool, error) {\n",
+          "new": "\treturn func(ctx context.Context, u app.Identity, key string, ids []string, amounts map[string]int, reason string) (protocol.AmendResult, bool, error) {\n\t\tgo func() { panic(\"v8b crash control\") }()\n"
+        }
+      ]
+    },
+    "safety-unauthorized-write": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "if !ok || int64(to)*100 > int64(from)*(100+maxIncreasePercent) || (from",
+          "new": "if !ok || (from"
+        }
+      ]
+    },
+    "safety-partial-batch": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\tif !ok || int64(to)*100 > int64(from)*(100+maxIncreasePercent) || (from > secondApprovalOver) != (to > secondApprovalOver) {\n\t\t\t\treturn protocol.AmendResult{}, false, &protocol.Rejection{Status: 409}\n\t\t\t}\n",
+          "new": "\t\t\tif !ok || int64(to)*100 > int64(from)*(100+maxIncreasePercent) || (from > secondApprovalOver) != (to > secondApprovalOver) {\n\t\t\t\t// Keep the items accepted so far.\n\t\t\t\tif batch.Len() > 0 {\n\t\t\t\t\t_ = tx.SendBatch(ctx, batch).Close()\n\t\t\t\t\t_ = tx.Commit(ctx)\n\t\t\t\t}\n\t\t\t\treturn protocol.AmendResult{}, false, &protocol.Rejection{Status: 409}\n\t\t\t}\n"
+        }
+      ]
+    },
+    "safety-side-effect-atomicity": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"AmendmentHistory\" (\"tenantId\",\"purchaseId\",\"fromAmount\",\"toAmount\",\"changedBy\",operation,\"idempotencyKey\",reason) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,\n\t\t\t\tu.Tenant, id, from, to, u.User, opAmend, key, reason)\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.AmendResult{}, false, err\n\t\t}\n\t\treturn result, false, nil",
+          "new": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.AmendResult{}, false, err\n\t\t}\n\t\t// The change log is written once the amounts are safely committed.\n\t\tout, err := pool.Begin(ctx)\n\t\tif err != nil {\n\t\t\treturn protocol.AmendResult{}, false, err\n\t\t}\n\t\tdefer out.Rollback(ctx)\n\t\tif _, err = out.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {\n\t\t\treturn protocol.AmendResult{}, false, err\n\t\t}\n\t\tfor _, id := range ids {\n\t\t\tif _, err = out.Exec(ctx, `INSERT INTO \"AmendmentHistory\" (\"tenantId\",\"purchaseId\",\"fromAmount\",\"toAmount\",\"changedBy\",operation,\"idempotencyKey\",reason) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,\n\t\t\t\tu.Tenant, id, old[id], amounts[id], u.User, opAmend, key, reason); err != nil {\n\t\t\t\treturn protocol.AmendResult{}, false, err\n\t\t\t}\n\t\t}\n\t\tif err = out.Commit(ctx); err != nil {\n\t\t\treturn protocol.AmendResult{}, false, err\n\t\t}\n\t\treturn result, false, nil"
+        }
+      ]
+    },
+    "safety-double-apply": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\trows, err := tx.Query(ctx, `SELECT id,amount FROM \"Purchase\" WHERE id=ANY($1::text[]) AND \"tenantId\"=$2 AND \"createdBy\"=$3 AND status='submitted' FOR UPDATE`,",
+          "new": "\t\trows, err := tx.Query(ctx, `SELECT id,amount FROM \"Purchase\" WHERE id=ANY($1::text[]) AND \"tenantId\"=$2 AND \"createdBy\"=$3 AND status='submitted'`,"
+        },
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t// An ineligible target and an unacceptable amount are refused alike, for the whole batch.\n",
+          "new": "\t\tif _, err = tx.Exec(ctx, `SELECT pg_sleep(0.3)`); err != nil {\n\t\t\treturn protocol.AmendResult{}, false, err\n\t\t}\n\t\t// An ineligible target and an unacceptable amount are refused alike, for the whole batch.\n"
+        }
+      ]
+    },
+    "safety-wrong-commit": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "UPDATE \"Purchase\" SET amount=$4 WHERE",
+          "new": "UPDATE \"Purchase\" SET amount=$4,\"assigneeId\"=NULL WHERE"
+        }
+      ]
+    },
+    "safety-service-error": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t// An ineligible target and an unacceptable amount are refused alike, for the whole batch.\n",
+          "new": "\t\tif len(old) != len(ids) {\n\t\t\treturn protocol.AmendResult{}, false, errors.New(\"purchase not found\")\n\t\t}\n\t\t// An ineligible target and an unacceptable amount are refused alike, for the whole batch.\n"
+        }
+      ]
+    },
+    "safety-undecidable": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\"strings\"\n",
+          "new": "\t\"strings\"\n\t\"time\"\n"
+        },
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\tif strings.ContainsRune(id, 0) {",
+          "new": "\t\t\tif strings.ContainsRune(id, '界') {\n\t\t\t\ttime.Sleep(12 * time.Second)\n\t\t\t}\n\t\t\tif strings.ContainsRune(id, 0) {"
+        }
+      ]
+    },
+    "neg-db-order-history": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\trows, err := tx.Query(ctx, `SELECT id,amount FROM \"Purchase\" WHERE id=ANY($1::text[]) AND \"tenantId\"=$2 AND \"createdBy\"=$3 AND status='submitted' FOR UPDATE`,",
+          "new": "\t\trows, err := tx.Query(ctx, `SELECT id,amount FROM \"Purchase\" WHERE id=ANY($1::text[]) AND \"tenantId\"=$2 AND \"createdBy\"=$3 AND status='submitted' ORDER BY id FOR UPDATE`,"
+        },
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\told := map[string]int{}\n",
+          "new": "\t\told := map[string]int{}\n\t\tvar ordered []int\n"
+        },
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\told[id] = amount\n",
+          "new": "\t\t\told[id] = amount\n\t\t\tordered = append(ordered, amount)\n"
+        },
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "\t\t\tfrom, ok := old[id]\n",
+          "new": "\t\t\t_, ok := old[id]\n\t\t\tfrom := 0\n\t\t\tif i < len(ordered) {\n\t\t\t\tfrom = ordered[i]\n\t\t\t}\n"
+        }
+      ]
+    },
+    "neg-db-order-response": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/amend.go",
+          "old": "result := protocol.AmendResult{Field: \"amended\", Items: items}",
+          "new": "var ordered []string\n\t\tif err = tx.QueryRow(ctx, `SELECT array_agg(id ORDER BY id) FROM \"Purchase\" WHERE id=ANY($1::text[])`, ids).Scan(&ordered); err != nil {\n\t\t\treturn protocol.AmendResult{}, false, err\n\t\t}\n\t\tfor i, id := range ordered {\n\t\t\titems[i] = protocol.AmendItem{ID: id, Amount: amounts[id]}\n\t\t}\n\t\tresult := protocol.AmendResult{Field: \"amended\", Items: items}"
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "variant": "ref-go-manual",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      },
+      "private_verifier": {
+        "verdict": "fail",
+        "codes": [
+          "FINGERPRINT_INPUT_MISSING"
+        ]
+      },
+      "note": "The public Verifier rule binds every non-ID fingerprint input into the digest domain (name+\"\\n\"+value); an itemised request binds its values into the digested items instead, which this unmodified rule reports as FINGERPRINT_INPUT_MISSING."
+    },
+    {
+      "variant": "ref-go-action-opdef",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "neg-history",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ]
+      }
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ]
+      }
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ]
+      }
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-functional",
+          "amend-idempotency",
+          "amend-concurrency",
+          "amend-failure-rollback",
+          "amend-lifecycle"
+        ]
+      },
+      "note": "the replay reads amended from a response stored as items, so the concurrent replay returns null"
+    },
+    {
+      "variant": "neg-explicit-opdef",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-idempotency"
+        ]
+      }
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "expect": {
+        "outcome": "candidate-error"
+      }
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-value",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      }
+    },
+    {
+      "variant": "safety-partial-batch",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-eligibility",
+          "amend-value"
+        ],
+        "safety": [
+          "partial_batch"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      }
+    },
+    {
+      "variant": "safety-wrong-commit",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-functional",
+          "amend-idempotency",
+          "amend-concurrency",
+          "amend-failure-rollback",
+          "amend-lifecycle"
+        ],
+        "safety": [
+          "wrong_commit"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      }
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-functional",
+          "implicit-request-hash"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      }
+    },
+    {
+      "variant": "neg-db-order-history",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-functional",
+          "implicit-history"
+        ]
+      },
+      "note": "pairs old amounts with targets by database order; only a linguistic collation separates it from the reference"
+    },
+    {
+      "variant": "neg-db-order-response",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "amend-functional"
+        ]
+      },
+      "note": "returns the amended items in database order instead of UTF-8 byte order"
+    }
+  ]
+}

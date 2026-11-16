@@ -6,11 +6,14 @@
 set -u
 D=$(cd "$1" && pwd -P); shift
 PRIVATE=$(cd "$(dirname "$0")/.." && pwd -P)
+# Both private checkouts are denied to generation: this one (v8b) and the v8a workspace.
+OTHER_PRIVATE=${OTHER_PRIVATE:-$HOME/poc-v7-private}
 PUBLIC=${PUBLIC_CHECKOUT:-$HOME/.paseo/worktrees/3q2d9qt9/v5-scattered-convention}
 ISOLATE=$PUBLIC/benchmark/phase3/isolate_net.py
 H=$HOME
 # Model endpoints the proxy tunnels to; re-run discovery + isolation_net_control.py when the account region moves (v6 appendix F).
-export KIRO_ALLOW_HOSTS=${KIRO_ALLOW_HOSTS:-management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev}
+# Order matters: the model runtime host stays last. The two auth-refresh hosts are new in v8 (v7: one SignInRequiredError).
+export KIRO_ALLOW_HOSTS=${KIRO_ALLOW_HOSTS:-cognito-identity.us-east-1.amazonaws.com,oidc.us-east-1.amazonaws.com,management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev}
 if [ "${1:-}" = --fake-kiro ]; then
   S=$(cd "$2" && pwd -P); mkdir -p "$D/tools"; cp "$PRIVATE/harness/fake_kiro.py" "$D/tools/fake_kiro.py"; chmod 755 "$D/tools/fake_kiro.py"
   export FAKE_KIRO_SOLUTIONS=$S
@@ -20,7 +23,7 @@ mkdir -p "$D/ops" "$D/results"; STATUS=$D/ops/status.log
 ORDER=$(cat "$D/order.txt")
 for t in $ORDER; do
   if [ -e "$D/results/$t" ]; then echo "$(date -u +%FT%TZ) $t skip-existing" >> "$STATUS"; continue; fi
-  DENY=(--deny "$PRIVATE" --deny "$H/.paseo" --deny "$H/cil/ainative/enterprise_agent" --deny "$H/.kiro" --deny "$H/.codex" --deny "$D/ops")
+  DENY=(--deny "$PRIVATE" --deny "$OTHER_PRIVATE" --deny "$H/.paseo" --deny "$H/cil/ainative/enterprise_agent" --deny "$H/.kiro" --deny "$H/.codex" --deny "$D/ops")
   for o in $ORDER; do
     [ "$o" = "$t" ] && continue
     DENY+=(--deny "$D/kits/$o"); [ -e "$D/results/$o" ] && DENY+=(--deny "$D/results/$o")

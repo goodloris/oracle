@@ -234,6 +234,106 @@ func decodeParam(body []byte, name string) ([]string, string, bool) {
 	return ids, *value, err == nil
 }
 
+// AmendItem is one target of an itemised Action and its requested amount.
+type AmendItem struct {
+	ID     string `json:"id"`
+	Amount int    `json:"amount"`
+}
+
+// AmendResult is encoded as {"<Field>":[{"id":...,"amount":...},...]}.
+type AmendResult struct {
+	Field string
+	Items []AmendItem
+}
+
+func (r AmendResult) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string][]AmendItem{r.Field: r.Items})
+}
+
+// AmendHandler receives an authenticated requester, one valid Idempotency-Key,
+// canonical (sorted, unique, 1..100) IDs, the requested amount of every ID and
+// the request reason.
+type AmendHandler func(ctx context.Context, u app.Identity, key string, ids []string, amounts map[string]int, reason string) (AmendResult, bool, error)
+
+// Amend serves POST path for requesters: a batch Action with one value per target.
+// The body must be exactly {"items":[{"id":"...","amount":N},...],"reason":"..."}
+// with 1..100 items of distinct IDs, integer amounts in 1..2147483647 and a
+// 1..200 byte reason; other requests go to next.
+func Amend(path string, handle AmendHandler, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != path {
+			next.ServeHTTP(w, r)
+			return
+		}
+		u, ok := app.AuthenticateDemo(r.Header.Get("Authorization"))
+		if !ok {
+			reject(w, 401)
+			return
+		}
+		if u.Role != "requester" {
+			reject(w, 403)
+			return
+		}
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxBodyBytes))
+		if err != nil {
+			var large *http.MaxBytesError
+			if errors.As(err, &large) {
+				reject(w, 413)
+			} else {
+				reject(w, 400)
+			}
+			return
+		}
+		ids, amounts, reason, ok := decodeAmend(body)
+		keys := r.Header.Values("Idempotency-Key")
+		if !ok || len(keys) != 1 || !validKey(keys[0]) {
+			reject(w, 400)
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+		result, replayed, err := handle(ctx, u, keys[0], ids, amounts, reason)
+		respond(w, result, replayed, err)
+	})
+}
+
+func decodeAmend(body []byte) ([]string, map[string]int, string, bool) {
+	if !utf8.Valid(body) {
+		return nil, nil, "", false
+	}
+	d := json.NewDecoder(bytes.NewReader(body))
+	d.DisallowUnknownFields()
+	var value struct {
+		Items []struct {
+			ID     *string          `json:"id"`
+			Amount *json.RawMessage `json:"amount"`
+		} `json:"items"`
+		Reason *string `json:"reason"`
+	}
+	if d.Decode(&value) != nil || d.Decode(new(any)) != io.EOF || value.Items == nil || value.Reason == nil {
+		return nil, nil, "", false
+	}
+	reason := *value.Reason
+	if len(reason) < 1 || len(reason) > 200 || strings.ContainsRune(reason, 0) {
+		return nil, nil, "", false
+	}
+	ids := make([]string, 0, len(value.Items))
+	amounts := map[string]int{}
+	for _, item := range value.Items {
+		if item.ID == nil || item.Amount == nil || strings.ContainsRune(*item.ID, 0) {
+			return nil, nil, "", false
+		}
+		n, err := strconv.ParseInt(string(*item.Amount), 10, 32)
+		if err != nil || n < 1 {
+			return nil, nil, "", false
+		}
+		ids = append(ids, *item.ID)
+		amounts[*item.ID] = int(n)
+	}
+	ids, err := canonical(ids)
+	return ids, amounts, reason, err == nil
+}
+
 // ConfirmHandler receives an identity with the route's role, one valid
 // Idempotency-Key, the path ID and the amount the caller confirmed.
 type ConfirmHandler func(ctx context.Context, u app.Identity, key, id string, amount int) (ItemResult, bool, error)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""v7 positive/negative/safety/crash controls on real PostgreSQL, plus static harness checks.
+"""v8b positive/negative/safety/crash controls on real PostgreSQL, plus static harness checks.
 
 Every control is a variant of a cell's export (tasks/<task>/controls.json): files added under
 internal/candidate/ and exact-once string edits, optionally on top of another variant. A control is
@@ -53,7 +53,7 @@ def freeze(work, plan, trial, candidate, manifest, directory):
     directory.mkdir(parents=True)
     initial = json.loads(manifest.read_text())['initial_sha']
     ctl.process(['git', 'add', '--all'], cwd=candidate)
-    ctl.process(['git', '-c', 'user.name=POC v7', '-c', 'user.email=poc@example.invalid', 'commit', '-q', '--allow-empty', '-m', 'v7 control'], cwd=candidate)
+    ctl.process(['git', '-c', 'user.name=POC v8b', '-c', 'user.email=poc@example.invalid', 'commit', '-q', '--allow-empty', '-m', 'v8b control'], cwd=candidate)
     ctl.process(['git', 'bundle', 'create', '-q', directory / 'candidate.bundle', 'HEAD'], cwd=candidate)
     (directory / 'candidate.patch').write_bytes(subprocess.check_output(['git', '-C', str(candidate), 'diff', '--binary', initial, 'HEAD']))
     p = json.loads(plan.read_text())
@@ -85,14 +85,16 @@ def evaluate_control(task, spec, name, work, plan, fixtures):
 
 
 def verifier_check(public, control, result, restored, initial):
-    """Private Verifier: references must pass. Public Verifier (public catalog): must never pass a v7 candidate;
-    on a go-action-opdef candidate it must report CATALOG_DRIFT."""
+    """Private Verifier: references must pass (or get the verdict the control records with its reason). Public Verifier
+    (public catalog): must never pass a v8b candidate; on a go-action-opdef candidate it must report CATALOG_DRIFT."""
     import verifier
     private = result.get('verifier') or {}
     pub = verifier.check(public, restored, initial)
     ok = pub['verdict'] != 'pass' and pub['exit'] != 0
     if control['cell'] == 'go-action-opdef': ok = ok and 'CATALOG_DRIFT' in pub['codes']
-    if control['kind'] == 'reference': ok = ok and private.get('verdict') == 'pass'
+    if control['kind'] == 'reference':
+        want = control.get('private_verifier', {'verdict': 'pass'})
+        ok = ok and private.get('verdict') == want['verdict'] and set(want.get('codes', [])) <= set(private.get('codes', []))
     return ok, {'private': {k: private.get(k) for k in ('exit', 'verdict', 'codes', 'error') if k in private},
                 'public': {k: pub.get(k) for k in ('exit', 'verdict', 'codes')}}
 
@@ -108,36 +110,31 @@ def compare(expect, result):
 
 
 def static_checks(task):
-    """Harness properties that need no database: clues, task text, prompts, document equivalence, kit contents."""
+    """Harness properties that need no database: clues, task text, prompts, kit contents."""
     c = ctl.contract(task)
     out = {}
     exports = {cell: ctl.files(task, cell) for cell in ctl.CELLS}
     missing = []
     for g, conv in c['conventions'].items():
         for cell, sources in conv['sources'].items():
-            cells = [cell] + (['go-manual-doc'] if cell == 'go-manual' else [])
-            for target in cells:
-                for path, text in sources:
-                    if text not in exports[target].get(path, b'').decode():
-                        missing.append([g, target, path, text])
+            for path, text in sources:
+                if text not in exports[cell].get(path, b'').decode():
+                    missing.append([g, cell, path, text])
     out['clues_present'] = not missing
     if missing: out['missing_clues'] = missing
+    out['every_convention_has_clues_in_both_cells'] = all(len(conv['sources'].get(cell, [])) >= 2 for conv in c['conventions'].values()
+                                                          for cell in ctl.CELLS)
     out['task_text_has_no_forbidden_words'] = not [w for w in c['forbidden_in_task'] if w.lower() in c['requirements'].lower()]
     prompts = {cell: ctl.prompt(task, cell).splitlines() for cell in ctl.CELLS}
     lines = [set(p) for p in prompts.values()]
     out['prompts_differ_only_in_capability'] = all(len(p) == len(prompts['go-manual']) for p in prompts.values()) and \
         set.intersection(*lines) == set(prompts['go-manual']) - {c['capability']['go-manual']}
-    m, d = exports['go-manual'], exports['go-manual-doc']
-    out['doc_cell_is_manual_plus_document'] = set(d) - set(m) == {'docs/OPERATIONS.md'} and all(d[k] == v for k, v in m.items())
-    r = run([PY, ROOT / 'harness/opdoc.py', task, '--check'], timeout=300)
-    out['document_equals_catalog'] = r.returncode == 0
-    allowed = ('go.mod', 'go.sum', 'TASK.md', 'SCHEMA.sql', '.gitignore', 'cmd/', 'internal/', 'docs/OPERATIONS.md')
+    allowed = ('go.mod', 'go.sum', 'TASK.md', 'SCHEMA.sql', '.gitignore', 'cmd/', 'internal/')
     names = {n for e in exports.values() for n in e}
     out['kits_hold_only_service_sources'] = all(n.startswith(allowed) for n in names) and \
         not any('oracle' in n or 'seed' in n or 'controls' in n for n in names)
-    other = [t for t in ctl.TASKS if t != task][0]
-    leak = ctl.contract(other)['operation']
-    out['no_other_task_operation_in_exports'] = not any(leak.encode() in data for e in exports.values() for data in e.values())
+    leaks = [ctl.contract(t)['operation'] for t in ctl.TASKS if t != task]
+    out['no_other_task_operation_in_exports'] = not any(op.encode() in data for op in leaks for e in exports.values() for data in e.values())
     public = os.environ.get('PUBLIC_WORKER')
     if public:
         out['vendored_worker_equals_public'] = ctl.digest(public) == ctl.digest(ROOT / ctl.WORKER)

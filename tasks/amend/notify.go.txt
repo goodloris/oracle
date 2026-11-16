@@ -27,8 +27,8 @@ func audience(eventType string) (string, bool) {
 		return "tenant-approvers", true
 	case "purchase.reassigned":
 		return "assignee", true
-	case "purchase.withdrawn":
-		return "assignee", true
+	case "purchase.amended":
+		return "tenant-approvers", true
 	}
 	return "", false
 }

@@ -1,0 +1,57 @@
+package opkernel
+
+import (
+	"context"
+	"os"
+	"testing"
+
+	"github.com/XUJiahua/enterprise_agent/internal/opdef"
+)
+
+// v8b private regression (copied into the overlaid public tree by harness/kernel_regression.py):
+// under a linguistic collation ORDER BY p.id differs from the Go byte order of ids ("B2" < "a1" in bytes,
+// "a1" < "B2" in en-US). The private kernel must pair every old value with its own target, both for the
+// field update (assigneeId -> AssignmentHistory) and for the amend kind (amount -> AmendmentHistory).
+// V8B_ID_COLLATION=icu switches Purchase.id to ICU en-US; =default keeps the database default collation
+// (glibc en_US.utf8 on the evaluation host), which must itself be linguistic for the test to mean anything.
+func TestV8bOldValuesPairByIDUnderLinguisticCollation(t *testing.T) {
+	d := open(t)
+	ctx := context.Background()
+	sqls := []string{`DROP TABLE IF EXISTS "AmendmentHistory" CASCADE`}
+	switch os.Getenv("V8B_ID_COLLATION") {
+	case "icu":
+		var icu bool
+		if err := d.admin.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM pg_collation WHERE collname='en-US-x-icu')`).Scan(&icu); err != nil || !icu {
+			t.Fatal("ICU collation en-US-x-icu required for the v8b regression") // never a skip
+		}
+		sqls = append(sqls, `ALTER TABLE "Purchase" ALTER COLUMN id TYPE text COLLATE "en-US-x-icu"`)
+	case "default":
+	default:
+		t.Fatal("V8B_ID_COLLATION must be icu or default")
+	}
+	for _, sql := range append(sqls, read(t, "tasks/amend/schema.sql")) {
+		if _, err := d.admin.Exec(ctx, sql); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d.purchase("a1", "alice", 1000, "submitted")
+	d.purchase("B2", "alice", 1001, "submitted")
+	if _, err := d.admin.Exec(ctx, `UPDATE "Purchase" SET "assigneeId"=CASE id WHEN 'a1' THEN 'carol' ELSE 'hana' END WHERE id IN ('a1','B2')`); err != nil {
+		t.Fatal(err)
+	}
+	if got := d.rows(`SELECT id FROM "Purchase" WHERE id IN ('a1','B2') ORDER BY id`); got[0] != "a1" {
+		t.Fatalf("collation not linguistic: %v", got)
+	}
+	if _, _, err := d.exec.Run(ctx, bob, opdef.BulkReassign, "kr", Request{IDs: []string{"a1", "B2"}, Value: "carol"}); err != nil {
+		t.Fatal(err)
+	}
+	d.want("assignment history pairs old value with its own target",
+		d.rows(`SELECT "purchaseId","fromAssignee","toAssignee" FROM "AssignmentHistory" WHERE "idempotencyKey"='kr' ORDER BY "purchaseId" COLLATE "C"`),
+		"B2 hana carol", "a1 carol carol")
+	if _, _, err := d.exec.Run(ctx, alice, opdef.BulkAmend, "ka", Request{IDs: []string{"a1", "B2"}, Amounts: map[string]int{"a1": 1050, "B2": 1040}, Reason: "quote"}); err != nil {
+		t.Fatal(err)
+	}
+	d.want("amend history pairs old value with its own target",
+		d.rows(`SELECT "purchaseId","fromAmount","toAmount" FROM "AmendmentHistory" WHERE "idempotencyKey"='ka' ORDER BY "purchaseId" COLLATE "C"`),
+		"B2 1001 1040", "a1 1000 1050")
+}

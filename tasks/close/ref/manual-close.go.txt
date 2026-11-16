@@ -1,0 +1,95 @@
+package candidate
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"strings"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/ledger"
+	"github.com/XUJiahua/enterprise_agent/internal/protocol"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const opClose = "bulk-close.v8"
+
+// newClose serves the approver-side closing of fully received approved purchases.
+func newClose(pool *pgxpool.Pool) protocol.Handler {
+	return func(ctx context.Context, u app.Identity, key string, ids []string) (protocol.Result, bool, error) {
+		for _, id := range ids {
+			if strings.ContainsRune(id, 0) {
+				return protocol.Result{}, false, &protocol.Rejection{Status: 404}
+			}
+		}
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		defer tx.Rollback(ctx)
+		if _, err = tx.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {
+			return protocol.Result{}, false, err
+		}
+		lock, _ := json.Marshal([]string{opClose, u.Tenant, u.User, key})
+		if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, string(lock)); err != nil {
+			return protocol.Result{}, false, err
+		}
+		hash := ledger.Fingerprint(opClose, ids)
+		var savedHash string
+		var saved []byte
+		err = tx.QueryRow(ctx, `SELECT "requestHash",response FROM "ActionRequest" WHERE "tenantId"=$1 AND "actorId"=$2 AND operation=$3 AND key=$4`,
+			u.Tenant, u.User, opClose, key).Scan(&savedHash, &saved)
+		switch {
+		case err == nil && savedHash != hash:
+			return protocol.Result{}, false, &protocol.Rejection{Status: 409}
+		case err == nil:
+			var body map[string][]string
+			if err = json.Unmarshal(saved, &body); err != nil {
+				return protocol.Result{}, false, err
+			}
+			return protocol.Result{Field: "closedIds", IDs: body["closedIds"]}, true, tx.Commit(ctx)
+		case !errors.Is(err, pgx.ErrNoRows):
+			return protocol.Result{}, false, err
+		}
+		var eligible int
+		if err = tx.QueryRow(ctx, `WITH t AS (SELECT p.id FROM "Purchase" p WHERE p.id=ANY($1::text[]) AND p."tenantId"=$2 AND p."createdBy"<>$3
+		 AND p.status='approved' AND (SELECT COALESCE(sum(r.amount),0) FROM "GoodsReceipt" r WHERE r."tenantId"=p."tenantId"
+		  AND r."purchaseId"=p.id AND r.status='accepted') >= p.amount FOR UPDATE OF p) SELECT count(*) FROM t`, ids, u.Tenant, u.User).Scan(&eligible); err != nil {
+			return protocol.Result{}, false, err
+		}
+		// Ineligible targets (missing, other tenant, own, not approved or not fully received) all get the same 409.
+		if eligible != len(ids) {
+			return protocol.Result{}, false, &protocol.Rejection{Status: 409}
+		}
+		tag, err := tx.Exec(ctx, `UPDATE "Purchase" SET status='closed' WHERE id=ANY($1::text[]) AND "tenantId"=$2 AND "createdBy"<>$3 AND status='approved'`,
+			ids, u.Tenant, u.User)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		if tag.RowsAffected() != int64(len(ids)) {
+			return protocol.Result{}, false, &protocol.Rejection{Status: 409}
+		}
+		batch := &pgx.Batch{}
+		for _, id := range ids {
+			batch.Queue(`INSERT INTO "ApprovalAudit" ("tenantId","purchaseId","approvedBy",operation,"idempotencyKey","fromStatus","toStatus") VALUES ($1,$2,$3,$4,$5,'approved','closed')`,
+				u.Tenant, id, u.User, opClose, key)
+			batch.Queue(`INSERT INTO "PurchaseEvent" ("tenantId","purchaseId",type,"actorId","idempotencyKey") VALUES ($1,$2,'purchase.closed',$3,$4)`,
+				u.Tenant, id, u.User, key)
+		}
+		result := protocol.Result{Field: "closedIds", IDs: ids}
+		response, err := json.Marshal(result)
+		if err != nil {
+			return protocol.Result{}, false, err
+		}
+		batch.Queue(`INSERT INTO "ActionRequest" ("tenantId","actorId",operation,key,"requestHash",response) VALUES ($1,$2,$3,$4,$5,$6::jsonb)`,
+			u.Tenant, u.User, opClose, key, hash, string(response))
+		if err = tx.SendBatch(ctx, batch).Close(); err != nil {
+			return protocol.Result{}, false, err
+		}
+		if err = tx.Commit(ctx); err != nil {
+			return protocol.Result{}, false, err
+		}
+		return result, false, nil
+	}
+}

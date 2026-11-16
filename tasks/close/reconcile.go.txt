@@ -50,24 +50,25 @@ func AssigneeDrift(ctx context.Context, q Querier) ([]Reassigned, error) {
 	return drifted, rows.Err()
 }
 
-type Recharged struct{ TenantID, PurchaseID, CostCenter, Recorded string }
+type Unreceived struct{ TenantID, PurchaseID string }
 
-func CostCenterDrift(ctx context.Context, q Querier) ([]Recharged, error) {
-	rows, err := q.Query(ctx, `SELECT p."tenantId",p.id,COALESCE(p."costCenterId",''),COALESCE(h."toCostCenter",'')
-	 FROM "Purchase" p LEFT JOIN LATERAL (SELECT "toCostCenter" FROM "CostCenterHistory" h
-	  WHERE h."tenantId"=p."tenantId" AND h."purchaseId"=p.id ORDER BY h."createdAt" DESC LIMIT 1) h ON true
-	 WHERE p."costCenterId" IS DISTINCT FROM h."toCostCenter" ORDER BY 1,2`)
+// ClosedUnreceived returns every closed Purchase whose accepted goods receipts
+// do not cover its amount (pending and rejected receipts never count).
+func ClosedUnreceived(ctx context.Context, q Querier) ([]Unreceived, error) {
+	rows, err := q.Query(ctx, `SELECT p."tenantId",p.id FROM "Purchase" p
+	 WHERE p.status='closed' AND (SELECT COALESCE(sum(r.amount),0) FROM "GoodsReceipt" r
+	  WHERE r."tenantId"=p."tenantId" AND r."purchaseId"=p.id AND r.status='accepted') < p.amount ORDER BY 1,2`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var drifted []Recharged
+	var open []Unreceived
 	for rows.Next() {
-		var d Recharged
-		if err = rows.Scan(&d.TenantID, &d.PurchaseID, &d.CostCenter, &d.Recorded); err != nil {
+		var u Unreceived
+		if err = rows.Scan(&u.TenantID, &u.PurchaseID); err != nil {
 			return nil, err
 		}
-		drifted = append(drifted, d)
+		open = append(open, u)
 	}
-	return drifted, rows.Err()
+	return open, rows.Err()
 }

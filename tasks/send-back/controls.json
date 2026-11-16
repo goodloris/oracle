@@ -1,0 +1,359 @@
+{
+  "variants": {
+    "ref-go-manual": {
+      "cell": "go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "protocol.Item(\"reopen\", \"requester\", newReopen(pool), batches)",
+          "new": "protocol.Item(\"send-back\", \"approver\", newSendBack(pool), protocol.Item(\"reopen\", \"requester\", newReopen(pool), batches))"
+        }
+      ],
+      "add": {
+        "internal/candidate/sendback.go": "ref/manual-send-back.go.txt"
+      }
+    },
+    "ref-go-action-opdef": {
+      "cell": "go-action-opdef",
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "protocol.Item(\"reopen\", \"requester\", item(exec, opdef.Reopen), batches)",
+          "new": "protocol.Item(\"send-back\", \"approver\", item(exec, opdef.SendBack), protocol.Item(\"reopen\", \"requester\", item(exec, opdef.Reopen), batches))"
+        }
+      ]
+    },
+    "neg-audit": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif _, err = tx.Exec(ctx, `INSERT INTO \"ApprovalAudit\" (\"tenantId\",\"purchaseId\",\"approvedBy\",operation,\"idempotencyKey\",\"fromStatus\",\"toStatus\",reason) VALUES ($1,$2,$3,$4,$5,'pending-second','submitted',$6)`,\n\t\t\tu.Tenant, id, u.User, opSendBack, key, reason); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-request-hash": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "ledger.Fingerprint(opSendBack, []string{id})",
+          "new": "ledger.Fingerprint(opSendBack, []string{id, reason})"
+        }
+      ]
+    },
+    "neg-outbox": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif _, err = tx.Exec(ctx, `INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.sent_back',$3,$4)`,\n\t\t\tu.Tenant, id, u.User, key); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-uniform-denial": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User || !fresh)) {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif err == nil && status == \"pending-second\" && !fresh {\n\t\t\t// The window has passed: tell the caller instead of a generic refusal.\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 422}\n\t\t}\n\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User || !fresh)) {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n"
+        }
+      ]
+    },
+    "neg-explicit-manual": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "result := protocol.ItemResult{ID: id, Status: \"submitted\"}",
+          "new": "result := protocol.ItemResult{ID: id, Status: \"sent-back\"}"
+        }
+      ]
+    },
+    "neg-explicit-opdef": {
+      "cell": "go-action-opdef",
+      "add": {
+        "internal/candidate/sendback.go": "ref/opdef-send-back-negative.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "protocol.Item(\"reopen\", \"requester\", item(exec, opdef.Reopen), batches)",
+          "new": "protocol.Item(\"send-back\", \"approver\", sendBack(exec), protocol.Item(\"reopen\", \"requester\", item(exec, opdef.Reopen), batches))"
+        }
+      ]
+    },
+    "crash": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\treturn func(ctx context.Context, u app.Identity, key, id, reason string) (protocol.ItemResult, bool, error) {\n",
+          "new": "\treturn func(ctx context.Context, u app.Identity, key, id, reason string) (protocol.ItemResult, bool, error) {\n\t\tgo func() { panic(\"v8b crash control\") }()\n"
+        }
+      ]
+    },
+    "safety-unauthorized-write": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "first == u.User || !fresh)) {",
+          "new": "first == u.User)) {"
+        },
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tvar fresh bool\n",
+          "new": "\t\tvar fresh bool\n\t\t_ = fresh\n"
+        }
+      ]
+    },
+    "safety-side-effect-atomicity": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif _, err = tx.Exec(ctx, `INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.sent_back',$3,$4)`,\n\t\t\tu.Tenant, id, u.User, key); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\treturn result, false, nil",
+          "new": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\t// Notifications are sent after the business change is safely committed.\n\t\tout, err := pool.Begin(ctx)\n\t\tif err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\tdefer out.Rollback(ctx)\n\t\tif _, err = out.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\tif _, err = out.Exec(ctx, `INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.sent_back',$3,$4)`,\n\t\t\tu.Tenant, id, u.User, key); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\tif err = out.Commit(ctx); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n\t\treturn result, false, nil"
+        }
+      ]
+    },
+    "safety-double-apply": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "WHERE p.id=$1 AND p.\"tenantId\"=$2 FOR UPDATE OF p`",
+          "new": "WHERE p.id=$1 AND p.\"tenantId\"=$2`"
+        },
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User || !fresh)) {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User || !fresh)) {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif _, err = tx.Exec(ctx, `SELECT pg_sleep(0.3)`); err != nil {\n\t\t\treturn protocol.ItemResult{}, false, err\n\t\t}\n"
+        },
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif tag.RowsAffected() != 1 {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\t_ = tag\n"
+        }
+      ]
+    },
+    "safety-wrong-commit": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "UPDATE \"Purchase\" SET status='submitted' WHERE",
+          "new": "UPDATE \"Purchase\" SET status='submitted',\"assigneeId\"=NULL WHERE"
+        }
+      ]
+    },
+    "safety-service-error": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User || !fresh)) {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif errors.Is(err, pgx.ErrNoRows) {\n\t\t\treturn protocol.ItemResult{}, false, errors.New(\"purchase not found\")\n\t\t}\n\t\tif errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != \"pending-second\" || first == u.User || !fresh)) {\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n"
+        }
+      ]
+    },
+    "safety-undecidable": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\t\"errors\"\n",
+          "new": "\t\"errors\"\n\t\"strings\"\n\t\"time\"\n"
+        },
+        {
+          "file": "internal/candidate/sendback.go",
+          "old": "\treturn func(ctx context.Context, u app.Identity, key, id, reason string) (protocol.ItemResult, bool, error) {\n",
+          "new": "\treturn func(ctx context.Context, u app.Identity, key, id, reason string) (protocol.ItemResult, bool, error) {\n\t\tif strings.ContainsRune(id, '界') {\n\t\t\ttime.Sleep(12 * time.Second)\n\t\t}\n"
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "variant": "ref-go-manual",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "ref-go-action-opdef",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "neg-audit",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-audit"
+        ]
+      }
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ]
+      }
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ]
+      }
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-functional",
+          "send-back-idempotency",
+          "send-back-failure-rollback",
+          "send-back-lifecycle"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-opdef",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-functional",
+          "send-back-idempotency",
+          "send-back-failure-rollback",
+          "send-back-lifecycle"
+        ]
+      }
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "expect": {
+        "outcome": "candidate-error"
+      }
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-concurrency"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      }
+    },
+    {
+      "variant": "safety-wrong-commit",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-functional",
+          "send-back-idempotency",
+          "send-back-concurrency",
+          "send-back-failure-rollback",
+          "send-back-lifecycle"
+        ],
+        "safety": [
+          "wrong_commit"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      }
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-functional"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      }
+    }
+  ],
+  "note": "partial_batch has no control here: send-back takes exactly one target, and the Oracle counts partial_batch only for refused steps with two or more targets."
+}

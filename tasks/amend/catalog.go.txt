@@ -1,14 +1,14 @@
 package opdef
 
 // Reviewed entries. Changing this file changes Digest and needs owner review.
-// v7 private catalog: the public entries plus the v7 task entry (never published).
+// v8b private catalog: the public entries plus the v8b task entry (never published).
 const (
 	BulkApprove  Name = "bulk-approve.v3"
 	BulkReject   Name = "bulk-reject.v4"
 	Reopen       Name = "reopen.v5"
 	Countersign  Name = "countersign.v6"
 	BulkReassign Name = "bulk-reassign.v6"
-	Withdraw     Name = "withdraw.v7"
+	BulkAmend    Name = "bulk-amend.v8"
 )
 
 var catalog = []Operation{
@@ -44,9 +44,9 @@ var catalog = []Operation{
 		Event: "purchase.reassigned", Denial: UniformDenial,
 	},
 	{
-		Name: Withdraw, Kind: Transition, Role: "requester", Subject: Own,
-		From: "submitted", To: "withdrawn",
-		Inputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,
-		Event: "purchase.withdrawn", Denial: UniformDenial,
+		Name: BulkAmend, Kind: Amend, Role: "requester", Subject: Own,
+		Status: "submitted", Column: "amount", Param: Amounts, MaxIncreasePercent: 10, KeepSideOf: 50000,
+		Response: "amended", Inputs: []string{IDs, Amounts, Reason}, Fingerprint: []string{IDs, Amounts}, Record: AmendmentHistory,
+		Event: "purchase.amended", Denial: UniformDenial,
 	},
 }

@@ -33,6 +33,7 @@ type Kind string
 const (
 	Transition  Kind = "transition"   // moves Purchase.status From -> To
 	FieldUpdate Kind = "field-update" // sets one managed column, keeps status
+	Amend       Kind = "amend"        // sets Column of every target to its own request value, keeps status
 )
 
 // Subject says whose purchases the actor may target.
@@ -49,7 +50,15 @@ type Record string
 const (
 	ApprovalAudit     Record = "ApprovalAudit"     // status transitions (from, to, reason)
 	AssignmentHistory Record = "AssignmentHistory" // assigneeId changes (from, to value)
-	CostCenterHistory Record = "CostCenterHistory" // costCenterId changes (from, to value)
+	AmendmentHistory  Record = "AmendmentHistory"  // amount amendments (from, to amount, reason)
+)
+
+// Preconditions a transition may require of every target (Requires), each
+// evaluated by the kernel on the locked target rows.
+const (
+	// FullyReceived: the accepted GoodsReceipt amounts of the purchase add up
+	// to at least its amount; pending and rejected receipts do not count.
+	FullyReceived = "fully-received"
 )
 
 // Separation is a segregation-of-duties requirement beyond Subject.
@@ -63,16 +72,18 @@ const (
 )
 
 // UniformDenial is the one status every ineligible target gets (missing,
-// other tenant, wrong owner, wrong state, failed separation or confirmation),
+// other tenant, wrong owner, wrong state, failed separation, confirmation,
+// precondition or time window, or an unacceptable request value),
 // so an Action never reveals why or whether a target exists.
 const UniformDenial = 409
 
 // Request field names used in Inputs and Fingerprint. A field-update entry's
 // value field is named by its Param.
 const (
-	IDs    = "ids"    // the targets (one for a single-target entry)
-	Reason = "reason" // optional free text, recorded in ApprovalAudit, never hashed
-	Amount = "amount" // amount the actor confirms (ConfirmAmount)
+	IDs     = "ids"     // the targets (one for a single-target entry)
+	Reason  = "reason"  // optional free text, recorded in ApprovalAudit, never hashed
+	Amount  = "amount"  // amount the actor confirms (ConfirmAmount)
+	Amounts = "amounts" // per-target new values of an Amend entry (its Param)
 )
 
 // Tier routes batch targets whose amount is above Over to To instead.
@@ -104,6 +115,8 @@ type Operation struct {
 	Inputs []string `json:"inputs"`
 	// Fingerprint lists the Inputs bound into requestHash, in digest order.
 	// Inputs not listed, and the Idempotency-Key, are never hashed.
+	// An Amend entry's Amounts are bound per target: the digested items are
+	// id+"="+value instead of the bare IDs (opkernel.Fingerprint).
 	Fingerprint []string `json:"fingerprint"`
 	Record      Record   `json:"record"`
 	// Event is the PurchaseEvent type written per target in the same
@@ -112,7 +125,17 @@ type Operation struct {
 	EventExemption string     `json:"eventExemption,omitempty"`
 	Separation     Separation `json:"separation,omitempty"`
 	ConfirmAmount  bool       `json:"confirmAmount,omitempty"`
-	Denial         int        `json:"denial"`
+	// Requires names a precondition every target must meet (transition).
+	Requires string `json:"requires,omitempty"`
+	// WithinHours: the latest ApprovalAudit row that moved the target into
+	// From is at most this many hours old (transition).
+	WithinHours int `json:"withinHours,omitempty"`
+	// Amend: a new value may exceed the old one by at most MaxIncreasePercent
+	// percent, and must stay on the same side of KeepSideOf as the old one
+	// (both <= KeepSideOf, or both above it).
+	MaxIncreasePercent int `json:"maxIncreasePercent,omitempty"`
+	KeepSideOf         int `json:"keepSideOf,omitempty"`
+	Denial             int `json:"denial"`
 }
 
 // Single reports whether the entry takes exactly one target.
@@ -227,6 +250,10 @@ func (o Operation) validate() error {
 		return fmt.Errorf("denial must be the uniform %d", UniformDenial)
 	case o.Separation != NoSeparation && (o.Separation != DistinctFromPreviousApprover || o.Subject != Others):
 		return fmt.Errorf("separation %q needs subject others", o.Separation)
+	case (o.Requires != "" && o.Requires != FullyReceived) || o.WithinHours < 0 || ((o.Requires != "" || o.WithinHours > 0) && o.Kind != Transition):
+		return fmt.Errorf("requires/withinHours: known precondition, non-negative window, transitions only")
+	case (o.MaxIncreasePercent != 0 || o.KeepSideOf != 0) != (o.Kind == Amend) || o.MaxIncreasePercent < 0 || o.KeepSideOf < 0:
+		return fmt.Errorf("maxIncreasePercent/keepSideOf are required exactly for an amend entry")
 	}
 	switch o.Kind {
 	case Transition:
@@ -237,8 +264,12 @@ func (o Operation) validate() error {
 			return fmt.Errorf("tier needs Over > 0, To, and a batch response")
 		}
 	case FieldUpdate:
-		if o.Status == "" || o.Column == "" || o.Param == "" || o.Single() || o.From != "" || o.To != "" || o.Tier != nil || (o.Record != AssignmentHistory && o.Record != CostCenterHistory) {
+		if o.Status == "" || o.Column == "" || o.Param == "" || o.Single() || o.From != "" || o.To != "" || o.Tier != nil || o.Record != AssignmentHistory {
 			return fmt.Errorf("field update needs Status, Column, Param, a batch response and a column history record")
+		}
+	case Amend:
+		if o.Status == "" || o.Column != "amount" || o.Param != Amounts || o.Single() || o.From != "" || o.To != "" || o.Tier != nil || o.Record != AmendmentHistory {
+			return fmt.Errorf("amend needs Status, Column amount, Param amounts, a batch response and AmendmentHistory")
 		}
 	default:
 		return fmt.Errorf("unknown kind %q", o.Kind)
@@ -246,7 +277,7 @@ func (o Operation) validate() error {
 	if len(o.Inputs) == 0 || o.Inputs[0] != IDs || len(o.Fingerprint) == 0 || o.Fingerprint[0] != IDs {
 		return fmt.Errorf("inputs and fingerprint start with %q", IDs)
 	}
-	allowed := map[string]bool{IDs: true, Reason: o.Kind == Transition, Amount: o.ConfirmAmount, o.Param: o.Param != ""}
+	allowed := map[string]bool{IDs: true, Reason: o.Kind == Transition || o.Kind == Amend, Amount: o.ConfirmAmount, o.Param: o.Param != ""}
 	for i, in := range o.Inputs {
 		if !allowed[in] || slices.Index(o.Inputs, in) != i {
 			return fmt.Errorf("input %q is unknown or repeated", in)

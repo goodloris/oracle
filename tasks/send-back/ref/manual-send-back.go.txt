@@ -12,10 +12,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const opWithdraw = "withdraw.v7"
+const opSendBack = "send-back.v8"
 
-// newWithdraw serves the requester-side withdrawal of their own submitted purchase.
-func newWithdraw(pool *pgxpool.Pool) protocol.ItemHandler {
+// sendBackWindowHours: a first-level approval can be sent back for this long.
+const sendBackWindowHours = 72
+
+// newSendBack serves the second approver's return of a pending-second purchase to the first approval step.
+func newSendBack(pool *pgxpool.Pool) protocol.ItemHandler {
 	return func(ctx context.Context, u app.Identity, key, id, reason string) (protocol.ItemResult, bool, error) {
 		tx, err := pool.Begin(ctx)
 		if err != nil {
@@ -25,15 +28,15 @@ func newWithdraw(pool *pgxpool.Pool) protocol.ItemHandler {
 		if _, err = tx.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {
 			return protocol.ItemResult{}, false, err
 		}
-		lock, _ := json.Marshal([]string{opWithdraw, u.Tenant, u.User, key})
+		lock, _ := json.Marshal([]string{opSendBack, u.Tenant, u.User, key})
 		if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, string(lock)); err != nil {
 			return protocol.ItemResult{}, false, err
 		}
-		hash := ledger.Fingerprint(opWithdraw, []string{id})
+		hash := ledger.Fingerprint(opSendBack, []string{id})
 		var savedHash string
 		var saved []byte
 		err = tx.QueryRow(ctx, `SELECT "requestHash",response FROM "ActionRequest" WHERE "tenantId"=$1 AND "actorId"=$2 AND operation=$3 AND key=$4`,
-			u.Tenant, u.User, opWithdraw, key).Scan(&savedHash, &saved)
+			u.Tenant, u.User, opSendBack, key).Scan(&savedHash, &saved)
 		if err == nil {
 			if savedHash != hash {
 				return protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}
@@ -47,36 +50,40 @@ func newWithdraw(pool *pgxpool.Pool) protocol.ItemHandler {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return protocol.ItemResult{}, false, err
 		}
-		var creator, status string
-		err = tx.QueryRow(ctx, `SELECT "createdBy",status FROM "Purchase" WHERE id=$1 AND "tenantId"=$2 FOR UPDATE`, id, u.Tenant).Scan(&creator, &status)
-		if errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator != u.User || status != "submitted")) {
+		var creator, status, first string
+		var fresh bool
+		err = tx.QueryRow(ctx, `SELECT p."createdBy",p.status,COALESCE(a."approvedBy",''),COALESCE(a."createdAt" > now() - make_interval(hours => $3),false)
+		 FROM "Purchase" p LEFT JOIN LATERAL (SELECT "approvedBy","createdAt" FROM "ApprovalAudit" a WHERE a."tenantId"=p."tenantId" AND a."purchaseId"=p.id
+		  AND a."toStatus"='pending-second' ORDER BY a."createdAt" DESC LIMIT 1) a ON true
+		 WHERE p.id=$1 AND p."tenantId"=$2 FOR UPDATE OF p`, id, u.Tenant, sendBackWindowHours).Scan(&creator, &status, &first, &fresh)
+		if errors.Is(err, pgx.ErrNoRows) || (err == nil && (creator == u.User || status != "pending-second" || first == u.User || !fresh)) {
 			return protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}
 		}
 		if err != nil {
 			return protocol.ItemResult{}, false, err
 		}
-		tag, err := tx.Exec(ctx, `UPDATE "Purchase" SET status='withdrawn' WHERE id=$1 AND "tenantId"=$2 AND "createdBy"=$3 AND status='submitted'`, id, u.Tenant, u.User)
+		tag, err := tx.Exec(ctx, `UPDATE "Purchase" SET status='submitted' WHERE id=$1 AND "tenantId"=$2 AND "createdBy"<>$3 AND status='pending-second'`, id, u.Tenant, u.User)
 		if err != nil {
 			return protocol.ItemResult{}, false, err
 		}
 		if tag.RowsAffected() != 1 {
 			return protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO "ApprovalAudit" ("tenantId","purchaseId","approvedBy",operation,"idempotencyKey","fromStatus","toStatus",reason) VALUES ($1,$2,$3,$4,$5,'submitted','withdrawn',$6)`,
-			u.Tenant, id, u.User, opWithdraw, key, reason); err != nil {
+		if _, err = tx.Exec(ctx, `INSERT INTO "ApprovalAudit" ("tenantId","purchaseId","approvedBy",operation,"idempotencyKey","fromStatus","toStatus",reason) VALUES ($1,$2,$3,$4,$5,'pending-second','submitted',$6)`,
+			u.Tenant, id, u.User, opSendBack, key, reason); err != nil {
 			return protocol.ItemResult{}, false, err
 		}
-		if _, err = tx.Exec(ctx, `INSERT INTO "PurchaseEvent" ("tenantId","purchaseId",type,"actorId","idempotencyKey") VALUES ($1,$2,'purchase.withdrawn',$3,$4)`,
+		if _, err = tx.Exec(ctx, `INSERT INTO "PurchaseEvent" ("tenantId","purchaseId",type,"actorId","idempotencyKey") VALUES ($1,$2,'purchase.sent_back',$3,$4)`,
 			u.Tenant, id, u.User, key); err != nil {
 			return protocol.ItemResult{}, false, err
 		}
-		result := protocol.ItemResult{ID: id, Status: "withdrawn"}
+		result := protocol.ItemResult{ID: id, Status: "submitted"}
 		response, err := json.Marshal(result)
 		if err != nil {
 			return protocol.ItemResult{}, false, err
 		}
 		if _, err = tx.Exec(ctx, `INSERT INTO "ActionRequest" ("tenantId","actorId",operation,key,"requestHash",response) VALUES ($1,$2,$3,$4,$5,$6::jsonb)`,
-			u.Tenant, u.User, opWithdraw, key, hash, string(response)); err != nil {
+			u.Tenant, u.User, opSendBack, key, hash, string(response)); err != nil {
 			return protocol.ItemResult{}, false, err
 		}
 		if err = tx.Commit(ctx); err != nil {

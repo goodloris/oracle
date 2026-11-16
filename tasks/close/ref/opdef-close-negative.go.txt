@@ -1,0 +1,25 @@
+package candidate
+
+import (
+	"context"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/opdef"
+	"github.com/XUJiahua/enterprise_agent/internal/opkernel"
+	"github.com/XUJiahua/enterprise_agent/internal/protocol"
+)
+
+// Explicit negative control: a hand-made adapter that answers every kernel refusal with 403.
+func closing(exec *opkernel.Executor) protocol.Handler {
+	op := entry(opdef.BulkClose)
+	return func(ctx context.Context, u app.Identity, key string, ids []string) (protocol.Result, bool, error) {
+		done, replayed, err := exec.Run(ctx, u, opdef.BulkClose, key, opkernel.Request{IDs: ids})
+		if err != nil {
+			if _, refused := adapt(err).(*protocol.Rejection); refused {
+				return protocol.Result{}, false, &protocol.Rejection{Status: 403}
+			}
+			return protocol.Result{}, false, err
+		}
+		return protocol.Result{Field: op.Response, IDs: done}, replayed, nil
+	}
+}

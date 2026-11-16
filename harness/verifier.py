@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Catalog-bound Verifier (`appctl operations`) for v7.
+"""Catalog-bound Verifier (`appctl operations`) for v8b.
 
 The public platform (PR #27 at fad8adf, pinned commit below) is the Verifier's code. The private build overlays the
-v7 catalog (tasks/<task>/catalog.go.txt) and the two vendored platform files that v7 changes
+v8b catalog (tasks/<task>/catalog.go.txt) and the two vendored platform files that v8b changes
 (harness/source/go-action-opdef/{opdef,opkernel}.go.txt), so the Verifier embeds exactly the catalog
-the go-action-opdef kits carry. The public build is the unmodified public tree; on a v7 candidate it must
+the go-action-opdef kits carry. The public build is the unmodified public tree; on a v8b candidate it must
 never return pass (control). The public checkout is read with `git archive` and never modified.
 
 Usage: verifier.py --task T digest            # private catalog digest, as reported by the private appctl
@@ -85,17 +85,17 @@ def digest(task):
         repo = Path(tmp) / 'empty'
         repo.mkdir()
         subprocess.run(['git', 'init', '-q', str(repo)], check=True)
-        subprocess.run(['git', '-C', str(repo), '-c', 'user.name=v7', '-c', 'user.email=v7@example.invalid', 'commit', '-q',
+        subprocess.run(['git', '-C', str(repo), '-c', 'user.name=v8b', '-c', 'user.email=v8b@example.invalid', 'commit', '-q',
                         '--allow-empty', '-m', 'empty'], check=True)
         base = subprocess.check_output(['git', '-C', str(repo), 'rev-parse', 'HEAD'], text=True).strip()
         result = check(binary, repo, base)
-    if not result['catalog'] or result['catalog'] == PUBLIC_CATALOG_DIGEST: raise ValueError('private build did not embed the v7 catalog')
+    if not result['catalog'] or result['catalog'] == PUBLIC_CATALOG_DIGEST: raise ValueError('private build did not embed the v8b catalog')
     return result['catalog']
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--task', choices=('withdraw', 'cost-center'), required=True)
+    p.add_argument('--task', choices=('close', 'send-back', 'amend'), required=True)
     sub = p.add_subparsers(dest='command', required=True)
     sub.add_parser('digest')
     c = sub.add_parser('check')

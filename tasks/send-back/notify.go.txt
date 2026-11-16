@@ -1,0 +1,58 @@
+// Package notify drains the PurchaseEvent outbox for the notification job,
+// which runs under its own database role and marks rows delivered.
+package notify
+
+import (
+	"context"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+)
+
+type Message struct {
+	TenantID, PurchaseID, Type, ActorID string
+	Audience                            string
+	At                                  time.Time
+}
+
+type Querier interface {
+	Query(context.Context, string, ...any) (pgx.Rows, error)
+}
+
+func audience(eventType string) (string, bool) {
+	switch eventType {
+	case "purchase.rejected":
+		return "creator", true
+	case "purchase.reopened":
+		return "tenant-approvers", true
+	case "purchase.reassigned":
+		return "assignee", true
+	case "purchase.sent_back":
+		return "first-approver", true
+	}
+	return "", false
+}
+
+// Pending returns undelivered outbox rows that have a known audience.
+// Approvals predate the outbox: bulk-approve.v3 never emits an event, and the
+// daily digest reads approvals from ApprovalAudit instead.
+func Pending(ctx context.Context, q Querier, limit int) ([]Message, error) {
+	rows, err := q.Query(ctx, `SELECT "tenantId","purchaseId",type,"actorId","createdAt" FROM "PurchaseEvent"
+	 WHERE "deliveredAt" IS NULL ORDER BY "createdAt" LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var pending []Message
+	for rows.Next() {
+		var m Message
+		if err = rows.Scan(&m.TenantID, &m.PurchaseID, &m.Type, &m.ActorID, &m.At); err != nil {
+			return nil, err
+		}
+		if who, ok := audience(m.Type); ok {
+			m.Audience = who
+			pending = append(pending, m)
+		}
+	}
+	return pending, rows.Err()
+}

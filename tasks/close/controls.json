@@ -1,0 +1,400 @@
+{
+  "variants": {
+    "ref-go-manual": {
+      "cell": "go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\tbatches := protocol.HTTP(protocol.Routes{\"/purchases/bulk-approve\": approve, \"/purchases/bulk-reject\": newReject(pool)}, fallback)",
+          "new": "\tbatches := protocol.HTTP(protocol.Routes{\"/purchases/bulk-approve\": approve, \"/purchases/bulk-reject\": newReject(pool), \"/purchases/bulk-close\": newClose(pool)}, fallback)"
+        }
+      ],
+      "add": {
+        "internal/candidate/close.go": "ref/manual-close.go.txt"
+      }
+    },
+    "ref-go-action-opdef": {
+      "cell": "go-action-opdef",
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\t\t\"/purchases/bulk-reject\":  batch(exec, opdef.BulkReject),\n",
+          "new": "\t\t\"/purchases/bulk-reject\":  batch(exec, opdef.BulkReject),\n\t\t\"/purchases/bulk-close\":   batch(exec, opdef.BulkClose),\n"
+        }
+      ]
+    },
+    "neg-audit": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"ApprovalAudit\" (\"tenantId\",\"purchaseId\",\"approvedBy\",operation,\"idempotencyKey\",\"fromStatus\",\"toStatus\") VALUES ($1,$2,$3,$4,$5,'approved','closed')`,\n\t\t\t\tu.Tenant, id, u.User, opClose, key)\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-request-hash": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "ledger.Fingerprint(opClose, ids)",
+          "new": "ledger.Fingerprint(opClose+\"\\n\", ids)"
+        }
+      ]
+    },
+    "neg-outbox": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.closed',$3,$4)`,\n\t\t\t\tu.Tenant, id, u.User, key)\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-uniform-denial": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\tif eligible != len(ids) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif eligible != len(ids) {\n\t\t\t// Approved purchases that are not fully received get a more helpful status.\n\t\t\tvar approved int\n\t\t\tif err = tx.QueryRow(ctx, `SELECT count(*) FROM \"Purchase\" WHERE id=ANY($1::text[]) AND \"tenantId\"=$2 AND \"createdBy\"<>$3 AND status='approved'`,\n\t\t\t\tids, u.Tenant, u.User).Scan(&approved); err != nil {\n\t\t\t\treturn protocol.Result{}, false, err\n\t\t\t}\n\t\t\tif approved == len(ids) {\n\t\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 422}\n\t\t\t}\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n"
+        }
+      ]
+    },
+    "neg-explicit-manual": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "result := protocol.Result{Field: \"closedIds\", IDs: ids}",
+          "new": "result := protocol.Result{Field: \"closed\", IDs: ids}"
+        }
+      ]
+    },
+    "neg-explicit-opdef": {
+      "cell": "go-action-opdef",
+      "add": {
+        "internal/candidate/closing.go": "ref/opdef-close-negative.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\t\t\"/purchases/bulk-reject\":  batch(exec, opdef.BulkReject),\n",
+          "new": "\t\t\"/purchases/bulk-reject\":  batch(exec, opdef.BulkReject),\n\t\t\"/purchases/bulk-close\":   closing(exec),\n"
+        }
+      ]
+    },
+    "crash": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\treturn func(ctx context.Context, u app.Identity, key string, ids []string) (protocol.Result, bool, error) {\n",
+          "new": "\treturn func(ctx context.Context, u app.Identity, key string, ids []string) (protocol.Result, bool, error) {\n\t\tgo func() { panic(\"v8b crash control\") }()\n"
+        }
+      ]
+    },
+    "safety-unauthorized-write": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\t AND p.status='approved' AND (SELECT COALESCE(sum(r.amount),0) FROM \"GoodsReceipt\" r WHERE r.\"tenantId\"=p.\"tenantId\"\n\t\t  AND r.\"purchaseId\"=p.id AND r.status='accepted') >= p.amount FOR UPDATE OF p) SELECT count(*) FROM t`",
+          "new": " AND p.status='approved' FOR UPDATE OF p) SELECT count(*) FROM t`"
+        }
+      ]
+    },
+    "safety-partial-batch": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\tif eligible != len(ids) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tvar existing int\n\t\tif err = tx.QueryRow(ctx, `SELECT count(*) FROM \"Purchase\" WHERE id=ANY($1::text[]) AND \"tenantId\"=$2`, ids, u.Tenant).Scan(&existing); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\t// Missing targets are skipped: the rest is closed, the caller still hears about the miss.\n\t\tif existing != len(ids) {\n\t\t\tif _, err = tx.Exec(ctx, `UPDATE \"Purchase\" p SET status='closed' WHERE p.id=ANY($1::text[]) AND p.\"tenantId\"=$2 AND p.\"createdBy\"<>$3\n\t\t\t AND p.status='approved' AND (SELECT COALESCE(sum(r.amount),0) FROM \"GoodsReceipt\" r WHERE r.\"tenantId\"=p.\"tenantId\"\n\t\t\t  AND r.\"purchaseId\"=p.id AND r.status='accepted') >= p.amount`, ids, u.Tenant, u.User); err != nil {\n\t\t\t\treturn protocol.Result{}, false, err\n\t\t\t}\n\t\t\t_ = tx.Commit(ctx)\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif eligible != len(ids) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n"
+        }
+      ]
+    },
+    "safety-side-effect-atomicity": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.closed',$3,$4)`,\n\t\t\t\tu.Tenant, id, u.User, key)\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\treturn result, false, nil",
+          "new": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\t// Notifications are sent after the business change is safely committed.\n\t\tout, err := pool.Begin(ctx)\n\t\tif err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\tdefer out.Rollback(ctx)\n\t\tif _, err = out.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\tif _, err = out.Exec(ctx, `INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") SELECT $2,id,'purchase.closed',$3,$4 FROM unnest($1::text[]) AS id`,\n\t\t\tids, u.Tenant, u.User, key); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\tif err = out.Commit(ctx); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\treturn result, false, nil"
+        }
+      ]
+    },
+    "safety-double-apply": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": " >= p.amount FOR UPDATE OF p) SELECT count(*) FROM t`",
+          "new": " >= p.amount) SELECT count(*) FROM t`"
+        },
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\tif eligible != len(ids) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif eligible != len(ids) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif _, err = tx.Exec(ctx, `SELECT pg_sleep(0.3)`); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n"
+        },
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\tif tag.RowsAffected() != int64(len(ids)) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\t_ = tag\n"
+        }
+      ]
+    },
+    "safety-wrong-commit": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "UPDATE \"Purchase\" SET status='closed' WHERE",
+          "new": "UPDATE \"Purchase\" SET status='closed',\"assigneeId\"=NULL WHERE"
+        }
+      ]
+    },
+    "safety-service-error": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\tif eligible != len(ids) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tvar existing int\n\t\tif err = tx.QueryRow(ctx, `SELECT count(*) FROM \"Purchase\" WHERE id=ANY($1::text[]) AND \"tenantId\"=$2`, ids, u.Tenant).Scan(&existing); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\tif existing != len(ids) {\n\t\t\treturn protocol.Result{}, false, errors.New(\"purchase not found\")\n\t\t}\n\t\tif eligible != len(ids) {\n\t\t\treturn protocol.Result{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n"
+        }
+      ]
+    },
+    "safety-undecidable": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\"strings\"\n",
+          "new": "\t\"strings\"\n\t\"time\"\n"
+        },
+        {
+          "file": "internal/candidate/close.go",
+          "old": "\t\t\tif strings.ContainsRune(id, 0) {",
+          "new": "\t\t\tif strings.ContainsRune(id, '界') {\n\t\t\t\ttime.Sleep(12 * time.Second)\n\t\t\t}\n\t\t\tif strings.ContainsRune(id, 0) {"
+        }
+      ]
+    },
+    "neg-db-order-response": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/close.go",
+          "old": "result := protocol.Result{Field: \"closedIds\", IDs: ids}",
+          "new": "var ordered []string\n\t\tif err = tx.QueryRow(ctx, `SELECT array_agg(id ORDER BY id) FROM \"Purchase\" WHERE id=ANY($1::text[])`, ids).Scan(&ordered); err != nil {\n\t\t\treturn protocol.Result{}, false, err\n\t\t}\n\t\tresult := protocol.Result{Field: \"closedIds\", IDs: ordered}"
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "variant": "ref-go-manual",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "ref-go-action-opdef",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "neg-audit",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-audit"
+        ]
+      }
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ]
+      }
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ]
+      }
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-functional",
+          "close-idempotency",
+          "close-concurrency",
+          "close-failure-rollback",
+          "close-lifecycle"
+        ]
+      },
+      "note": "the replay reads closedIds from a response stored as closed, so the concurrent replay returns null"
+    },
+    {
+      "variant": "neg-explicit-opdef",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-idempotency"
+        ]
+      }
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "expect": {
+        "outcome": "candidate-error"
+      }
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      }
+    },
+    {
+      "variant": "safety-partial-batch",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-eligibility"
+        ],
+        "safety": [
+          "partial_batch"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-concurrency"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      }
+    },
+    {
+      "variant": "safety-wrong-commit",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-functional",
+          "close-idempotency",
+          "close-concurrency",
+          "close-failure-rollback",
+          "close-lifecycle"
+        ],
+        "safety": [
+          "wrong_commit"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      }
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-functional",
+          "implicit-request-hash"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      }
+    },
+    {
+      "variant": "neg-db-order-response",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "close-functional"
+        ]
+      },
+      "note": "returns closedIds in database order instead of UTF-8 byte order"
+    }
+  ]
+}

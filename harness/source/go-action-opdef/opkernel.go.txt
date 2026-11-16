@@ -29,12 +29,13 @@ import (
 
 // Request carries the per-call values. Only fields listed in the entry's
 // Inputs may be set: Reason (reason), Amount (amount), Value (the Param of a
-// field update).
+// field update), Amounts (the per-target values of an amend, keyed by ID).
 type Request struct {
-	IDs    []string
-	Reason string
-	Amount int
-	Value  string
+	IDs     []string
+	Reason  string
+	Amount  int
+	Value   string
+	Amounts map[string]int
 }
 
 // Rejection is a client-visible refusal; adapt it at the service boundary.
@@ -51,8 +52,12 @@ type managed struct{ valid, record, from, to string }
 var columns = map[string]managed{
 	"assigneeId": {`SELECT 1 FROM "TenantMember" WHERE "tenantId"=$1 AND "userId"=$2 AND role='approver' AND active`,
 		"AssignmentHistory", "fromAssignee", "toAssignee"},
-	"costCenterId": {`SELECT 1 FROM "CostCenter" WHERE "tenantId"=$1 AND code=$2 AND active`,
-		"CostCenterHistory", "fromCostCenter", "toCostCenter"},
+}
+
+// preconditions maps opdef.Operation.Requires to an SQL predicate on the target row p.
+var preconditions = map[string]string{
+	opdef.FullyReceived: ` AND (SELECT COALESCE(sum(r.amount),0) FROM "GoodsReceipt" r WHERE r."tenantId"=p."tenantId"
+	 AND r."purchaseId"=p.id AND r.status='accepted') >= p.amount`,
 }
 
 // New validates the catalog and requires a guarded, append-only runtime.
@@ -119,14 +124,23 @@ func validKey(key string) bool {
 // Fingerprint is the requestHash: the operation name and, in catalog order,
 // every Fingerprint field other than the targets form the domain
 // (name+"\n"+value...), then the sorted, length-prefixed target IDs. It equals
-// the v6 ledger digest for every catalog entry.
+// the v6 ledger digest for every catalog entry. An amend binds its per-target
+// values into the digested items instead: id+"="+value for every target.
 func Fingerprint(op opdef.Operation, ids []string, req Request) string {
 	h := sha256.New()
 	domain := string(op.Name)
+	items := ids
 	for _, f := range op.Fingerprint[1:] {
+		if op.Kind == opdef.Amend && f == opdef.Amounts {
+			items = make([]string, len(ids))
+			for i, id := range ids {
+				items[i] = fmt.Sprintf("%s=%d", id, req.Amounts[id])
+			}
+			continue
+		}
 		domain += "\n" + field(op, req, f)
 	}
-	sorted := append([]string(nil), ids...)
+	sorted := append([]string(nil), items...)
 	sort.Strings(sorted)
 	fmt.Fprint(h, domain, "\n")
 	for _, id := range sorted {
@@ -150,14 +164,26 @@ func field(op opdef.Operation, req Request, name string) string {
 // check rejects request fields the entry does not declare.
 func check(op opdef.Operation, req Request) error {
 	has := func(f string) bool { return slices.Contains(op.Inputs, f) }
-	if (req.Reason != "" && !has(opdef.Reason)) || (req.Amount != 0 && !op.ConfirmAmount) || (req.Value != "" && op.Param == "") {
+	if (req.Reason != "" && !has(opdef.Reason)) || (req.Amount != 0 && !op.ConfirmAmount) || (req.Value != "" && op.Kind != opdef.FieldUpdate) ||
+		(req.Amounts != nil && op.Kind != opdef.Amend) {
 		return fmt.Errorf("%s: request sets a field the catalog entry does not accept", op.Name)
 	}
 	return nil
 }
 
-func response(op opdef.Operation, ids, statuses []string, value string) any {
+type amended struct {
+	ID     string `json:"id"`
+	Amount int    `json:"amount"`
+}
+
+func response(op opdef.Operation, ids, statuses []string, value string, amounts map[string]int) any {
 	switch {
+	case op.Kind == opdef.Amend:
+		items := make([]amended, len(ids))
+		for i, id := range ids {
+			items[i] = amended{id, amounts[id]}
+		}
+		return map[string]any{op.Response: items}
 	case op.Single():
 		return map[string]string{"id": ids[0], "status": statuses[0]}
 	case op.Param != "":
@@ -174,6 +200,17 @@ func restore(op opdef.Operation, saved []byte) ([]string, error) {
 	if op.Single() {
 		var id string
 		return []string{id}, json.Unmarshal(body["id"], &id)
+	}
+	if op.Kind == opdef.Amend {
+		var items []amended
+		if err := json.Unmarshal(body[op.Response], &items); err != nil {
+			return nil, err
+		}
+		ids := make([]string, len(items))
+		for i, it := range items {
+			ids[i] = it.ID
+		}
+		return ids, nil
 	}
 	var ids []string
 	return ids, json.Unmarshal(body[op.Response], &ids)
@@ -198,9 +235,19 @@ func (e *Executor) Run(ctx context.Context, u app.Identity, name opdef.Name, key
 		return nil, false, err
 	}
 	if !validKey(key) || (op.Single() && len(ids) != 1) || (op.ConfirmAmount && req.Amount < 1) ||
-		(op.Param != "" && (req.Value == "" || len(req.Value) > 100 || !utf8.ValidString(req.Value))) ||
+		(op.Kind == opdef.FieldUpdate && (req.Value == "" || len(req.Value) > 100 || !utf8.ValidString(req.Value))) ||
 		len(req.Reason) > 200 || !utf8.ValidString(req.Reason) {
 		return nil, false, &Rejection{400}
+	}
+	if op.Kind == opdef.Amend {
+		if len(req.Amounts) != len(ids) || req.Reason == "" {
+			return nil, false, &Rejection{400}
+		}
+		for _, id := range ids {
+			if v, ok := req.Amounts[id]; !ok || v < 1 || v > 2147483647 {
+				return nil, false, &Rejection{400}
+			}
+		}
 	}
 	for _, id := range append([]string{req.Value}, ids...) {
 		if strings.ContainsRune(id, 0) {
@@ -238,9 +285,12 @@ func (e *Executor) Run(ctx context.Context, u app.Identity, name opdef.Name, key
 		return nil, false, err
 	}
 	var statuses []string
-	if op.Kind == opdef.Transition {
+	switch op.Kind {
+	case opdef.Transition:
 		statuses, err = transition(ctx, tx, u, op, key, ids, req)
-	} else {
+	case opdef.Amend:
+		statuses, err = amend(ctx, tx, u, op, key, ids, req)
+	default:
 		statuses, err = update(ctx, tx, u, op, key, ids, req.Value)
 	}
 	if err != nil {
@@ -252,7 +302,7 @@ func (e *Executor) Run(ctx context.Context, u app.Identity, name opdef.Name, key
 			return nil, false, err
 		}
 	}
-	body, err := json.Marshal(response(op, ids, statuses, req.Value))
+	body, err := json.Marshal(response(op, ids, statuses, req.Value, req.Amounts))
 	if err != nil {
 		return nil, false, err
 	}
@@ -311,9 +361,11 @@ func eligible(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation
 func transition(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation, key string, ids []string, req Request) ([]string, error) {
 	extra := ` AND (NOT $6 OR p.amount=$7)
 	 AND (NOT $8 OR (SELECT a."approvedBy" FROM "ApprovalAudit" a WHERE a."tenantId"=p."tenantId" AND a."purchaseId"=p.id
-	  AND a."toStatus"=$5 ORDER BY a."createdAt" DESC LIMIT 1) IS DISTINCT FROM $3)`
+	  AND a."toStatus"=$5 ORDER BY a."createdAt" DESC LIMIT 1) IS DISTINCT FROM $3)
+	 AND (NOT $9 OR (SELECT a."createdAt" FROM "ApprovalAudit" a WHERE a."tenantId"=p."tenantId" AND a."purchaseId"=p.id
+	  AND a."toStatus"=$5 ORDER BY a."createdAt" DESC LIMIT 1) > now() - make_interval(hours => $10))` + preconditions[op.Requires]
 	if _, err := eligible(ctx, tx, u, op, ids, op.From, extra, op.ConfirmAmount, req.Amount,
-		op.Separation == opdef.DistinctFromPreviousApprover); err != nil {
+		op.Separation == opdef.DistinctFromPreviousApprover, op.WithinHours > 0, op.WithinHours); err != nil {
 		return nil, err
 	}
 	over, overTo := 0, ""
@@ -377,6 +429,58 @@ func update(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation, 
 	_, err = tx.Exec(ctx, `INSERT INTO `+pgx.Identifier{c.record}.Sanitize()+` ("tenantId","purchaseId",`+pgx.Identifier{c.from}.Sanitize()+`,`+
 		pgx.Identifier{c.to}.Sanitize()+`,"changedBy",operation,"idempotencyKey")
 	 SELECT $2,t.id,t.old,$4,$5,$6,$7 FROM unnest($1::text[],$3::text[]) AS t(id,old)`, ids, u.Tenant, previous, value, u.User, string(op.Name), key)
+	statuses := make([]string, len(ids))
+	for i := range statuses {
+		statuses[i] = op.Status
+	}
+	return statuses, err
+}
+
+// amend sets the amount of every target to its own requested value. Every
+// target must be eligible and every value acceptable (increase limit, same
+// side of KeepSideOf), or the whole call gets the uniform denial.
+func amend(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation, key string, ids []string, req Request) ([]string, error) {
+	rows, err := tx.Query(ctx, `SELECT p.id,p.amount FROM "Purchase" p WHERE p.id=ANY($1::text[])
+	 AND p."tenantId"=$2 AND (p."createdBy"=$3)=$4 AND p.status=$5 ORDER BY p.id FOR UPDATE OF p`,
+		ids, u.Tenant, u.User, op.Subject == opdef.Own, op.Status)
+	if err != nil {
+		return nil, err
+	}
+	old := map[string]int{}
+	for rows.Next() {
+		var id string
+		var amount int
+		if err = rows.Scan(&id, &amount); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		old[id] = amount
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	previous, values := make([]int, len(ids)), make([]int, len(ids))
+	for i, id := range ids {
+		from, ok := old[id]
+		to := req.Amounts[id]
+		// Pair by id, never by position (the database collation need not be byte order).
+		if !ok || int64(to)*100 > int64(from)*int64(100+op.MaxIncreasePercent) || (from <= op.KeepSideOf) != (to <= op.KeepSideOf) {
+			return nil, &Rejection{op.Denial}
+		}
+		previous[i], values[i] = from, to
+	}
+	tag, err := tx.Exec(ctx, `UPDATE "Purchase" p SET amount=t.amount FROM unnest($1::text[],$2::int[]) AS t(id,amount)
+	 WHERE p.id=t.id AND p."tenantId"=$3 AND (p."createdBy"=$4)=$5 AND p.status=$6`, ids, values, u.Tenant, u.User, op.Subject == opdef.Own, op.Status)
+	if err != nil {
+		return nil, err
+	}
+	if tag.RowsAffected() != int64(len(ids)) {
+		return nil, &Rejection{op.Denial}
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO "AmendmentHistory" ("tenantId","purchaseId","fromAmount","toAmount","changedBy",operation,"idempotencyKey",reason)
+	 SELECT $4,t.id,t.old,t.new,$5,$6,$7,$8 FROM unnest($1::text[],$2::int[],$3::int[]) AS t(id,old,new)`,
+		ids, previous, values, u.Tenant, u.User, string(op.Name), key, req.Reason)
 	statuses := make([]string, len(ids))
 	for i := range statuses {
 		statuses[i] = op.Status

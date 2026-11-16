@@ -29,7 +29,7 @@ def emit(text, model, credits):
 
 def main():
     if sys.argv[1:] == ['--version']:
-        print('fake-kiro-cli 0.0.0 (v7 hand-off control, no model)')
+        print('fake-kiro-cli 0.0.0 (v8b hand-off control, no model)')
         return 0
     args = sys.argv[1:]
     model = args[args.index('--model') + 1] if '--model' in args else 'unknown'

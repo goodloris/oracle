@@ -37,12 +37,33 @@ type Querier interface {
 // The domain is the operation name. A batch response has one array field; a
 // parameterised batch response (bulk-reassign's "assignee") also carries its one
 // string parameter, which is part of the request and is bound into the domain
-// as operation+"\n"+value. A single-target response is its "id" field; the
-// request reason is not stored in the response and is not part of the digest.
+// as operation+"\n"+value. An itemised batch response (one value per target)
+// has one array of {"id","amount"} objects; each item is digested as
+// id+"="+amount in place of the bare ID. A single-target response is its "id"
+// field; the request reason is not stored in the response and is not part of
+// the digest.
 func subject(operation string, response []byte) (string, []string, bool) {
 	var body map[string]json.RawMessage
 	if json.Unmarshal(response, &body) != nil {
 		return "", nil, false
+	}
+	if len(body) == 1 {
+		for _, raw := range body {
+			var items []struct {
+				ID     *string `json:"id"`
+				Amount *int    `json:"amount"`
+			}
+			if json.Unmarshal(raw, &items) == nil && len(items) > 0 && items[0].ID != nil {
+				entries := make([]string, len(items))
+				for i, it := range items {
+					if it.ID == nil || it.Amount == nil {
+						return "", nil, false
+					}
+					entries[i] = fmt.Sprintf("%s=%d", *it.ID, *it.Amount)
+				}
+				return operation, entries, true
+			}
+		}
 	}
 	if raw, ok := body["id"]; ok {
 		var id string

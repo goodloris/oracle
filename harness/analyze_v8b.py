@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Pre-registered v7 analysis (prereg/preregistration-v7.md). Reads run directories only; never calls a model.
+"""Pre-registered v8b analysis (prereg/preregistration-v8b.md). Reads run directories only; never calls a model.
 
-Usage: analyze_v7.py --run DIR [--run DIR ...] [--output analysis.json] [--seed 20261116] [--resamples 10000]
+Usage: analyze_v8b.py --run DIR [--run DIR ...] [--output analysis.json] [--seed 20261116] [--resamples 10000]
 A run directory is a host run (`/opt/poc-oracle/runs/<run>`): plan.json, results/<trial>/ (worker outcome,
 receipt, network.log, generation/events.jsonl) and evaluations/<trial>/result.json. One run per lane
 (task x model). Blocks are (task, model, instance).
 
 Outcomes: A (passed), E (explicit_passed), K (conventions_passed), D (outbox_passed), S (generation_seconds),
 C (usage.credits), safety (seven structured categories).
-Primary: H1 A go-action-opdef > go-manual, exact one-sided paired sign test, alone at alpha 0.05.
-Secondary: H2 A go-manual-doc > go-manual, H3 A go-action-opdef > go-manual-doc, Holm over {H2, H3}.
-Each hypothesis has its own valid blocks: both of its cells observed in the block.
+Primary (the only test): H1 A go-action-opdef (given) > go-manual, exact one-sided paired sign test over the
+blocks of all three tasks pooled, alpha 0.05. A block is valid when both cells are observed in it.
+Per-task results are descriptive only (rates; the per-task sign-test p values are reported as exploratory).
 Exploratory: S opdef < manual, one-sided Wilcoxon signed-rank (exact with mid-ranks for n <= 50, else normal
 approximation with tie correction). Cost per correct result with a block bootstrap. Sensitivity analysis
 drops, per hypothesis, every block in which one of its two trials made a retrieval attempt (v6 appendix A).
@@ -24,13 +24,12 @@ import random
 import re
 import sys
 
-CELLS = ('go-manual', 'go-manual-doc', 'go-action-opdef')
+CELLS = ('go-manual', 'go-action-opdef')
 OBSERVED = {'passed', 'acceptance-failed', 'candidate-error', 'budget-exceeded', 'scope-violation'}
 UNMEASURED = {'runtime-blocked', 'provider-error', 'protocol-error', 'infrastructure-blocked', 'not-run'}
 SAFETY = ('unauthorized_write', 'partial_batch', 'side_effect_atomicity', 'double_apply', 'wrong_commit',
           'service_error', 'undecidable')
-HYPOTHESES = {'H1': ('go-action-opdef', 'go-manual'), 'H2': ('go-manual-doc', 'go-manual'), 'H3': ('go-action-opdef', 'go-manual-doc')}
-SECONDARY = ('H2', 'H3')
+HYPOTHESES = {'H1': ('go-action-opdef', 'go-manual')}
 ALPHA = 0.05
 # Telemetry hosts never count as network-denied (v6 appendix C and F).
 TELEMETRY = {'telemetry.eu-central-1.kiro.dev', 'client-telemetry.us-east-1.amazonaws.com',
@@ -73,8 +72,8 @@ def trial(run, t, plan):
     res, ev = run / 'results' / t['id'], run / 'evaluations' / t['id'] / 'result.json'
     if ev.exists():
         r = json.loads(ev.read_text())
-        if r.get('version') != 7:
-            raise ValueError('not a v7 evaluation: %s' % ev)
+        if r.get('version') != 8:
+            raise ValueError('not a v8b evaluation: %s' % ev)
     elif (res / 'outcome.json').exists():
         r = json.loads((res / 'outcome.json').read_text())
         if r['outcome'] == 'generated':
@@ -100,6 +99,7 @@ def trial(run, t, plan):
             'S': g.get('generation_seconds') if observed else None,
             'started': bool(g.get('turn_started')), 'credits': usage if type(usage) in (int, float) else None,
             'safety': {k: (r.get('safety') or {}).get(k, {'count': 0, 'cases': []}) for k in SAFETY} if scored else None,
+            'verifier': (r.get('verifier') or {}).get('verdict') if scored else None,
             'retrieval_attempt': [c[:200] for c in shell_commands(res / 'generation' / 'events.jsonl') if RETRIEVAL.search(c)],
             'network_denied': denied_hosts(res / 'network.log')}
 
@@ -170,15 +170,6 @@ def wilcoxon_lower_p(diffs):
     return 0.5 * math.erfc(-z / math.sqrt(2)), n, w_plus, 'normal'
 
 
-def holm(ps):
-    order = sorted(ps, key=lambda k: (ps[k], k))
-    adj, running = {}, 0.0
-    for i, k in enumerate(order):
-        running = max(running, min(1.0, (len(ps) - i) * ps[k]))
-        adj[k] = running
-    return adj
-
-
 def blocks_of(lanes):
     return [b for lane in lanes for b in lane['blocks']]
 
@@ -203,10 +194,6 @@ def paired(blocks, hypothesis, metric='A', exclude_retrieval=False):
 def hypotheses(blocks, exclude_retrieval=False):
     out = {h: paired(blocks, h, exclude_retrieval=exclude_retrieval) for h in HYPOTHESES}
     out['H1']['holds'] = out['H1']['p_one_sided'] < ALPHA
-    adj = holm({h: out[h]['p_one_sided'] for h in SECONDARY})
-    for h in SECONDARY:
-        out[h]['p_holm'] = adj[h]
-        out[h]['holds'] = adj[h] < ALPHA
     return out
 
 
@@ -307,18 +294,37 @@ def audit(lanes):
     return out
 
 
+def verifier_table(lanes):
+    """Private Verifier verdict against the Oracle's A, per task and cell (additional analysis, never an outcome)."""
+    out = {}
+    for lane in lanes:
+        for b in lane['blocks']:
+            for cell, t in b.items():
+                if t['verifier'] is None and t['outcome'] not in ('passed', 'acceptance-failed'):
+                    continue
+                row = out.setdefault(lane['task'], {}).setdefault(cell, Counter())
+                row['%s/%s' % ('A' if t['A'] else 'notA', t['verifier'] or 'none')] += 1
+    return {task: {cell: dict(c) for cell, c in cells.items()} for task, cells in out.items()}
+
+
 def analyze(runs, seed=20261116, resamples=10000):
     lanes = load(runs)
     blocks = blocks_of(lanes)
     rng = random.Random(seed)
+    tasks = sorted({lane['task'] for lane in lanes})
+    per_task = []
+    for task in tasks:
+        tb = [b for lane in lanes if lane['task'] == task for b in lane['blocks']]
+        per_task.append({'task': task, 'descriptive_only': True, 'rates': {c: rates([b[c] for b in tb]) for c in CELLS},
+                         'exploratory_A_sign_test': paired(tb, 'H1'), 'cost': cost(tb, rng, resamples)})
     per_lane = []
     for lane in lanes:
         per_lane.append({'task': lane['task'], 'model': lane['model'],
                          'rates': {c: rates([b[c] for b in lane['blocks']]) for c in CELLS},
                          'exploratory_A_sign_tests': {h: paired(lane['blocks'], h) for h in HYPOTHESES},
                          'cost': cost(lane['blocks'], rng, resamples)})
-    return {'version': 7, 'seed': seed, 'resamples': resamples, 'lanes': [[l['task'], l['model']] for l in lanes],
-            'primary_and_secondary': hypotheses(blocks),
+    return {'version': 8, 'seed': seed, 'resamples': resamples, 'lanes': [[l['task'], l['model']] for l in lanes],
+            'primary': hypotheses(blocks), 'per_task': per_task, 'verifier': verifier_table(lanes),
             'sensitivity_excluding_retrieval_attempt': hypotheses(blocks, exclude_retrieval=True),
             'exploratory_S_wilcoxon': seconds(blocks),
             'rates': {c: rates([b[c] for b in blocks]) for c in CELLS},

@@ -17,9 +17,21 @@ v1–v6 的 Oracle 和参考答案都放在公开仓库里。Kiro 的服务端 `
 
 验收主机没有 GitHub 凭据，本仓库由操作员机器通过 `rsync`/`git bundle` 推送过去，不在共享主机上留 deploy key。
 
+## 布局
+
+| 路径 | 内容 |
+|---|---|
+| `tasks/<task>/` | 任务说明与约定（`cohort.json`）、任务 schema、私有目录 `catalog.go.txt`、目录文档 `OPERATIONS.md`、参考实现与控制清单 |
+| `harness/` | 控制器 `ctl.py`、独立 Oracle `oracle.py`、`dbrpc/`、控制 `controls.py`、Verifier 构建 `verifier.py`、导出模板 `source/` |
+| `benchmark/phase3/generation_worker.py` | 公开 worker 的逐字节副本（kit 的 worker.py） |
+| `scripts/` | 主机同步、主机数据库、prepare、拉取 kit、沙箱生成、推回、验收、主机控制 |
+| `prereg/preregistration-v7.md` | 预注册草稿（未冻结） |
+| `docs/v7-design.md` | 设计说明；`docs/evidence/` 为控制与跨主机证据 |
+
 ## 流程
 
-1. 在验收主机上执行 `fixtures`、`plan`、`prepare`：seed 留在主机，kit 用 scp 传给生成端。
-2. 生成端执行 `run_kiro_cohort_net.sh`，产出 bundle、receipt 和网络日志，再用 scp 传回主机。
-3. 在验收主机上执行 `restore`、`evaluate`、`summarize`，Oracle 输出结构化的安全字段。
-4. 预注册全文提交在本仓库；只把它的 SHA256 和提交时间贴到公开 issue，用来证明数据产生之前已经冻结。
+1. `scripts/sync_to_host.sh`、`scripts/sync_public_to_host.sh`（Verifier 用的公开平台 commit），`scripts/host_db.sh up <lane>`。
+2. `scripts/host_prepare.sh <run> <task> <model> <reps>`：主机上执行 `fixtures`、`plan`、`prepare`，seed 留在主机。
+3. `scripts/pull_kits.sh <run> <dir>`（目录必须在本仓库之外）→ `scripts/generate.sh <dir>/<run>` → `scripts/push_results.sh <run> <dir>`。
+4. `scripts/host_evaluate.sh <run> <lane>`：主机上执行 `restore`、`evaluate`、`summarize`；`scripts/host_db.sh down <lane>`。
+5. 预注册全文提交在本仓库；只把它的 SHA256 和提交时间贴到公开 issue。

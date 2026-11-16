@@ -1,0 +1,52 @@
+{
+  "version": 3,
+  "kind": "synthetic-smoke",
+  "plan_sha256": "a4342d19283348a16cbee63b3febf6fca14065ce53b8fe7af7ac0b2a71d91e1d",
+  "trial": {
+    "id": "go-action-opdef--001",
+    "cell": "go-action-opdef",
+    "instance": 1,
+    "prompt": "\u672c\u7248\u672c\u5728\u65e2\u6709\u6279\u91cf\u5ba1\u6279\uff08POST /purchases/bulk-approve\uff09\u3001\u6279\u91cf\u9a73\u56de\uff08POST /purchases/bulk-reject\uff09\u3001\u91cd\u65b0\u63d0\u4ea4\uff08POST /purchases/{id}/reopen\uff09\u4e0e\u6279\u91cf\u6539\u6d3e\uff08POST /purchases/bulk-reassign\uff09\u7684\u57fa\u7840\u4e0a\uff0c\u65b0\u589e\u7533\u8bf7\u64a4\u56de\uff1aPOST /purchases/{id}/withdraw\uff0c\u8bf7\u6c42\u4f53\u4e25\u683c\u4e3a {\"reason\":\"...\"}\uff0creason \u4e3a 1..200 \u5b57\u8282\u3002\u53ea\u6709\u5df2\u8ba4\u8bc1\u7684 requester \u53ef\u4ee5\u8c03\u7528\uff0c\u5e76\u4e14\u53ea\u80fd\u64a4\u56de\u672c\u4eba\u5728\u5f53\u524d\u79df\u6237\u4e2d\u521b\u5efa\u3001\u72b6\u6001\u4e3a submitted \u7684\u91c7\u8d2d\u5355\uff1b\u6210\u529f\u540e\u8be5\u91c7\u8d2d\u5355 status \u53d8\u4e3a withdrawn\uff0c\u5176\u4ed6\u5217\u90fd\u4e0d\u53d8\u3002\u627e\u4e0d\u5230\u76ee\u6807\u3001\u76ee\u6807\u5c5e\u4e8e\u5176\u4ed6\u79df\u6237\u3001\u4e0d\u662f\u672c\u4eba\u521b\u5efa\u6216\u72b6\u6001\u4e0d\u662f submitted \u65f6\u8fd4\u56de 4xx\uff0c\u6570\u636e\u5e93\u5168\u90e8\u4e0d\u53d8\u3002\u8bf7\u6c42\u4f53\u3001\u8eab\u4efd\u3001\u62a5\u6587\u4e0a\u9650\u548c Idempotency-Key \u6821\u9a8c\u7531\u5171\u4eab HTTP \u9002\u914d\u5668 protocol.Item \u5b8c\u6210\uff08verb \u4e3a withdraw\uff0crole \u4e3a requester\uff09\uff0c\u65b0\u8def\u5f84\u901a\u8fc7\u5b83\u6ce8\u518c\u3002\u6210\u529f\u8fd4\u56de 200\uff0c\u54cd\u5e94\u4e3a {\"id\":ID,\"status\":\"withdrawn\"}\u3002\u9996\u6b21\u6210\u529f Idempotency-Replayed=false\uff1b\u540c\u4e00 actor \u4ee5\u540c\u4e00 key \u91cd\u653e\u540c\u4e00\u76ee\u6807\u65f6\uff0c\u8fd4\u56de\u76f8\u540c\u72b6\u6001\u548c\u54cd\u5e94\u5b57\u8282\uff0cheader=true\uff0c\u4e0d\u4ea7\u751f\u65b0\u5199\u5165\uff1b\u540c key \u4e0d\u540c\u76ee\u6807\u8fd4\u56de 409\u3002\u4e0d\u540c actor \u4f7f\u7528\u540c\u540d key \u4e92\u4e0d\u5f71\u54cd\u3002\u5e42\u7b49\u7ed3\u679c\u4e0e\u64a4\u56de\u5728\u540c\u4e00\u4e8b\u52a1\u4e2d\u5199\u5165 ActionRequest\uff1aoperation \u4e3a \"withdraw.v7\"\uff0ctenantId\u3001actorId\u3001key \u5206\u522b\u4e3a\u5f53\u524d\u79df\u6237\u3001\u5f53\u524d\u7528\u6237\u548c Idempotency-Key \u539f\u503c\uff0cresponse \u4e3a\u54cd\u5e94 JSON \u5bf9\u8c61\uff0c\u6bcf\u4e2a\u6210\u529f\u7684\u65b0\u8bf7\u6c42\u6070\u597d\u4e00\u884c\u3002ActionRequest \u5199\u5165\u5931\u8d25\u65f6\u8fd4\u56de 503 \u4e14\u6570\u636e\u5e93\u5168\u90e8\u4e0d\u53d8\uff0c\u6545\u969c\u79fb\u9664\u540e\u540c key \u53ef\u91cd\u8bd5\u3002\u5e76\u53d1\uff1a\u540c key \u540c\u8bf7\u6c42\u4e24\u6b21\u5747 200 \u4e14\u53ea\u63d0\u4ea4\u4e00\u6b21\uff1b\u4e0d\u540c key \u540c\u65f6\u64a4\u56de\u540c\u4e00\u91c7\u8d2d\u5355\u65f6\u6070\u597d\u4e00\u4e2a\u8fd4\u56de 200\u3001\u53e6\u4e00\u4e2a\u8fd4\u56de 4xx\uff0c\u53ea\u64a4\u56de\u4e00\u6b21\u3002\u64a4\u56de\u540e\u7684\u91c7\u8d2d\u5355\u4e0d\u80fd\u518d\u88ab\u6279\u91cf\u5ba1\u6279\u3001\u6279\u91cf\u9a73\u56de\u3001\u91cd\u65b0\u63d0\u4ea4\u6216\u6539\u6d3e\uff084xx\uff0c\u6570\u636e\u5e93\u4e0d\u53d8\uff09\u3002approver \u8c03\u7528\u8fd4\u56de 403\uff0c\u672a\u8ba4\u8bc1\u8fd4\u56de 401\uff1b\u5ba2\u6237\u7aef\u4e0a\u4e0b\u6587\u5934\u4e0d\u80fd\u8986\u76d6\u8ba4\u8bc1\u8eab\u4efd\u3002\u6279\u91cf\u5ba1\u6279\u3001\u6279\u91cf\u9a73\u56de\u3001\u91cd\u65b0\u63d0\u4ea4\u3001\u6279\u91cf\u6539\u6d3e\u4e0e\u539f\u6709 API \u884c\u4e3a\u4fdd\u6301\u4e0d\u53d8\u3002\nAdd the withdraw Action described above to the existing service.\nRead the existing code first and follow its conventions.\nThe database uses guarded RLS. The shared HTTP adapter in internal/protocol validates input and binds demo identity; register the new path with protocol.Item.\nOnly edit/add internal/candidate/ Go code. All other exports, dependencies, Git settings and tests are protected.\nPreserve the existing APIs, including bulk-approve, bulk-reject, reopen and bulk-reassign.\nDo not commit/push, read credentials, other checkouts or evaluator materials; do not use other agents.\nUse go build ./... and go test ./... as needed. Private database credentials are unavailable during generation. The public SQL schema is in SCHEMA.sql.\nCapability: protected internal/opdef is the reviewed operation catalog and already contains the entry for the operation in this task; protected internal/opkernel executes catalog entries: New(ctx,pool), Request and Executor.Run(ctx,identity,name,key,request). The existing operations are served through the kernel by internal/candidate; serve the new one the same way. opkernel.Rejection is distinct from protocol.Rejection; adapt at your boundary.\nThis is a trusted-code pilot; directory export alone does not enforce host or network isolation.",
+    "prompt_sha256": "0f32a06df94ed7344a95dafced167dd89fa568423da2cea29441969c8cb08fca"
+  },
+  "outcome": "generated",
+  "passed": false,
+  "generation": {
+    "status": "completed",
+    "usage": {
+      "credits": 0.01
+    },
+    "turn_started": true,
+    "run_finished": true,
+    "reported_model": "fake-kiro",
+    "event_count": 4,
+    "agent_messages": [
+      "done: copied the go-action-opdef reference solution"
+    ],
+    "errors": [],
+    "engine": "kiro",
+    "generation_seconds": 0.04,
+    "requested_model": "fake-kiro",
+    "reasoning_effort": "medium",
+    "sandbox": "workspace-write",
+    "command": [
+      "/Users/administrator/poc-v7-runs/xh2-withdraw-20261116/tools/fake_kiro.py",
+      "chat",
+      "--no-interactive",
+      "--output-format",
+      "stream-json",
+      "--agent-engine",
+      "v3",
+      "--agent",
+      "poc-v3-generator",
+      "--model",
+      "fake-kiro",
+      "--effort",
+      "medium",
+      "--trust-all-tools"
+    ],
+    "returncode": 0,
+    "timed_out": false,
+    "cli_version": "fake-kiro-cli 0.0.0 (v7 hand-off control, no model)"
+  }
+}

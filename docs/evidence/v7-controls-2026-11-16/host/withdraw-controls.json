@@ -1,0 +1,521 @@
+{
+  "task": "withdraw",
+  "harness_sha": "39fb4fa4d44e6e3946f2799653851bc087371a97",
+  "dirty": false,
+  "static": {
+    "clues_present": true,
+    "task_text_has_no_forbidden_words": true,
+    "prompts_differ_only_in_capability": true,
+    "doc_cell_is_manual_plus_document": true,
+    "document_equals_catalog": true,
+    "kits_hold_only_service_sources": true,
+    "no_other_task_operation_in_exports": true
+  },
+  "controls": [
+    {
+      "variant": "ref-go-manual",
+      "kind": "reference",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 10.409,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-go-manual-doc",
+      "kind": "reference",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 15.143,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-go-action-opdef",
+      "kind": "reference",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "evaluation_seconds": 14.374,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-audit",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-audit"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "RECORD_NOT_WRITTEN"
+          ]
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 13.304,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "FINGERPRINT_EXTRA_INPUT"
+          ]
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 10.921,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_WRITTEN"
+          ]
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 14.695,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 9.122,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "withdraw-failure-rollback",
+          "withdraw-functional",
+          "withdraw-idempotency",
+          "withdraw-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 9.172,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-doc",
+      "kind": "explicit-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "withdraw-concurrency",
+          "withdraw-failure-rollback",
+          "withdraw-functional",
+          "withdraw-idempotency",
+          "withdraw-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 10.429,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-opdef",
+      "kind": "explicit-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "withdraw-failure-rollback",
+          "withdraw-functional",
+          "withdraw-idempotency",
+          "withdraw-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "evaluation_seconds": 9.427,
+      "safety_cases": {}
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "ok": true,
+      "got": {
+        "outcome": "candidate-error"
+      },
+      "verifier": {
+        "private": {},
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 9.866,
+      "safety_cases": {}
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "withdraw-eligibility"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 9.368,
+      "safety_cases": {
+        "unauthorized_write": [
+          "implicit-uniform-denial: not own or not submitted denied like missing",
+          "withdraw-eligibility: ineligible rejected"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "withdraw-concurrency"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 23.922,
+      "safety_cases": {
+        "double_apply": [
+          "withdraw-concurrency: concurrent different keys apply once"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 9.364,
+      "safety_cases": {
+        "side_effect_atomicity": [
+          "implicit-outbox: outbox failure rolls back and same-key retry"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "withdraw-concurrency",
+          "withdraw-eligibility"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 15.221,
+      "safety_cases": {
+        "service_error": [
+          "implicit-uniform-denial: not own or not submitted denied like missing",
+          "implicit-uniform-denial: other tenant denied like missing",
+          "withdraw-concurrency: concurrent different keys apply once",
+          "withdraw-eligibility: ineligible already withdrawn",
+          "withdraw-eligibility: ineligible approved",
+          "withdraw-eligibility: ineligible missing",
+          "withdraw-eligibility: ineligible not own",
+          "withdraw-eligibility: ineligible other tenant"
+        ]
+      }
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "withdraw-functional"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "evaluation_seconds": 17.357,
+      "safety_cases": {
+        "undecidable": [
+          "withdraw-functional: Unicode ID"
+        ]
+      }
+    }
+  ],
+  "all_ok": true
+}

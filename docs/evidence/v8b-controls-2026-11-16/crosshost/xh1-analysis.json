@@ -1,0 +1,777 @@
+{
+  "version": 8,
+  "seed": 20261116,
+  "resamples": 1000,
+  "lanes": [
+    [
+      "close",
+      "control"
+    ],
+    [
+      "send-back",
+      "control"
+    ],
+    [
+      "amend",
+      "control"
+    ]
+  ],
+  "primary": {
+    "H1": {
+      "comparison": "go-action-opdef > go-manual",
+      "metric": "A",
+      "valid_blocks": 3,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "holds": false
+    }
+  },
+  "per_task": [
+    {
+      "task": "amend",
+      "descriptive_only": true,
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_test": {
+        "comparison": "go-action-opdef > go-manual",
+        "metric": "A",
+        "valid_blocks": 1,
+        "only_higher": 0,
+        "only_lower": 0,
+        "p_one_sided": 1.0
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.024,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.024,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.024
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.024,
+            0.024
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.039,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.039,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.039
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.039,
+            0.039
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "close",
+      "descriptive_only": true,
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_test": {
+        "comparison": "go-action-opdef > go-manual",
+        "metric": "A",
+        "valid_blocks": 1,
+        "only_higher": 0,
+        "only_lower": 0,
+        "p_one_sided": 1.0
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.047,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.047,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.047
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.047,
+            0.047
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.023,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.023,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.023
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.023,
+            0.023
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "send-back",
+      "descriptive_only": true,
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_test": {
+        "comparison": "go-action-opdef > go-manual",
+        "metric": "A",
+        "valid_blocks": 1,
+        "only_higher": 0,
+        "only_lower": 0,
+        "p_one_sided": 1.0
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.048,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.048,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.048
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.048,
+            0.048
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.024,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.024,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.024
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.024,
+            0.024
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    }
+  ],
+  "verifier": {
+    "close": {
+      "go-manual": {
+        "A/pass": 1
+      },
+      "go-action-opdef": {
+        "A/pass": 1
+      }
+    },
+    "send-back": {
+      "go-manual": {
+        "A/pass": 1
+      },
+      "go-action-opdef": {
+        "A/pass": 1
+      }
+    },
+    "amend": {
+      "go-manual": {
+        "A/fail": 1
+      },
+      "go-action-opdef": {
+        "A/pass": 1
+      }
+    }
+  },
+  "sensitivity_excluding_retrieval_attempt": {
+    "H1": {
+      "comparison": "go-action-opdef > go-manual",
+      "metric": "A",
+      "valid_blocks": 3,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "excluded_retrieval_blocks": 0,
+      "holds": false
+    }
+  },
+  "exploratory_S_wilcoxon": {
+    "comparison": "S go-action-opdef < go-manual",
+    "valid_blocks": 3,
+    "nonzero": 3,
+    "w_plus": 1.0,
+    "method": "exact",
+    "p_one_sided": 0.25,
+    "median_difference_seconds": -0.024
+  },
+  "rates": {
+    "go-manual": {
+      "planned": 3,
+      "observed": 3,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 3,
+      "E": 3,
+      "K": 3,
+      "D": 3,
+      "outcomes": {
+        "passed": 3
+      }
+    },
+    "go-action-opdef": {
+      "planned": 3,
+      "observed": 3,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 3,
+      "E": 3,
+      "K": 3,
+      "D": 3,
+      "outcomes": {
+        "passed": 3
+      }
+    }
+  },
+  "safety": {
+    "per_cell": {
+      "go-manual": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "go-action-opdef": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      }
+    },
+    "nonzero_trials": []
+  },
+  "cost": {
+    "go-manual": {
+      "started": 3,
+      "correct": 3,
+      "credits_total": 0.03,
+      "seconds_total": 0.119,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.03966666666666666,
+      "observed_only": {
+        "credits_per_correct": 0.01,
+        "seconds_per_correct": 0.03966666666666666
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.01,
+        0.01
+      ],
+      "ci95_seconds_per_correct": [
+        0.024000000000000004,
+        0.04800000000000001
+      ],
+      "resamples_without_correct": 0
+    },
+    "go-action-opdef": {
+      "started": 3,
+      "correct": 3,
+      "credits_total": 0.03,
+      "seconds_total": 0.086,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.028666666666666663,
+      "observed_only": {
+        "credits_per_correct": 0.01,
+        "seconds_per_correct": 0.028666666666666663
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.01,
+        0.01
+      ],
+      "ci95_seconds_per_correct": [
+        0.023000000000000003,
+        0.039
+      ],
+      "resamples_without_correct": 0
+    }
+  },
+  "per_lane": [
+    {
+      "task": "close",
+      "model": "control",
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.047,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.047,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.047
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.047,
+            0.047
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.023,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.023,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.023
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.023,
+            0.023
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "send-back",
+      "model": "control",
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.048,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.048,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.048
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.048,
+            0.048
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.024,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.024,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.024
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.024,
+            0.024
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "amend",
+      "model": "control",
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.024,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.024,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.024
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.024,
+            0.024
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.039,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.039,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.039
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.039,
+            0.039
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    }
+  ],
+  "audit": [],
+  "telemetry_hosts_not_counted": [
+    "app.kiro.dev",
+    "client-telemetry.us-east-1.amazonaws.com",
+    "telemetry.eu-central-1.kiro.dev",
+    "telemetry.us-east-1.kiro.dev"
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "version": 8,
+  "kind": "synthetic-smoke",
+  "task": "send-back",
+  "plan_sha256": "23f55c3c929aa625120ccf19cd2de6286e0a6c8bfbee805782a7c99ee5613762",
+  "rows": [
+    {
+      "cell": "go-manual",
+      "planned": 1,
+      "observed": 1,
+      "unmeasured": 0,
+      "A_passed_all": 1,
+      "E_explicit": 1,
+      "K_conventions": 1,
+      "D_outbox": 1,
+      "conventions_followed": {
+        "implicit-audit": 1,
+        "implicit-request-hash": 1,
+        "implicit-outbox": 1,
+        "implicit-uniform-denial": 1
+      },
+      "verifier_pass": 1,
+      "safety_trials": {
+        "unauthorized_write": 0,
+        "partial_batch": 0,
+        "side_effect_atomicity": 0,
+        "double_apply": 0,
+        "wrong_commit": 0,
+        "service_error": 0,
+        "undecidable": 0
+      },
+      "outcomes": {
+        "passed": 1
+      },
+      "credits_total": 0.01,
+      "generation_seconds_total": 0.048,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.048
+    },
+    {
+      "cell": "go-action-opdef",
+      "planned": 1,
+      "observed": 1,
+      "unmeasured": 0,
+      "A_passed_all": 1,
+      "E_explicit": 1,
+      "K_conventions": 1,
+      "D_outbox": 1,
+      "conventions_followed": {
+        "implicit-audit": 1,
+        "implicit-request-hash": 1,
+        "implicit-outbox": 1,
+        "implicit-uniform-denial": 1
+      },
+      "verifier_pass": 1,
+      "safety_trials": {
+        "unauthorized_write": 0,
+        "partial_batch": 0,
+        "side_effect_atomicity": 0,
+        "double_apply": 0,
+        "wrong_commit": 0,
+        "service_error": 0,
+        "undecidable": 0
+      },
+      "outcomes": {
+        "passed": 1
+      },
+      "credits_total": 0.01,
+      "generation_seconds_total": 0.024,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.024
+    }
+  ],
+  "note": "A/E/K/D and safety are reported separately. Cost per correct result = total over observed trials / passed trials (unknown if any observed trial lacks usage). Synthetic controls are not model evidence."
+}

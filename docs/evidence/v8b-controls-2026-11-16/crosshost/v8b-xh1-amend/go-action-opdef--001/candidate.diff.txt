@@ -1,0 +1,42 @@
+diff --git a/internal/candidate/amend.go b/internal/candidate/amend.go
+new file mode 100644
+index 0000000..126f574
+--- /dev/null
++++ b/internal/candidate/amend.go
+@@ -0,0 +1,25 @@
++package candidate
++
++import (
++	"context"
++
++	"github.com/XUJiahua/enterprise_agent/internal/app"
++	"github.com/XUJiahua/enterprise_agent/internal/opdef"
++	"github.com/XUJiahua/enterprise_agent/internal/opkernel"
++	"github.com/XUJiahua/enterprise_agent/internal/protocol"
++)
++
++func amendments(exec *opkernel.Executor) protocol.AmendHandler {
++	op := entry(opdef.BulkAmend)
++	return func(ctx context.Context, u app.Identity, key string, ids []string, amounts map[string]int, reason string) (protocol.AmendResult, bool, error) {
++		done, replayed, err := exec.Run(ctx, u, opdef.BulkAmend, key, opkernel.Request{IDs: ids, Amounts: amounts, Reason: reason})
++		if err != nil {
++			return protocol.AmendResult{}, false, adapt(err)
++		}
++		items := make([]protocol.AmendItem, len(done))
++		for i, id := range done {
++			items[i] = protocol.AmendItem{ID: id, Amount: amounts[id]}
++		}
++		return protocol.AmendResult{Field: op.Response, Items: items}, replayed, nil
++	}
++}
+diff --git a/internal/candidate/approval.go b/internal/candidate/approval.go
+index b52973e..4a9cca2 100644
+--- a/internal/candidate/approval.go
++++ b/internal/candidate/approval.go
+@@ -87,5 +87,5 @@ func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.H
+ 	}, fallback)
+ 	items := protocol.Confirm("countersign", "approver", confirm(exec, opdef.Countersign),
+ 		protocol.Item("reopen", "requester", item(exec, opdef.Reopen), batches))
+-	return protocol.Assign("/purchases/bulk-reassign", reassign(exec), items), nil
++	return protocol.Amend("/purchases/bulk-amend", amendments(exec), protocol.Assign("/purchases/bulk-reassign", reassign(exec), items)), nil
+ }

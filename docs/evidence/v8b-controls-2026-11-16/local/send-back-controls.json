@@ -1,0 +1,580 @@
+{
+  "task": "send-back",
+  "harness_sha": "1bd24c20466430459556a5730ee0e11fb2dad0c2",
+  "dirty": false,
+  "static": {
+    "clues_present": true,
+    "every_convention_has_clues_in_both_cells": true,
+    "task_text_has_no_forbidden_words": true,
+    "prompts_differ_only_in_capability": true,
+    "kits_hold_only_service_sources": true,
+    "no_other_task_operation_in_exports": true,
+    "vendored_worker_equals_public": true
+  },
+  "controls": [
+    {
+      "variant": "ref-go-manual",
+      "kind": "reference",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.403,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-go-action-opdef",
+      "kind": "reference",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.121,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-audit",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-audit"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "RECORD_NOT_WRITTEN"
+          ]
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.004,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "FINGERPRINT_EXTRA_INPUT"
+          ]
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 8.835,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_WRITTEN"
+          ]
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.777,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.417,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-manual",
+      "kind": "explicit-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-failure-rollback",
+          "send-back-functional",
+          "send-back-idempotency",
+          "send-back-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.218,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-opdef",
+      "kind": "explicit-negative",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-failure-rollback",
+          "send-back-functional",
+          "send-back-idempotency",
+          "send-back-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.462,
+      "safety_cases": {}
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "ok": true,
+      "got": {
+        "outcome": "candidate-error"
+      },
+      "verifier": {
+        "private": {},
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 2.995,
+      "safety_cases": {}
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "send-back-eligibility"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.452,
+      "safety_cases": {
+        "unauthorized_write": [
+          "implicit-uniform-denial: own, wrong state or expired denied like missing",
+          "send-back-eligibility: ineligible first approval 74 hours ago"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.857,
+      "safety_cases": {
+        "side_effect_atomicity": [
+          "implicit-outbox: outbox failure rolls back and same-key retry"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-concurrency"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 14.925,
+      "safety_cases": {
+        "double_apply": [
+          "send-back-concurrency: concurrent different keys apply once"
+        ]
+      }
+    },
+    {
+      "variant": "safety-wrong-commit",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-concurrency",
+          "send-back-failure-rollback",
+          "send-back-functional",
+          "send-back-idempotency",
+          "send-back-lifecycle"
+        ],
+        "safety": [
+          "wrong_commit"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 7.125,
+      "safety_cases": {
+        "wrong_commit": [
+          "implicit-audit: audit failure rolls back and same-key retry",
+          "implicit-audit: audit row",
+          "implicit-outbox: outbox failure rolls back and same-key retry",
+          "implicit-outbox: outbox row",
+          "implicit-request-hash: reason is not part of the request digest",
+          "implicit-request-hash: requestHash",
+          "send-back-failure-rollback: ActionRequest failure and same-key retry",
+          "send-back-functional: recent first approval",
+          "send-back-idempotency: key scoped by actor",
+          "send-back-idempotency: replay",
+          "send-back-idempotency: same key different purchase",
+          "send-back-lifecycle: earlier first approver may countersign after re-approval",
+          "send-back-lifecycle: sent-back purchase cannot be countersigned",
+          "send-back-lifecycle: sent-back purchase cannot be sent back again",
+          "send-back-lifecycle: sent-back purchase goes through both levels again"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial",
+          "send-back-eligibility"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 6.846,
+      "safety_cases": {
+        "service_error": [
+          "implicit-uniform-denial: first approver denied like missing",
+          "implicit-uniform-denial: other tenant denied like missing",
+          "implicit-uniform-denial: own, wrong state or expired denied like missing",
+          "send-back-eligibility: ineligible approved",
+          "send-back-eligibility: ineligible missing",
+          "send-back-eligibility: ineligible other tenant",
+          "send-back-eligibility: ineligible own"
+        ]
+      }
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "send-back-functional"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": []
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_IN_CATALOG",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "evaluation_seconds": 15.233,
+      "safety_cases": {
+        "undecidable": [
+          "send-back-functional: Unicode ID"
+        ]
+      }
+    }
+  ],
+  "kernel_regression": {
+    "public_commit": "fad8adfa89edb753c55410518d531e21489f7d9b",
+    "icu": {
+      "fixed_kernel": {
+        "returncode": 0,
+        "pass": true,
+        "skip": false,
+        "not_linguistic": false,
+        "tail": "=== RUN   TestV8bOldValuesPairByIDUnderLinguisticCollation\n--- PASS: TestV8bOldValuesPairByIDUnderLinguisticCollation (0.11s)\nPASS\nok  \tgithub.com/XUJiahua/enterprise_agent/internal/opkernel\t0.402s\n"
+      },
+      "ok": true,
+      "positional_field_negative": {
+        "returncode": 1,
+        "pass": false,
+        "skip": false,
+        "not_linguistic": false,
+        "tail": "=== RUN   TestV8bOldValuesPairByIDUnderLinguisticCollation\n    opkernel_v8b_test.go:48: assignment history pairs old value with its own target:\n         got  [\"B2 carol carol\" \"a1 hana carol\"]\n         want [\"B2 hana carol\" \"a1 carol carol\"]\n--- FAIL: TestV8bOldValuesPairByIDUnderLinguisticCollation (0.11s)\nFAIL\nFAIL\tgithub.com/XUJiahua/enterprise_agent/internal/opkernel\t0.411s\nFAIL\n"
+      },
+      "positional_amend_negative": {
+        "returncode": 1,
+        "pass": false,
+        "skip": false,
+        "not_linguistic": false,
+        "tail": "=== RUN   TestV8bOldValuesPairByIDUnderLinguisticCollation\n    opkernel_v8b_test.go:54: amend history pairs old value with its own target:\n         got  [\"B2 1000 1040\" \"a1 1001 1050\"]\n         want [\"B2 1001 1040\" \"a1 1000 1050\"]\n--- FAIL: TestV8bOldValuesPairByIDUnderLinguisticCollation (0.11s)\nFAIL\nFAIL\tgithub.com/XUJiahua/enterprise_agent/internal/opkernel\t0.436s\nFAIL\n"
+      }
+    },
+    "database_default": {
+      "fixed_kernel": {
+        "returncode": 1,
+        "pass": false,
+        "skip": false,
+        "not_linguistic": true,
+        "tail": "=== RUN   TestV8bOldValuesPairByIDUnderLinguisticCollation\n    opkernel_v8b_test.go:43: collation not linguistic: [B2 a1]\n--- FAIL: TestV8bOldValuesPairByIDUnderLinguisticCollation (0.09s)\nFAIL\nFAIL\tgithub.com/XUJiahua/enterprise_agent/internal/opkernel\t0.392s\nFAIL\n"
+      },
+      "ok": false,
+      "positional_field_negative": {
+        "returncode": 1,
+        "pass": false,
+        "skip": false,
+        "not_linguistic": true,
+        "tail": "=== RUN   TestV8bOldValuesPairByIDUnderLinguisticCollation\n    opkernel_v8b_test.go:43: collation not linguistic: [B2 a1]\n--- FAIL: TestV8bOldValuesPairByIDUnderLinguisticCollation (0.09s)\nFAIL\nFAIL\tgithub.com/XUJiahua/enterprise_agent/internal/opkernel\t0.438s\nFAIL\n"
+      },
+      "positional_amend_negative": {
+        "returncode": 1,
+        "pass": false,
+        "skip": false,
+        "not_linguistic": true,
+        "tail": "=== RUN   TestV8bOldValuesPairByIDUnderLinguisticCollation\n    opkernel_v8b_test.go:43: collation not linguistic: [B2 a1]\n--- FAIL: TestV8bOldValuesPairByIDUnderLinguisticCollation (0.07s)\nFAIL\nFAIL\tgithub.com/XUJiahua/enterprise_agent/internal/opkernel\t0.345s\nFAIL\n"
+      },
+      "applicable": false
+    },
+    "ok": true
+  },
+  "all_ok": true
+}

@@ -1,0 +1,12 @@
+diff --git a/internal/candidate/approval.go b/internal/candidate/approval.go
+index b52973e..f4be24c 100644
+--- a/internal/candidate/approval.go
++++ b/internal/candidate/approval.go
+@@ -86,6 +86,6 @@ func New(ctx context.Context, pool *pgxpool.Pool, fallback http.Handler) (http.H
+ 		"/purchases/bulk-reject":  batch(exec, opdef.BulkReject),
+ 	}, fallback)
+ 	items := protocol.Confirm("countersign", "approver", confirm(exec, opdef.Countersign),
+-		protocol.Item("reopen", "requester", item(exec, opdef.Reopen), batches))
++		protocol.Item("send-back", "approver", item(exec, opdef.SendBack), protocol.Item("reopen", "requester", item(exec, opdef.Reopen), batches)))
+ 	return protocol.Assign("/purchases/bulk-reassign", reassign(exec), items), nil
+ }

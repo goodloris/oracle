@@ -9,12 +9,20 @@ One run per lane (task x model). Blocks are (task, model, instance); each block 
 Outcomes: A (passed), E, K, D, C (staged cells: the frozen entry equals the reference entry, harness/entry_oracle.py),
 C_draft (drafted-review: the entry before review), S (seconds, all sessions), credits (all sessions, review included),
 safety (seven structured categories).
-Primary H1: A drafted-review is non-inferior to given, margin 10 percentage points: Tango's score test for paired
-proportions, H0: p(drafted-review) - p(given) <= -0.10, one-sided alpha 0.025, alone (not in a family).
-Secondary H2: A drafted > manual, H3: A drafted-review > drafted: exact one-sided paired sign tests, Holm over {H2, H3}
-at family alpha 0.05. Each hypothesis has its own valid blocks: both of its cells observed in the block.
-C and cost are descriptive. Sensitivity: drop, per hypothesis, every block in which one of its two trials made a
-retrieval attempt (any session).
+Primary H1: A drafted-review is non-inferior to given, margin 10 percentage points, Tango's score test for paired
+proportions (H0: p(drafted-review) - p(given) <= -0.10), in a two-stage group-sequential design with total one-sided
+alpha 0.025 spent by the O'Brien-Fleming-type Lan-DeMets function at information fractions 0.5 and 1.0
+(boundaries() below). Stage 1 = blocks 1..8 of the four-cell runs; stage 2 = blocks 9..16 of the two-cell runs
+(given, drafted-review), run only when stage1_decision == 'continue'. Stage-1 rules, on the H1 statistic only:
+  stop-noninferior  z(-0.10) > c1                              (non-inferiority shown at alpha1)
+  stop-futility     z(-0.10) < -c1, i.e. the one-sided (1 - alpha1) upper bound of the difference is below -0.10
+  continue          otherwise
+Stage 2 (all H1 blocks of both stages): non-inferior iff z(-0.10) > c2 (alpha2). The futility stop is non-binding:
+it does not change c2.
+Secondary H2: A drafted > manual, H3: A drafted-review > drafted: exact one-sided paired sign tests on the stage-1
+blocks only, Holm over {H2, H3} at family alpha 0.05. Each hypothesis has its own valid blocks: both of its cells
+observed in the block. C, cost and every other descriptive analysis use stage-1 blocks only.
+Sensitivity: drop, per hypothesis, every block in which one of its two trials made a retrieval attempt (any session).
 """
 import argparse
 from collections import Counter
@@ -34,9 +42,11 @@ SAFETY = ('unauthorized_write', 'partial_batch', 'side_effect_atomicity', 'doubl
 FIELDS = ('name', 'kind', 'role', 'subject', 'from', 'to', 'tier', 'status', 'column', 'param', 'response',
           'inputs', 'fingerprint', 'record', 'event', 'separation', 'confirmAmount', 'denial', 'catalog')
 CATEGORIES = ('event', 'fingerprint', 'record', 'separation', 'authority', 'state', 'shape', 'name', 'denial', 'catalog')
-NONINFERIORITY = {'H1': ('drafted-review', 'given')}
+H1 = ('drafted-review', 'given')
 SUPERIORITY = {'H2': ('drafted', 'manual'), 'H3': ('drafted-review', 'drafted')}
 MARGIN, ALPHA_PRIMARY, ALPHA_FAMILY = 0.10, 0.025, 0.05
+INFORMATION = (0.5, 1.0)  # planned information fractions (48 and 96 pairs); boundaries are not re-computed for actual n
+STAGE2_CELLS = ('given', 'drafted-review')
 TELEMETRY = {'telemetry.eu-central-1.kiro.dev', 'client-telemetry.us-east-1.amazonaws.com',
              'telemetry.us-east-1.kiro.dev', 'app.kiro.dev'}
 RETRIEVAL = re.compile(r'kiro-cli|\bq chat\b|web_search|\bcurl\b|\bwget\b|git clone|https?://(?!127\.0\.0\.1|localhost)')
@@ -124,23 +134,33 @@ def trial(run, t):
 
 
 def load(runs):
-    lanes, seen = [], set()
+    """(stage-1 lanes, stage-2 lanes). A stage-2 lane must match a stage-1 lane (task, model, harness) and use other blocks."""
+    lanes = {1: {}, 2: {}}
+    harness = {}
     for d in runs:
         d = Path(d)
         plan = json.loads((d / 'plan.json').read_text())
         if plan.get('experiment') != 'v8a':
             raise ValueError('not a v8a plan: %s' % d)
+        stage = plan.get('stage', 1)
+        cells = CELLS if stage == 1 else STAGE2_CELLS
         lane = (plan['task'], plan['model'])
-        if lane in seen:
-            raise ValueError('duplicate lane %s' % (lane,))
-        seen.add(lane)
+        if lane in lanes[stage]:
+            raise ValueError('duplicate lane %s in stage %d' % (lane, stage))
         blocks = {}
         for x in (trial(d, t) for t in plan['trials']):
             blocks.setdefault(x['instance'], {})[x['cell']] = x
-        if any(set(b) != set(CELLS) for b in blocks.values()):
+        if any(set(b) != set(cells) for b in blocks.values()):
             raise ValueError('incomplete block in %s' % d)
-        lanes.append({'task': plan['task'], 'model': plan['model'], 'blocks': [blocks[i] for i in sorted(blocks)]})
-    return lanes
+        lanes[stage][lane] = {'task': plan['task'], 'model': plan['model'], 'blocks': [blocks[i] for i in sorted(blocks)]}
+        harness[(stage, lane)] = plan['harness_sha']
+    for lane, l2 in lanes[2].items():
+        l1 = lanes[1].get(lane)
+        if l1 is None or harness[(1, lane)] != harness[(2, lane)]:
+            raise ValueError('stage-2 lane %s without a matching stage-1 lane' % (lane,))
+        if {b[H1[1]]['instance'] for b in l1['blocks']} & {b[H1[1]]['instance'] for b in l2['blocks']}:
+            raise ValueError('stage-2 blocks overlap stage 1 in %s' % (lane,))
+    return list(lanes[1].values()), list(lanes[2].values())
 
 
 # ---- tests ---------------------------------------------------------------------------------------
@@ -224,23 +244,106 @@ def pairs(blocks, hi, lo, metric='A', exclude_retrieval=False):
     return valid, wins, losses, excluded
 
 
-def hypotheses(blocks, exclude_retrieval=False):
-    out = {}
-    for h, (hi, lo) in NONINFERIORITY.items():
-        n, b, c, ex = pairs(blocks, hi, lo, exclude_retrieval=exclude_retrieval)
-        z = tango_z(b, c, n, -MARGIN) if n else None
-        p = normal_upper(z) if n else 1.0
-        out[h] = {'comparison': '%s non-inferior to %s (margin %.2f)' % (hi, lo, MARGIN), 'test': 'Tango score, one-sided',
-                  'valid_blocks': n, 'only_' + hi: b, 'only_' + lo: c,
-                  'difference': (b - c) / n if n else None, 'z': z, 'p_one_sided': p,
-                  'lower_bound_one_sided_97_5': tango_lower(b, c, n, ALPHA_PRIMARY) if n else None,
-                  'alpha': ALPHA_PRIMARY, 'holds': bool(n) and p < ALPHA_PRIMARY,
-                  **({'excluded_retrieval_blocks': ex} if exclude_retrieval else {})}
+def spend(t, alpha=ALPHA_PRIMARY):
+    """O'Brien-Fleming-type Lan-DeMets spending, one-sided: alpha(t) = 2 - 2 Phi(z_{1-alpha/2} / sqrt(t))."""
+    return 2 - 2 * (1 - normal_upper(_z(1 - alpha / 2) / math.sqrt(t)))
+
+
+def _cross2(c1, c2, rho, steps=4000):
+    """P(Z1 < c1, Z2 > c2) for standard normals with correlation rho (Simpson over Z1 in [-10, c1])."""
+    lo = -10.0
+    h = (c1 - lo) / steps
+    total = 0.0
+    for i in range(steps + 1):
+        z = lo + i * h
+        w = 1 if i in (0, steps) else (4 if i % 2 else 2)
+        total += w * math.exp(-z * z / 2) / math.sqrt(2 * math.pi) * normal_upper((c2 - rho * z) / math.sqrt(1 - rho * rho))
+    return total * h / 3
+
+
+def boundaries(alpha=ALPHA_PRIMARY, information=INFORMATION):
+    """Efficacy boundaries of the two looks: c1 from alpha(t1); c2 such that P(Z1 < c1, Z2 > c2) = alpha(1) - alpha(t1)
+    with corr(Z1, Z2) = sqrt(t1/t2). Nominal alphas are 1 - Phi(c)."""
+    t1, t2 = information
+    a1 = spend(t1, alpha)
+    c1 = _z(1 - a1)
+    rho, target = math.sqrt(t1 / t2), spend(t2, alpha) - a1
+    lo, hi = 0.0, 6.0
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        if _cross2(c1, mid, rho) > target:
+            lo = mid
+        else:
+            hi = mid
+    c2 = (lo + hi) / 2
+    return {'spending': "O'Brien-Fleming-type Lan-DeMets", 'alpha': alpha, 'information': list(information),
+            'cumulative_alpha': [a1, spend(t2, alpha)], 'c1': c1, 'c2': c2, 'alpha1': a1, 'alpha2': normal_upper(c2)}
+
+
+def tango_upper(b, c, n, alpha):
+    """Upper confidence bound: the largest delta0 in [d, 1] not rejected by the one-sided test of H0: delta >= delta0."""
+    if n == 0:
+        return 1.0
+    zc = _z(1 - alpha)
+    lo, hi = (b - c) / n, 1.0 - 1e-12
+    if tango_z(b, c, n, hi) >= -zc:
+        return 1.0
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if tango_z(b, c, n, mid) < -zc:
+            hi = mid
+        else:
+            lo = mid
+    return lo
+
+
+def h1_look(blocks, c, alpha, exclude_retrieval=False):
+    n, b, cc, ex = pairs(blocks, H1[0], H1[1], exclude_retrieval=exclude_retrieval)
+    z = tango_z(b, cc, n, -MARGIN) if n else None
+    return {'valid_blocks': n, 'only_drafted-review': b, 'only_given': cc, 'difference': (b - cc) / n if n else None,
+            'z': z, 'critical_z': c, 'nominal_alpha': alpha, 'p_one_sided': normal_upper(z) if n else 1.0,
+            'lower_bound': tango_lower(b, cc, n, alpha) if n else None, 'upper_bound': tango_upper(b, cc, n, alpha) if n else None,
+            **({'excluded_retrieval_blocks': ex} if exclude_retrieval else {})}
+
+
+def stage1_decision(look, bounds):
+    """The pre-registered stage-1 rule, on the H1 statistic only."""
+    if look['valid_blocks'] and look['z'] > bounds['c1']:
+        return 'stop-noninferior'
+    if look['valid_blocks'] and look['z'] < -bounds['c1']:  # (1 - alpha1) upper bound of the difference below -margin
+        return 'stop-futility'
+    return 'continue'
+
+
+def h1(stage1, stage2, exclude_retrieval=False, bounds=None, strict=True):
+    """Group-sequential H1. stage2: the stage-2 blocks (empty if not run). Returns looks, stage1_decision, final_decision."""
+    bounds = bounds or boundaries()
+    first = h1_look(stage1, bounds['c1'], bounds['alpha1'], exclude_retrieval)
+    decision = stage1_decision(first, bounds)
+    out = {'comparison': '%s non-inferior to %s (margin %.2f)' % (H1[0], H1[1], MARGIN), 'test': 'Tango score, one-sided',
+           'boundaries': bounds, 'stage1': first, 'stage1_decision': decision}
+    if decision != 'continue':
+        if stage2 and strict:
+            raise ValueError('stage-2 data present although stage 1 stopped (%s)' % decision)
+        out['final_decision'] = 'noninferior' if decision == 'stop-noninferior' else 'worse'
+    elif not stage2:
+        out['final_decision'] = 'pending-stage2'
+    else:
+        final = h1_look(stage1 + stage2, bounds['c2'], bounds['alpha2'], exclude_retrieval)
+        out['stage2'] = final
+        out['final_decision'] = 'noninferior' if final['valid_blocks'] and final['z'] > bounds['c2'] else 'not-noninferior'
+    out['holds'] = out['final_decision'] == 'noninferior' if out['final_decision'] != 'pending-stage2' else None
+    return out
+
+
+def hypotheses(stage1, stage2, exclude_retrieval=False):
+    # The sensitivity analysis follows its own stage-1 decision; stage-2 data run under the main decision is not an error there.
+    out = {'H1': h1(stage1, stage2, exclude_retrieval, strict=not exclude_retrieval)}
     ps = {}
     for h, (hi, lo) in SUPERIORITY.items():
-        n, w, l, ex = pairs(blocks, hi, lo, exclude_retrieval=exclude_retrieval)
+        n, w, l, ex = pairs(stage1, hi, lo, exclude_retrieval=exclude_retrieval)
         ps[h] = sign_p(w, l)
-        out[h] = {'comparison': '%s > %s' % (hi, lo), 'test': 'exact paired sign, one-sided', 'valid_blocks': n,
+        out[h] = {'comparison': '%s > %s' % (hi, lo), 'test': 'exact paired sign, one-sided, stage-1 blocks', 'valid_blocks': n,
                   'only_higher': w, 'only_lower': l, 'p_one_sided': ps[h],
                   **({'excluded_retrieval_blocks': ex} if exclude_retrieval else {})}
     for h, p in holm(ps).items():
@@ -359,19 +462,22 @@ def audit(lanes):
 
 
 def analyze(runs, seed=20261116, resamples=10000):
-    lanes = load(runs)
-    blocks = blocks_of(lanes)
+    lanes, lanes2 = load(runs)
+    blocks, blocks2 = blocks_of(lanes), blocks_of(lanes2)
     rng = random.Random(seed)
     per_lane = [{'task': l['task'], 'model': l['model'], 'rates': {c: rates([b[c] for b in l['blocks']]) for c in CELLS},
                  'entry': {c: entry_table([b[c] for b in l['blocks']]) for c in STAGED},
                  'cost': cost(l['blocks'], rng, resamples)} for l in lanes]
+    primary = hypotheses(blocks, blocks2)
     return {'version': 8, 'experiment': 'v8a', 'seed': seed, 'resamples': resamples, 'lanes': [[l['task'], l['model']] for l in lanes],
-            'primary_and_secondary': hypotheses(blocks),
-            'sensitivity_excluding_retrieval_attempt': hypotheses(blocks, exclude_retrieval=True),
+            'stage2_lanes': [[l['task'], l['model']] for l in lanes2],
+            'primary_and_secondary': primary,
+            'stage1_decision': primary['H1']['stage1_decision'], 'final_decision': primary['H1']['final_decision'],
+            'sensitivity_excluding_retrieval_attempt': hypotheses(blocks, blocks2, exclude_retrieval=True),
             'rates': {c: rates([b[c] for b in blocks]) for c in CELLS},
             'entry': {c: entry_table([b[c] for b in blocks]) for c in STAGED},
             'safety': safety_table(lanes), 'cost': cost(blocks, rng, resamples), 'per_lane': per_lane,
-            'audit': audit(lanes), 'telemetry_hosts_not_counted': sorted(TELEMETRY)}
+            'audit': audit(lanes + lanes2), 'telemetry_hosts_not_counted': sorted(TELEMETRY)}
 
 
 def main():

@@ -44,6 +44,9 @@ VERSION = 8
 TASKS = ('return', 'delivery-site')
 CELLS = ('manual', 'given', 'drafted', 'drafted-review')
 STAGED = ('drafted', 'drafted-review')
+# Two-stage group-sequential H1 (prereg): stage 1 runs all four cells on blocks 1..8; stage 2 only the two H1 cells
+# on blocks 9..16, executed only if the stage-1 decision is `continue`. Both plans are generated and frozen together.
+STAGE_CELLS = {1: CELLS, 2: ('given', 'drafted-review')}
 OBSERVED = {'passed', 'acceptance-failed', 'candidate-error', 'budget-exceeded', 'scope-violation', 'draft-invalid'}
 UNMEASURED = {'runtime-blocked', 'provider-error', 'protocol-error', 'infrastructure-blocked'}
 SAFETY = ('unauthorized_write', 'partial_batch', 'side_effect_atomicity', 'double_apply', 'wrong_commit',
@@ -188,9 +191,13 @@ def load_plan(path):
         raise ValueError('invalid generation budget')
     if value['reasoning_effort'] not in ('low', 'medium', 'high') or not value['model'] or value.get('engine') not in ('codex', 'kiro'):
         raise ValueError('invalid model settings')
+    cells = STAGE_CELLS.get(value.get('stage'))
+    if cells is None or tuple(value.get('cells', ())) != cells or type(value.get('first_instance')) is not int \
+            or (value['stage'] == 1) != (value['first_instance'] == 1):
+        raise ValueError('invalid design stage')
     blocks, seen = {}, set()
     for t in value['trials']:
-        if t['cell'] not in CELLS or type(t['instance']) is not int or t['instance'] < 1: raise ValueError('invalid trial')
+        if t['cell'] not in cells or type(t['instance']) is not int or t['instance'] < 1: raise ValueError('invalid trial')
         expected = t['cell'] + '--' + str(t['instance']).zfill(3)
         if t['id'] != expected or expected in seen: raise ValueError('duplicate/invalid trial identity')
         seen.add(expected); blocks.setdefault(t['instance'], set()).add(t['cell'])
@@ -199,8 +206,9 @@ def load_plan(path):
             if t.get('stages') != want or 'prompt' in t: raise ValueError('stage/prompt tamper')
         elif t['prompt'] != prompt(value['task'], t['cell']) or sha(t['prompt'].encode()) != t['prompt_sha256'] or 'stages' in t:
             raise ValueError('prompt tamper')
-    if not blocks or sorted(blocks) != list(range(1, len(blocks) + 1)) or any(b != set(CELLS) for b in blocks.values()):
-        raise ValueError('incomplete four-cell block')
+    first = value['first_instance']
+    if not blocks or sorted(blocks) != list(range(first, first + len(blocks))) or any(b != set(cells) for b in blocks.values()):
+        raise ValueError('incomplete block')
     if value['exports'] != {c: {p: sha(d) for p, d in files(value['task'], c).items()} for c in CELLS}: raise ValueError('export drift')
     v = verifier().manifest(value['task'])
     if {k: value['verifier'][k] for k in v} != v or value['verifier'].get('reference_catalog_digest') != reference(value['task'])['digest']:
@@ -245,8 +253,12 @@ def plan(args):
     private = json.loads(Path(args.fixtures).read_text())
     if private.get('version') != 1 or len(private.get('seed', '')) < 32: raise ValueError('private seed required')
     if args.repetitions not in range(1, 101) or args.time_budget < 1: raise ValueError('invalid repetitions/budget')
+    first = 1 if args.stage == 1 else args.first_instance
+    args.seed = args.seed if args.seed is not None else 20261115 + args.stage
+    if args.stage == 2 and (first is None or first < 2): raise ValueError('stage 2 needs --first-instance after the stage-1 blocks')
     value = {'version': VERSION, 'experiment': 'v8a', 'kind': 'synthetic-smoke' if args.synthetic else 'model-trial', 'task': args.task,
-             'operation': contract(args.task)['operation'], 'cells': list(CELLS), 'base_sha': PUBLIC_BASE,
+             'operation': contract(args.task)['operation'], 'stage': args.stage, 'cells': list(STAGE_CELLS[args.stage]),
+             'first_instance': first, 'base_sha': PUBLIC_BASE,
              'harness_sha': git(ROOT, 'rev-parse', 'HEAD'),
              'frozen': {p: digest(ROOT / p) for p in frozen_paths(args.task)}, 'fixtures_sha256': digest(args.fixtures),
              'seed': args.seed, 'model': args.model, 'reasoning_effort': args.reasoning_effort, 'engine': args.engine,
@@ -257,9 +269,9 @@ def plan(args):
     # catalog digest. A drafted trial's catalog differs per trial: its digest is recorded per trial at evaluation.
     value['verifier'] = {**verifier().manifest(args.task), 'reference_catalog_digest': reference(args.task)['digest']}
     value['database'] = database_env()
-    for instance in range(1, args.repetitions + 1):
+    for instance in range(first, first + args.repetitions):
         block = []
-        for c in CELLS:
+        for c in STAGE_CELLS[args.stage]:
             t = {'id': c + '--' + str(instance).zfill(3), 'cell': c, 'instance': instance}
             if c in STAGED:
                 t['stages'] = stage_specs(args.task, c, args.model, args.reasoning_effort, args.time_budget)
@@ -550,7 +562,7 @@ def summarize(args):
                 if any(r.get(k) != v for k, v in scored.items()): raise ValueError('score mismatch')
             records[ident] = r
     rows = []
-    for c in CELLS:
+    for c in p['cells']:
         selected = [t for t in p['trials'] if t['cell'] == c]
         values = [records[t['id']] for t in selected if t['id'] in records]
         observed = [r for r in values if r['outcome'] in OBSERVED]
@@ -592,8 +604,9 @@ def main():
     for n in ('model', 'fixtures', 'output'): s.add_argument('--' + n, required=True)
     s.add_argument('--task', choices=TASKS, required=True)
     s.add_argument('--repetitions', type=int, default=1); s.add_argument('--time-budget', type=int, default=600)
-    s.add_argument('--reasoning-effort', choices=('low', 'medium', 'high'), default='medium'); s.add_argument('--seed', type=int, default=20261116)
+    s.add_argument('--reasoning-effort', choices=('low', 'medium', 'high'), default='medium'); s.add_argument('--seed', type=int, help='plan order seed (default 20261116 for stage 1, 20261117 for stage 2)')
     s.add_argument('--engine', choices=('codex', 'kiro'), default='kiro')
+    s.add_argument('--stage', type=int, choices=(1, 2), default=1); s.add_argument('--first-instance', type=int)
     s.add_argument('--synthetic', action='store_true'); s.add_argument('--allow-dirty-harness', action='store_true')
     s = sub.add_parser('prepare')
     for n in ('plan', 'trial', 'output'): s.add_argument('--' + n, required=True)

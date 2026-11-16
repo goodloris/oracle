@@ -6,7 +6,7 @@
 
 | 路径 | 内容 |
 |---|---|
-| `harness/ctl.py` | v8a 控制器：fixtures / plan / prepare / export / restore / evaluate / summarize，四组，分阶段 receipt，按组裁剪的 kit 计划视图 |
+| `harness/ctl.py` | v8a 控制器：fixtures / plan（`--stage 1|2`）/ prepare / export / restore / evaluate / summarize，四组（第二阶段两组），分阶段 receipt，按组裁剪的 kit 计划视图 |
 | `harness/prompts.json` | 全部提示词（manual、given、起草、审查；适配 = given），审查者模型 |
 | `harness/stages.py` | 生成端阶段包装：导入 kit 中的公开 worker，逐阶段调用 `invoke()`，逐阶段检查范围、提交、目录检查 |
 | `harness/catalogcheck.py` | 编译 `internal/opdef` 并报告 `Validate()`、`All()`、`Digest()`；生成端与主机共用 |
@@ -14,7 +14,7 @@
 | `harness/oracle.py` | 完整 Oracle（v7 框架；T1 `return`、T2 `delivery-site` 的用例） |
 | `harness/controls.py` | 静态检查、条目正确性控制、真实 PostgreSQL 控制（含分阶段组）、Verifier 断言 |
 | `harness/verifier.py` | 私有 Verifier：公开 `fad8adf` + 任务平台版本 + **trial 的目录** |
-| `harness/analyze_v8a.py`、`analyze_v8a_check.py` | 预注册分析与统计自检 |
+| `harness/analyze_v8a.py`、`analyze_v8a_check.py` | 预注册分析（两阶段 H1 边界与停止决策）与分析控制（边界、α 消耗、四种决策路径的合成数据、运行特性） |
 | `harness/kernel_regression.py`、`harness/kernel/opkernel_v8a_test.go.txt` | T2 叠加内核的按 id 配对回归（ICU 与数据库默认排序）+ 按位置配对的负控制 |
 | `harness/source/platform/` | 公开 `fad8adf` 的 `catalog.go`、`opdef.go`、`opkernel.go` 原样（T1 平台；drafted 组的起点目录） |
 | `tasks/return/`、`tasks/delivery-site/` | `cohort.json`、`schema.sql`、`notify`/`reconcile`、参考目录 `catalog.go.txt`、`ref/`、`controls.json`、`entry_controls.json`；T2 另有 `platform/` 叠加 |
@@ -121,7 +121,7 @@ drafted-review                                                    draft → 提�
 3. **kit 中的计划改为按组裁剪的视图**。v7 的 kit 计划含 `tasks/` 文件 hash 和全部组的导出 hash；对 v7 无害（条目是给定的），但对 v8a 的起草会话是一个可以离线验证猜测的通道。
 4. **分阶段 kit 用 isolate_net 的命令覆盖**（公开工具标注为“controls only”）启动私有 `stages.py`；`stages.py` 导入 kit 中逐字节相同的公开 worker，不复制其逻辑。单会话组的执行路径与 v7 相同。
 5. **主机 checkout 与槽位隔离**（`private-v8a`、容器标签），因为 v8b 同时在同一主机开发。
-6. **H1 的检验**：用户给定“非劣效、界值 10 个百分点”。配对二元结局采用 Tango score 检验，单侧 α = 0.025（非劣效的常规水平）。8 块/通道下功效有限，已在预注册中写明，冻结前由操作员确认块数与 α。
+6. **H1 的检验**：用户给定“非劣效、界值 10 个百分点”，后改为两阶段成组序贯设计（2026-11-16 决定）。配对二元结局用 Tango score 检验；O'Brien-Fleming 型 Lan-DeMets 消耗，信息分数 0.5 / 1.0，单侧总 α = 0.025，名义 α₁ = 0.001525（c₁ = 2.9626）、α₂ = 0.024500（c₂ = 1.9686）。第一阶段四组 × 8 块；第二阶段只有 given 与 drafted-review，块 9–16，计划 `stage: 2`、`first_instance: 9`、种子 20261117，与第一阶段一起生成和冻结。停止规则与输出见预注册；实现 `analyze_v8a.boundaries()`、`stage1_decision()`、`h1()`，控制 `analyze_v8a_check.py`。
 
 ## 已知局限
 

@@ -1,0 +1,41 @@
+{
+  "ready": true,
+  "cli_version": "fake-kiro-cli 0.0.0 (v7 hand-off control, no model)",
+  "invocation": {
+    "status": "completed",
+    "usage": {
+      "credits": 0
+    },
+    "turn_started": true,
+    "run_finished": true,
+    "reported_model": "fake-kiro",
+    "event_count": 4,
+    "agent_messages": [
+      "READY"
+    ],
+    "errors": [],
+    "engine": "kiro",
+    "generation_seconds": 0.041,
+    "requested_model": "fake-kiro",
+    "reasoning_effort": "medium",
+    "sandbox": "read-only",
+    "command": [
+      "/Users/administrator/poc-v7-runs/xh4-cost-center-20261116/tools/fake_kiro.py",
+      "chat",
+      "--no-interactive",
+      "--output-format",
+      "stream-json",
+      "--agent-engine",
+      "v3",
+      "--agent",
+      "poc-v3-generator",
+      "--model",
+      "fake-kiro",
+      "--effort",
+      "medium",
+      "--trust-tools="
+    ],
+    "returncode": 0,
+    "timed_out": false
+  }
+}

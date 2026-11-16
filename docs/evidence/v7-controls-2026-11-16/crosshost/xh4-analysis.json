@@ -1,0 +1,598 @@
+{
+  "version": 7,
+  "seed": 20261116,
+  "resamples": 1000,
+  "lanes": [
+    [
+      "withdraw",
+      "fake-kiro"
+    ],
+    [
+      "cost-center",
+      "fake-kiro"
+    ]
+  ],
+  "primary_and_secondary": {
+    "H1": {
+      "comparison": "go-action-opdef > go-manual",
+      "metric": "A",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "holds": false
+    },
+    "H2": {
+      "comparison": "go-manual-doc > go-manual",
+      "metric": "A",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "p_holm": 1.0,
+      "holds": false
+    },
+    "H3": {
+      "comparison": "go-action-opdef > go-manual-doc",
+      "metric": "A",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "p_holm": 1.0,
+      "holds": false
+    }
+  },
+  "sensitivity_excluding_retrieval_attempt": {
+    "H1": {
+      "comparison": "go-action-opdef > go-manual",
+      "metric": "A",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "excluded_retrieval_blocks": 0,
+      "holds": false
+    },
+    "H2": {
+      "comparison": "go-manual-doc > go-manual",
+      "metric": "A",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "excluded_retrieval_blocks": 0,
+      "p_holm": 1.0,
+      "holds": false
+    },
+    "H3": {
+      "comparison": "go-action-opdef > go-manual-doc",
+      "metric": "A",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "excluded_retrieval_blocks": 0,
+      "p_holm": 1.0,
+      "holds": false
+    }
+  },
+  "exploratory_S_wilcoxon": {
+    "comparison": "S go-action-opdef < go-manual",
+    "valid_blocks": 2,
+    "nonzero": 2,
+    "w_plus": 1.5,
+    "method": "exact",
+    "p_one_sided": 0.75,
+    "median_difference_seconds": 0.0020000000000000018
+  },
+  "rates": {
+    "go-manual": {
+      "planned": 2,
+      "observed": 2,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 2,
+      "E": 2,
+      "K": 2,
+      "D": 2,
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "go-manual-doc": {
+      "planned": 2,
+      "observed": 2,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 2,
+      "E": 2,
+      "K": 2,
+      "D": 2,
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "go-action-opdef": {
+      "planned": 2,
+      "observed": 2,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 2,
+      "E": 2,
+      "K": 2,
+      "D": 2,
+      "outcomes": {
+        "passed": 2
+      }
+    }
+  },
+  "safety": {
+    "per_cell": {
+      "go-manual": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "go-manual-doc": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "go-action-opdef": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      }
+    },
+    "nonzero_trials": []
+  },
+  "cost": {
+    "go-manual": {
+      "started": 2,
+      "correct": 2,
+      "credits_total": 0.02,
+      "seconds_total": 0.078,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.039,
+      "observed_only": {
+        "credits_per_correct": 0.01,
+        "seconds_per_correct": 0.039
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.01,
+        0.01
+      ],
+      "ci95_seconds_per_correct": [
+        0.038,
+        0.04
+      ],
+      "resamples_without_correct": 0
+    },
+    "go-manual-doc": {
+      "started": 2,
+      "correct": 2,
+      "credits_total": 0.02,
+      "seconds_total": 0.079,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.0395,
+      "observed_only": {
+        "credits_per_correct": 0.01,
+        "seconds_per_correct": 0.0395
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.01,
+        0.01
+      ],
+      "ci95_seconds_per_correct": [
+        0.039,
+        0.04
+      ],
+      "resamples_without_correct": 0
+    },
+    "go-action-opdef": {
+      "started": 2,
+      "correct": 2,
+      "credits_total": 0.02,
+      "seconds_total": 0.078,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.039,
+      "observed_only": {
+        "credits_per_correct": 0.01,
+        "seconds_per_correct": 0.039
+      },
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.01,
+        0.01
+      ],
+      "ci95_seconds_per_correct": [
+        0.038,
+        0.04
+      ],
+      "resamples_without_correct": 0
+    }
+  },
+  "per_lane": [
+    {
+      "task": "withdraw",
+      "model": "fake-kiro",
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-manual-doc": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.038,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.038,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.038
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.038,
+            0.038
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-manual-doc": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.039,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.039,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.039
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.039,
+            0.039
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.04,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.04,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.04
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.04,
+            0.04
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "cost-center",
+      "model": "fake-kiro",
+      "rates": {
+        "go-manual": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-manual-doc": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "go-action-opdef": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "exploratory_A_sign_tests": {
+        "H1": {
+          "comparison": "go-action-opdef > go-manual",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        },
+        "H2": {
+          "comparison": "go-manual-doc > go-manual",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        },
+        "H3": {
+          "comparison": "go-action-opdef > go-manual-doc",
+          "metric": "A",
+          "valid_blocks": 1,
+          "only_higher": 0,
+          "only_lower": 0,
+          "p_one_sided": 1.0
+        }
+      },
+      "cost": {
+        "go-manual": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.04,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.04,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.04
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.04,
+            0.04
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-manual-doc": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.04,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.04,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.04
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.04,
+            0.04
+          ],
+          "resamples_without_correct": 0
+        },
+        "go-action-opdef": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.038,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.038,
+          "observed_only": {
+            "credits_per_correct": 0.01,
+            "seconds_per_correct": 0.038
+          },
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.038,
+            0.038
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    }
+  ],
+  "audit": [],
+  "telemetry_hosts_not_counted": [
+    "app.kiro.dev",
+    "client-telemetry.us-east-1.amazonaws.com",
+    "telemetry.eu-central-1.kiro.dev",
+    "telemetry.us-east-1.kiro.dev"
+  ]
+}

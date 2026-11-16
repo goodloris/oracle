@@ -1,0 +1,2 @@
+{"event": "start", "proxy": "127.0.0.1:18900", "allow": ["management.us-east-1.kiro.dev", "runtime.us-east-1.kiro.dev"], "discover": false}
+{"ts": 1794818354.91, "event": "stop", "returncode": 0, "interrupted": false}

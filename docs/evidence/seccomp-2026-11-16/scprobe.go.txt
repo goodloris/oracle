@@ -1,0 +1,26 @@
+package main
+
+import (
+	"fmt"
+	"syscall"
+)
+
+var probes = map[string]uintptr{"recvmmsg": 299, "fanotify_init": 300, "prlimit64": 302, "name_to_handle_at": 303, "clock_adjtime": 305,
+	"syncfs": 306, "sendmmsg": 307, "getcpu": 309, "process_vm_readv": 310, "kcmp": 312, "sched_setattr": 314, "sched_getattr": 315,
+	"renameat2": 316, "seccomp": 317, "getrandom": 318, "memfd_create": 319, "bpf": 321, "execveat": 322, "userfaultfd": 323,
+	"membarrier": 324, "mlock2": 325, "copy_file_range": 326, "preadv2": 327, "pwritev2": 328, "pkey_mprotect": 329, "pkey_alloc": 330,
+	"pkey_free": 331, "statx": 332, "io_pgetevents": 333, "rseq": 334, "pidfd_send_signal": 424, "io_uring_setup": 425, "open_tree": 428,
+	"fsopen": 430, "pidfd_open": 434, "clone3": 435, "close_range": 436, "openat2": 437, "pidfd_getfd": 438, "faccessat2": 439,
+	"process_madvise": 440, "epoll_pwait2": 441, "mount_setattr": 442, "landlock_create_ruleset": 444, "memfd_secret": 447,
+	"process_mrelease": 448, "futex_waitv": 449, "set_mempolicy_home_node": 450, "cachestat": 451, "fchmodat2": 452, "map_shadow_stack": 453}
+
+func main() {
+	for name, nr := range probes {
+		a := [6]uintptr{}
+		if name == "statx" || name == "faccessat2" || name == "openat2" || name == "fchmodat2" {
+			a[0] = ^uintptr(0) // invalid dirfd -> EBADF if implemented
+		}
+		_, _, e := syscall.RawSyscall6(nr, a[0], a[1], a[2], a[3], a[4], a[5])
+		fmt.Printf("%s %d %d\n", name, nr, int(e))
+	}
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Catalog-bound Verifier (`appctl operations`) for v7.
 
-The public platform (PR #27, pinned commit below) is the Verifier's code. The private build overlays the
+The public platform (PR #27 at fad8adf, pinned commit below) is the Verifier's code. The private build overlays the
 v7 catalog (tasks/<task>/catalog.go.txt) and the two vendored platform files that v7 changes
 (harness/source/go-action-opdef/{opdef,opkernel}.go.txt), so the Verifier embeds exactly the catalog
 the go-action-opdef kits carry. The public build is the unmodified public tree; on a v7 candidate it must
@@ -21,12 +21,12 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_COMMIT = 'cbe1336af5eab5f1f3f2ac475703fb9d734f043e'
+PUBLIC_COMMIT = 'fad8adfa89edb753c55410518d531e21489f7d9b'
 PUBLIC_CATALOG_DIGEST = 'sha256:98abea36467340ad3702d12341beb3894e649d42d9129cfac4e45e46a9de0055'
 # Public files the private build replaces, with the public content they were derived from.
 UPSTREAM = {'internal/opdef/catalog.go': '736429c18304e9a46b602e25af2510b4cf4fdbe592f904e5d7f21d4a63a0db92',
             'internal/opdef/opdef.go': 'da9bc05000573f68aca230999755c8aa283efd4e4aa8e24c5c3a52b320185432',
-            'internal/opkernel/opkernel.go': '8655075e58fb76b69e7b316437fe23ce9d8070404d4beb9ee8a5d0e91e8360a1'}
+            'internal/opkernel/opkernel.go': '55228e1b3e2040b81f4fd0f14a984e955f1c111888774a2fd9a936d1e2663ab0'}
 
 
 def overlay(task):

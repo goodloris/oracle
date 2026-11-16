@@ -4,7 +4,7 @@
 
 ## 目的
 
-v6 的 A 两组持平，因为作者声明的事件（D）在 action 组只有 0.39。PR #27（公开 `cbe1336`）把业务语义放进受保护的操作目录 `internal/opdef`，内核 `internal/opkernel` 只按目录名执行。v7 检验这能否提高 **A**，并用第三组 `go-manual-doc` 把“知道正确事实”和“内核替你执行”两种来源分开。同时报告每个正确结果的 credit 和时间。
+v6 的 A 两组持平，因为作者声明的事件（D）在 action 组只有 0.39。PR #27（公开 `fad8adf`）把业务语义放进受保护的操作目录 `internal/opdef`，内核 `internal/opkernel` 只按目录名执行。v7 检验这能否提高 **A**，并用第三组 `go-manual-doc` 把“知道正确事实”和“内核替你执行”两种来源分开。同时报告每个正确结果的 credit 和时间。
 
 ## 仓库布局
 
@@ -64,7 +64,7 @@ v6 的 A 两组持平，因为作者声明的事件（D）在 action 组只有 0
 
 1. `tasks/<task>/catalog.go.txt` = 公开 `catalog.go`（5 个条目，逐字保留）+ 本任务条目。go-action-opdef 的导出用它覆盖公开版本；go-manual-doc 只得到由它生成的文档。
 2. **T2 需要改两处平台代码。** 公开 `opdef.Validate` 只允许字段修改记录到 AssignmentHistory，公开 `opkernel` 只管理 `assigneeId` 列（PR #27 文档“新增业务操作的路径”第 2 步也写明新列需要改内核）。私有叠加因此包括：`opdef.go` 增加 `Record` 常量 `CostCenterHistory`；`opkernel.go` 把 `valid` 映射换成 `columns`（值校验 + 历史表/列），加入 `costCenterId`。两处都不新增导出类型，Verifier 的内核类型分类表不受影响。T1 只用到目录条目，但两个任务使用同一份平台叠加。
-3. `harness/verifier.py` 用 `git archive` 取公开 `cbe1336`（核对被替换的三个公开文件的 hash，防止上游漂移），叠加上述三个文件后构建 `appctl`。`plan` 把公开 commit、叠加文件 hash 和**私有目录摘要**（由私有 `appctl` 自己报告）写入计划；`load_plan` 校验绑定未变，`evaluate` 核对 `appctl` 报告的摘要与计划一致。
+3. `harness/verifier.py` 用 `git archive` 取公开 `fad8adf`（核对被替换的三个公开文件的 hash，防止上游漂移），叠加上述三个文件后构建 `appctl`。`plan` 把公开 commit、叠加文件 hash 和**私有目录摘要**（由私有 `appctl` 自己报告）写入计划；`load_plan` 校验绑定未变，`evaluate` 核对 `appctl` 报告的摘要与计划一致。
 
 | 目录 | 摘要 |
 |---|---|
@@ -130,7 +130,7 @@ v6 的 A 两组持平，因为作者声明的事件（D）在 action 组只有 0
 ```
 本机                                   验收主机 root@10.30.11.112:/opt/poc-oracle
 scripts/sync_to_host.sh  ──bundle──▶   private/（本仓库）
-scripts/sync_public_to_host.sh ─────▶  public/（公开 cbe1336，只用于构建 Verifier）
+scripts/sync_public_to_host.sh ─────▶  public/（公开 fad8adf，只用于构建 Verifier）
 scripts/host_db.sh up <lane>     ───▶  poc-oracle-pg-<lane>，127.0.0.1:5670<lane>
 scripts/host_prepare.sh <run> …  ───▶  runs/<run>/{private/fixtures.json, plan.json, kits/}
 scripts/pull_kits.sh <run> <dir> ◀───  kits、order.txt、plan.json（不含 seed）
@@ -139,7 +139,7 @@ scripts/push_results.sh <run> <dir> ─▶ runs/<run>/results/
 scripts/host_evaluate.sh <run> <lane>  restore → evaluate（端口 1970<lane>）→ summary.json
 ```
 
-主机约束：Go 用 `/opt/poc-oracle/go/bin/go`（`GOTOOLCHAIN=local`，GOPATH/GOMODCACHE/GOCACHE 都在 `/opt/poc-oracle` 下），Python 3.10，容器统一 `poc-oracle-*` 并只绑定 127.0.0.1。主机内核是 3.10（CentOS 7），默认 seccomp 配置下 `postgres:17-alpine` 的 initdb 报 EPERM，因此我们的容器加 `--security-opt seccomp=unconfined`（只作用于该容器）。
+主机约束：Go 用 `/opt/poc-oracle/go/bin/go`（`GOTOOLCHAIN=local`，GOPATH/GOMODCACHE/GOCACHE 都在 `/opt/poc-oracle` 下），Python 3.10，容器统一 `poc-oracle-*` 并只绑定 127.0.0.1。**主机数据库镜像待定**：内核 3.10 + runc 链接的 libseccomp 2.3.1 下，`postgres:17-alpine` 在 Docker 默认 seccomp profile 中 initdb 报 EPERM，且无法用按名字的最小 profile 修补（证据见 `docs/evidence/seccomp-2026-11-16/`）；不使用 `seccomp=unconfined`。
 
 ## 与用户给定设计的偏离及理由
 
@@ -151,6 +151,6 @@ scripts/host_evaluate.sh <run> <lane>  restore → evaluate（端口 1970<lane>�
 ## 已知局限
 
 - 隐含约定和任务由我们设计。go-action-opdef 中 K、D 按构造成立，A 的差异主要来自适配代码与显式契约。
-- `opkernel` 的 `eligible` 按 `ORDER BY p.id`（数据库排序规则）取旧值，再按 Go 的字节序与目标配对。`postgres:17-alpine` 的 en_US.utf8 在 musl 下等价于字节序，所以本实验不受影响；在 glibc 排序规则下历史行的 from 值可能错配。这是上游问题，已在汇报中提出。
+- 上游 `opkernel` 的 `eligible` 曾按数据库排序取旧值、按位置配对，公开 `fad8adf` 已改为按 id 配对；私有叠加同步了这个修复，并有私有回归（`harness/kernel_regression.py`：ICU en-US 排序下 assigneeId 与 costCenterId 两列都正确配对；把配对改回按位置的负控制必须失败），结果写入每次控制报告的 `kernel_regression`。
 - Oracle 的并发用例依赖时序；双写类人造候选靠 `pg_sleep(0.3)` 扩大窗口，本机各重复 3 次结果一致。
 - `undecidable` 只在请求超时（8 秒）或连接失败时出现；候选崩溃时剩余用例都会是 undecidable，但结局已记为 candidate-error。

@@ -12,8 +12,8 @@ export templates are vendored here. Nothing under this directory is imported by 
 | `go-manual/approval.go.txt`, `reopen.go.txt` | public `benchmark/phase6b/source/manual-*.go.txt` | approval registers bulk-reassign |
 | `go-manual/reject.go.txt` | public `benchmark/phase5b/source/manual-reject.go.txt` | none |
 | `go-manual/reassign.go.txt` | new (v7 start state: v6b reassign done by hand, correctly) | — |
-| `go-action-opdef/opdef.go.txt` | worktree `operation-semantics` (`poc/operation-semantics`, uncommitted, sha256 `da9bc050…`) `internal/opdef/opdef.go` | adds `Record` `CostCenterHistory`; a field update may use either history record |
-| `go-action-opdef/opkernel.go.txt` | same worktree, `internal/opkernel/opkernel.go` (sha256 `8655075e…`) | the per-column `valid` map becomes `columns` (validity query + history table/columns), adding `costCenterId` |
+| `go-action-opdef/opdef.go.txt` | public `fad8adf` `internal/opdef/opdef.go` (sha256 `da9bc050…`, unchanged since `cbe1336`) | adds `Record` `CostCenterHistory`; a field update may use either history record |
+| `go-action-opdef/opkernel.go.txt` | public `fad8adf` `internal/opkernel/opkernel.go` (sha256 `55228e1b…`, includes the pair-old-values-by-id fix) | the per-column `valid` map becomes `columns` (validity query + history table/columns), adding `costCenterId`; regression `harness/kernel/opkernel_v7_test.go.txt` (ICU collation, both managed columns, with a positional-pairing negative control) |
 | `go-action-opdef/approval.go.txt` | new adapter over `opkernel.Executor.Run` | — |
 | `tasks/<task>/catalog.go.txt` | public catalog (`736429c1…`) minus countersign and the approve tier (the v7 world is v6b), plus the task's entry | — |
 

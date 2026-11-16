@@ -280,20 +280,30 @@ func eligible(ctx context.Context, tx pgx.Tx, u app.Identity, op opdef.Operation
 		return nil, err
 	}
 	defer rows.Close()
-	var previous []*string
+	// Pair old values by id: the database collation's ORDER BY need not match
+	// the Go byte order of ids (glibc en_US vs C), so position is not identity.
+	byID := map[string]*string{}
 	for rows.Next() {
 		var id string
 		var old *string
 		if err = rows.Scan(&id, &old); err != nil {
 			return nil, err
 		}
-		previous = append(previous, old)
+		byID[id] = old
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	if len(previous) != len(ids) {
+	if len(byID) != len(ids) {
 		return nil, &Rejection{op.Denial}
+	}
+	previous := make([]*string, len(ids))
+	for i, id := range ids {
+		old, ok := byID[id]
+		if !ok {
+			return nil, &Rejection{op.Denial}
+		}
+		previous[i] = old
 	}
 	return previous, nil
 }

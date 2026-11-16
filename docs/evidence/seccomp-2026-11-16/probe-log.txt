@@ -1,0 +1,52 @@
+## host
+3.10.0-1160.119.1.el7.x86_64
+docker 26.1.4
+runc version 1.1.12
+libseccomp-2.3.1-4.el7.x86_64
+	libseccomp.so.2 => /lib64/libseccomp.so.2 (0x00007fc207866000)
+## postgres:17-alpine initdb with default-seccomp.json: exited
+2026-11-16 08:31:04.549 UTC [34] LOG:  could not write to file "postmaster.pid": Operation not permitted
+2026-11-16 08:31:04.560 UTC [34] FATAL:  could not write to file "pg_wal/xlogtemp.34": Operation not permitted
+## syscall probe with default-seccomp.json (name nr errno; 1=EPERM 38=ENOSYS; only EPERM shown)
+fanotify_init 300 1
+process_vm_readv 310 1
+kcmp 312 1
+bpf 321 1
+userfaultfd 323 1
+preadv2 327 1
+pwritev2 328 1
+pkey_mprotect 329 1
+pkey_alloc 330 1
+pkey_free 331 1
+## postgres:17-alpine initdb with try-pw.json: exited
+2026-11-16 08:31:15.136 UTC [34] LOG:  could not write to file "postmaster.pid": Operation not permitted
+2026-11-16 08:31:15.148 UTC [34] FATAL:  could not write to file "pg_wal/xlogtemp.34": Operation not permitted
+## syscall probe with try-pw.json (name nr errno; 1=EPERM 38=ENOSYS; only EPERM shown)
+fanotify_init 300 1
+process_vm_readv 310 1
+kcmp 312 1
+bpf 321 1
+userfaultfd 323 1
+preadv2 327 1
+pwritev2 328 1
+pkey_mprotect 329 1
+pkey_alloc 330 1
+pkey_free 331 1
+## postgres:17-alpine initdb with probe.json: exited
+2026-11-16 08:31:26.117 UTC [34] LOG:  could not write to file "postmaster.pid": Operation not permitted
+2026-11-16 08:31:26.127 UTC [34] FATAL:  could not write to file "pg_wal/xlogtemp.34": Operation not permitted
+## syscall probe with probe.json (name nr errno; 1=EPERM 38=ENOSYS; only EPERM shown)
+fanotify_init 300 1
+process_vm_readv 310 1
+preadv2 327 1
+pwritev2 328 1
+pkey_mprotect 329 1
+pkey_alloc 330 1
+pkey_free 331 1
+## postgres:17-alpine initdb with enosys-all.json: running
+2026-11-16 08:31:39.527 UTC [41] LOG:  database system is ready to accept connections
+2026-11-16 08:31:39.752 UTC [1] LOG:  database system is ready to accept connections
+## syscall probe with enosys-all.json (name nr errno; 1=EPERM 38=ENOSYS; only EPERM shown)
+## postgres:latest (PG17, Debian/glibc) with the builtin default profile
+running sha256:4bc6cc20ca7a7d56c3cefa8dd618dd6a5419827cef9a1133c49f3156b9436471
+2026-11-16 08:31:51.992 UTC [49] LOG:  database system is ready to accept connections

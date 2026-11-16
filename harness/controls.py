@@ -201,11 +201,18 @@ def main():
                  'safety_cases': {k: v['cases'] for k, v in result.get('safety', {}).items() if v['count']}}
         report['controls'].append(entry)
         print(json.dumps({k: entry[k] for k in ('variant', 'ok', 'got')}, ensure_ascii=False), flush=True)
-    report['all_ok'] = all(v for k, v in report['static'].items() if k != 'missing_clues') and all(c['ok'] for c in report['controls'])
+    if not a.only:
+        # Private kernel regression (fad8adf fix in the overlay kernel) + its positional-pairing negative control.
+        r = run([PY, ROOT / 'harness/kernel_regression.py'], timeout=2000)
+        try: report['kernel_regression'] = json.loads(r.stdout.strip().splitlines()[-1])
+        except (ValueError, IndexError): report['kernel_regression'] = {'ok': False, 'error': (r.stdout + r.stderr)[-800:]}
+    report['all_ok'] = all(v for k, v in report['static'].items() if k != 'missing_clues') and all(c['ok'] for c in report['controls']) \
+        and report.get('kernel_regression', {'ok': True})['ok']
     text = json.dumps(report, indent=2, ensure_ascii=False) + '\n'
     (work / 'controls-report.json').write_text(text)
     if a.output: Path(a.output).write_text(text)
     print(json.dumps({'task': a.task, 'static': report['static'], 'controls': len(report['controls']),
+                      'kernel_regression': report.get('kernel_regression', {}).get('ok'),
                       'failed': [c['variant'] for c in report['controls'] if not c['ok']], 'all_ok': report['all_ok']}, ensure_ascii=False))
     return 0 if report['all_ok'] else 1
 

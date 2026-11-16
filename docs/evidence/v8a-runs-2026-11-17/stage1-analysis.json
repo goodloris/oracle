@@ -1,0 +1,2502 @@
+{
+  "version": 8,
+  "experiment": "v8a",
+  "seed": 20261116,
+  "resamples": 10000,
+  "lanes": [
+    [
+      "return",
+      "claude-opus-5.5"
+    ],
+    [
+      "return",
+      "gpt-5.6-luna"
+    ],
+    [
+      "return",
+      "qwen3-coder-next"
+    ],
+    [
+      "delivery-site",
+      "claude-opus-5.5"
+    ],
+    [
+      "delivery-site",
+      "gpt-5.6-luna"
+    ],
+    [
+      "delivery-site",
+      "qwen3-coder-next"
+    ]
+  ],
+  "stage2_lanes": [],
+  "primary_and_secondary": {
+    "H1": {
+      "comparison": "drafted-review non-inferior to given (margin 0.10)",
+      "test": "Tango score, one-sided",
+      "boundaries": {
+        "spending": "O'Brien-Fleming-type Lan-DeMets",
+        "alpha": 0.025,
+        "information": [
+          0.5,
+          1.0
+        ],
+        "cumulative_alpha": [
+          0.0015253227579890005,
+          0.02499999999999991
+        ],
+        "c1": 2.9625880427275373,
+        "c2": 1.968595640637417,
+        "alpha1": 0.0015253227579890005,
+        "alpha2": 0.024499771789663734
+      },
+      "stage1": {
+        "valid_blocks": 48,
+        "only_drafted-review": 1,
+        "only_given": 4,
+        "difference": -0.0625,
+        "z": 0.7466520088504859,
+        "critical_z": 2.9625880427275373,
+        "nominal_alpha": 0.0015253227579890005,
+        "p_one_sided": 0.227636822806201,
+        "lower_bound": -0.2589633441309497,
+        "upper_bound": 0.12187757132802012
+      },
+      "stage1_decision": "continue",
+      "final_decision": "pending-stage2",
+      "holds": null
+    },
+    "H2": {
+      "comparison": "drafted > manual",
+      "test": "exact paired sign, one-sided, stage-1 blocks",
+      "valid_blocks": 48,
+      "only_higher": 8,
+      "only_lower": 1,
+      "p_one_sided": 0.01953125,
+      "p_holm": 0.01953125,
+      "holds": true
+    },
+    "H3": {
+      "comparison": "drafted-review > drafted",
+      "test": "exact paired sign, one-sided, stage-1 blocks",
+      "valid_blocks": 48,
+      "only_higher": 8,
+      "only_lower": 0,
+      "p_one_sided": 0.00390625,
+      "p_holm": 0.0078125,
+      "holds": true
+    }
+  },
+  "stage1_decision": "continue",
+  "final_decision": "pending-stage2",
+  "sensitivity_excluding_retrieval_attempt": {
+    "H1": {
+      "comparison": "drafted-review non-inferior to given (margin 0.10)",
+      "test": "Tango score, one-sided",
+      "boundaries": {
+        "spending": "O'Brien-Fleming-type Lan-DeMets",
+        "alpha": 0.025,
+        "information": [
+          0.5,
+          1.0
+        ],
+        "cumulative_alpha": [
+          0.0015253227579890005,
+          0.02499999999999991
+        ],
+        "c1": 2.9625880427275373,
+        "c2": 1.968595640637417,
+        "alpha1": 0.0015253227579890005,
+        "alpha2": 0.024499771789663734
+      },
+      "stage1": {
+        "valid_blocks": 47,
+        "only_drafted-review": 1,
+        "only_given": 4,
+        "difference": -0.06382978723404255,
+        "z": 0.7096626906064618,
+        "critical_z": 2.9625880427275373,
+        "nominal_alpha": 0.0015253227579890005,
+        "p_one_sided": 0.2389566668593032,
+        "lower_bound": -0.26354948640186787,
+        "upper_bound": 0.12407945464074768,
+        "excluded_retrieval_blocks": 1
+      },
+      "stage1_decision": "continue",
+      "final_decision": "pending-stage2",
+      "holds": null
+    },
+    "H2": {
+      "comparison": "drafted > manual",
+      "test": "exact paired sign, one-sided, stage-1 blocks",
+      "valid_blocks": 47,
+      "only_higher": 8,
+      "only_lower": 0,
+      "p_one_sided": 0.00390625,
+      "excluded_retrieval_blocks": 1,
+      "p_holm": 0.0078125,
+      "holds": true
+    },
+    "H3": {
+      "comparison": "drafted-review > drafted",
+      "test": "exact paired sign, one-sided, stage-1 blocks",
+      "valid_blocks": 46,
+      "only_higher": 7,
+      "only_lower": 0,
+      "p_one_sided": 0.0078125,
+      "excluded_retrieval_blocks": 2,
+      "p_holm": 0.0078125,
+      "holds": true
+    }
+  },
+  "rates": {
+    "manual": {
+      "planned": 48,
+      "observed": 48,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 29,
+      "E": 44,
+      "K": 29,
+      "D": 29,
+      "outcomes": {
+        "passed": 29,
+        "acceptance-failed": 18,
+        "candidate-error": 1
+      }
+    },
+    "given": {
+      "planned": 48,
+      "observed": 48,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 47,
+      "E": 47,
+      "K": 48,
+      "D": 48,
+      "outcomes": {
+        "passed": 47,
+        "acceptance-failed": 1
+      }
+    },
+    "drafted": {
+      "planned": 48,
+      "observed": 48,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 36,
+      "E": 42,
+      "K": 36,
+      "D": 36,
+      "outcomes": {
+        "passed": 36,
+        "acceptance-failed": 6,
+        "draft-invalid": 5,
+        "scope-violation": 1
+      }
+    },
+    "drafted-review": {
+      "planned": 48,
+      "observed": 48,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 44,
+      "E": 44,
+      "K": 44,
+      "D": 44,
+      "outcomes": {
+        "passed": 44,
+        "draft-invalid": 4
+      }
+    }
+  },
+  "entry": {
+    "drafted": {
+      "observed": 48,
+      "C": 36,
+      "no_frozen_entry": 0,
+      "wrong_by_field": {
+        "name": 1,
+        "kind": 0,
+        "role": 0,
+        "subject": 0,
+        "from": 0,
+        "to": 0,
+        "tier": 0,
+        "status": 0,
+        "column": 0,
+        "param": 0,
+        "response": 0,
+        "inputs": 0,
+        "fingerprint": 0,
+        "record": 0,
+        "event": 11,
+        "separation": 0,
+        "confirmAmount": 0,
+        "denial": 0,
+        "catalog": 0
+      },
+      "wrong_by_category": {
+        "event": 11,
+        "fingerprint": 0,
+        "record": 0,
+        "separation": 0,
+        "authority": 0,
+        "state": 0,
+        "shape": 0,
+        "name": 1,
+        "denial": 0,
+        "catalog": 0
+      },
+      "A_given_C": {
+        "C=1": [
+          36,
+          36
+        ],
+        "C=0": [
+          0,
+          12
+        ]
+      }
+    },
+    "drafted-review": {
+      "observed": 48,
+      "C": 44,
+      "no_frozen_entry": 0,
+      "wrong_by_field": {
+        "name": 0,
+        "kind": 0,
+        "role": 0,
+        "subject": 0,
+        "from": 0,
+        "to": 0,
+        "tier": 0,
+        "status": 0,
+        "column": 0,
+        "param": 0,
+        "response": 0,
+        "inputs": 0,
+        "fingerprint": 0,
+        "record": 0,
+        "event": 4,
+        "separation": 0,
+        "confirmAmount": 0,
+        "denial": 0,
+        "catalog": 0
+      },
+      "wrong_by_category": {
+        "event": 4,
+        "fingerprint": 0,
+        "record": 0,
+        "separation": 0,
+        "authority": 0,
+        "state": 0,
+        "shape": 0,
+        "name": 0,
+        "denial": 0,
+        "catalog": 0
+      },
+      "A_given_C": {
+        "C=1": [
+          44,
+          44
+        ],
+        "C=0": [
+          0,
+          4
+        ]
+      },
+      "C_draft": 41,
+      "review": {
+        "fixed": 3,
+        "broke": 0,
+        "kept_correct": 41,
+        "kept_wrong": 4,
+        "changed_catalog": 3
+      }
+    }
+  },
+  "safety": {
+    "per_cell": {
+      "manual": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 6,
+          "cases": 12
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 1,
+          "cases": 22
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "given": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "drafted": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "drafted-review": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      }
+    },
+    "nonzero_trials": [
+      {
+        "task": "delivery-site",
+        "model": "qwen3-coder-next",
+        "trial": "manual--001",
+        "safety": {
+          "service_error": [
+            "implicit-history: concurrent changes form one chain",
+            "implicit-history: history failure rolls back and same-key retry",
+            "implicit-history: history row",
+            "implicit-history: history rows per target with previous value",
+            "implicit-outbox: outbox failure rolls back and same-key retry",
+            "implicit-outbox: outbox row",
+            "implicit-outbox: outbox row per target",
+            "implicit-request-hash: requestHash",
+            "implicit-request-hash: requestHash batch Unicode ID",
+            "site-concurrency: concurrent different keys",
+            "site-concurrency: concurrent identical",
+            "site-failure-rollback: ActionRequest failure and same-key retry",
+            "site-functional: batch is sorted",
+            "site-functional: mixed previous values",
+            "site-functional: other tenant requester",
+            "site-functional: single target",
+            "site-idempotency: key scoped by actor",
+            "site-idempotency: replay",
+            "site-idempotency: same key different purchases",
+            "site-idempotency: same key different site",
+            "site-lifecycle: changed purchase can be approved",
+            "site-lifecycle: changed purchase can be rejected"
+          ]
+        }
+      },
+      {
+        "task": "delivery-site",
+        "model": "qwen3-coder-next",
+        "trial": "manual--002",
+        "safety": {
+          "double_apply": [
+            "implicit-history: concurrent changes form one chain",
+            "site-concurrency: concurrent different keys"
+          ]
+        }
+      },
+      {
+        "task": "delivery-site",
+        "model": "qwen3-coder-next",
+        "trial": "manual--003",
+        "safety": {
+          "double_apply": [
+            "implicit-history: concurrent changes form one chain",
+            "site-concurrency: concurrent different keys"
+          ]
+        }
+      },
+      {
+        "task": "delivery-site",
+        "model": "qwen3-coder-next",
+        "trial": "manual--004",
+        "safety": {
+          "double_apply": [
+            "implicit-history: concurrent changes form one chain",
+            "site-concurrency: concurrent different keys"
+          ]
+        }
+      },
+      {
+        "task": "delivery-site",
+        "model": "qwen3-coder-next",
+        "trial": "manual--005",
+        "safety": {
+          "double_apply": [
+            "implicit-history: concurrent changes form one chain",
+            "site-concurrency: concurrent different keys"
+          ]
+        }
+      },
+      {
+        "task": "delivery-site",
+        "model": "qwen3-coder-next",
+        "trial": "manual--006",
+        "safety": {
+          "double_apply": [
+            "implicit-history: concurrent changes form one chain",
+            "site-concurrency: concurrent different keys"
+          ]
+        }
+      },
+      {
+        "task": "delivery-site",
+        "model": "qwen3-coder-next",
+        "trial": "manual--008",
+        "safety": {
+          "double_apply": [
+            "implicit-history: concurrent changes form one chain",
+            "site-concurrency: concurrent different keys"
+          ]
+        }
+      }
+    ]
+  },
+  "cost": {
+    "manual": {
+      "started": 48,
+      "correct": 29,
+      "credits_total": 75.413389,
+      "seconds_total": 6456.266,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 2.6004616817567348,
+      "seconds_per_correct": 222.62986206896554,
+      "note": null,
+      "ci95_credits_per_correct": [
+        2.097332722318293,
+        3.3374256606849806
+      ],
+      "ci95_seconds_per_correct": [
+        163.39156756756756,
+        317.0234583333334
+      ],
+      "resamples_without_correct": 0
+    },
+    "given": {
+      "started": 48,
+      "correct": 47,
+      "credits_total": 38.827692,
+      "seconds_total": 3723.943,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.8261211145852297,
+      "seconds_per_correct": 79.23282978723404,
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.7276918360932921,
+        0.9340851367134697
+      ],
+      "ci95_seconds_per_correct": [
+        65.95406382978722,
+        95.47602325581391
+      ],
+      "resamples_without_correct": 0
+    },
+    "drafted": {
+      "started": 48,
+      "correct": 36,
+      "credits_total": 84.987403,
+      "seconds_total": 7328.856,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 2.360761198827161,
+      "seconds_per_correct": 203.57933333333332,
+      "note": null,
+      "per_stage": {
+        "draft": {
+          "credits": 49.258957,
+          "seconds": 4282.647
+        },
+        "review": {
+          "credits": 0,
+          "seconds": 0
+        },
+        "adapter": {
+          "credits": 35.728446,
+          "seconds": 3046.209
+        }
+      },
+      "ci95_credits_per_correct": [
+        1.9609790145750927,
+        2.850244280265339
+      ],
+      "ci95_seconds_per_correct": [
+        150.29370000000003,
+        281.8329032258065
+      ],
+      "resamples_without_correct": 0
+    },
+    "drafted-review": {
+      "started": 48,
+      "correct": 44,
+      "credits_total": 192.952013,
+      "seconds_total": 11142.956,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 4.385273029486658,
+      "seconds_per_correct": 253.24900000000008,
+      "note": null,
+      "per_stage": {
+        "draft": {
+          "credits": 50.486755,
+          "seconds": 3945.62
+        },
+        "review": {
+          "credits": 100.27895,
+          "seconds": 3364.184
+        },
+        "adapter": {
+          "credits": 42.186308,
+          "seconds": 3833.152
+        }
+      },
+      "ci95_credits_per_correct": [
+        4.055149749178744,
+        4.742751635094161
+      ],
+      "ci95_seconds_per_correct": [
+        221.08706521739126,
+        291.4435581395349
+      ],
+      "resamples_without_correct": 0
+    }
+  },
+  "per_lane": [
+    {
+      "task": "return",
+      "model": "claude-opus-5.5",
+      "rates": {
+        "manual": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "given": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted-review": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        }
+      },
+      "entry": {
+        "drafted": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          }
+        },
+        "drafted-review": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          },
+          "C_draft": 8,
+          "review": {
+            "fixed": 0,
+            "broke": 0,
+            "kept_correct": 8,
+            "kept_wrong": 0,
+            "changed_catalog": 0
+          }
+        }
+      },
+      "cost": {
+        "manual": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 20.861154,
+          "seconds_total": 653.962,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 2.6076442572139307,
+          "seconds_per_correct": 81.74525,
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.346354066169154,
+            2.88383804606136
+          ],
+          "ci95_seconds_per_correct": [
+            71.80475,
+            91.198875
+          ],
+          "resamples_without_correct": 0
+        },
+        "given": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 7.638635,
+          "seconds_total": 355.057,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.9548293583333334,
+          "seconds_per_correct": 44.382125,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.8902834482587064,
+            1.0205085171227195
+          ],
+          "ci95_seconds_per_correct": [
+            41.60575,
+            47.55312500000001
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 22.267377,
+          "seconds_total": 861.457,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 2.783422178358209,
+          "seconds_per_correct": 107.682125,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 14.047009,
+              "seconds": 469.087
+            },
+            "review": {
+              "credits": 0,
+              "seconds": 0
+            },
+            "adapter": {
+              "credits": 8.220369,
+              "seconds": 392.37
+            }
+          },
+          "ci95_credits_per_correct": [
+            2.5823877108208957,
+            2.982829064427861
+          ],
+          "ci95_seconds_per_correct": [
+            95.957875,
+            124.11625
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-review": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 40.047796,
+          "seconds_total": 1423.29,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 5.005974546061359,
+          "seconds_per_correct": 177.91124999999997,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 14.14603,
+              "seconds": 474.658
+            },
+            "review": {
+              "credits": 16.963711,
+              "seconds": 559.182
+            },
+            "adapter": {
+              "credits": 8.938056,
+              "seconds": 389.45
+            }
+          },
+          "ci95_credits_per_correct": [
+            4.72975125248756,
+            5.2429338491293525
+          ],
+          "ci95_seconds_per_correct": [
+            172.50087499999998,
+            184.08675
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "return",
+      "model": "gpt-5.6-luna",
+      "rates": {
+        "manual": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "given": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted-review": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        }
+      },
+      "entry": {
+        "drafted": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          }
+        },
+        "drafted-review": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          },
+          "C_draft": 8,
+          "review": {
+            "fixed": 0,
+            "broke": 0,
+            "kept_correct": 8,
+            "kept_wrong": 0,
+            "changed_catalog": 0
+          }
+        }
+      },
+      "cost": {
+        "manual": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 9.286224,
+          "seconds_total": 802.225,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.16077800880597,
+          "seconds_per_correct": 100.278125,
+          "note": null,
+          "ci95_credits_per_correct": [
+            1.0767939665671642,
+            1.2339634680472638
+          ],
+          "ci95_seconds_per_correct": [
+            86.129125,
+            118.928
+          ],
+          "resamples_without_correct": 0
+        },
+        "given": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 4.869568,
+          "seconds_total": 390.226,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.6086959824751244,
+          "seconds_per_correct": 48.77824999999999,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.5355690640422885,
+            0.6963230838681592
+          ],
+          "ci95_seconds_per_correct": [
+            41.958,
+            55.639625
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 9.662079,
+          "seconds_total": 783.055,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.2077598853233829,
+          "seconds_per_correct": 97.881875,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 5.222007,
+              "seconds": 419.173
+            },
+            "review": {
+              "credits": 0,
+              "seconds": 0
+            },
+            "adapter": {
+              "credits": 4.440072,
+              "seconds": 363.882
+            }
+          },
+          "ci95_credits_per_correct": [
+            1.1210822976119403,
+            1.3114251462189053
+          ],
+          "ci95_seconds_per_correct": [
+            85.6605,
+            113.84675000000001
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-review": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 25.661419,
+          "seconds_total": 1266.74,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 3.2076773273797676,
+          "seconds_per_correct": 158.34250000000003,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 5.095351,
+              "seconds": 381.027
+            },
+            "review": {
+              "credits": 16.2163,
+              "seconds": 537.006
+            },
+            "adapter": {
+              "credits": 4.349768,
+              "seconds": 348.707
+            }
+          },
+          "ci95_credits_per_correct": [
+            3.0177156238225544,
+            3.410476741393035
+          ],
+          "ci95_seconds_per_correct": [
+            148.856,
+            169.47537499999999
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "return",
+      "model": "qwen3-coder-next",
+      "rates": {
+        "manual": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 6,
+          "E": 7,
+          "K": 6,
+          "D": 6,
+          "outcomes": {
+            "acceptance-failed": 1,
+            "passed": 6,
+            "candidate-error": 1
+          }
+        },
+        "given": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 6,
+          "E": 8,
+          "K": 6,
+          "D": 6,
+          "outcomes": {
+            "passed": 6,
+            "acceptance-failed": 2
+          }
+        },
+        "drafted-review": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        }
+      },
+      "entry": {
+        "drafted": {
+          "observed": 8,
+          "C": 6,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 2,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 2,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              6,
+              6
+            ],
+            "C=0": [
+              0,
+              2
+            ]
+          }
+        },
+        "drafted-review": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          },
+          "C_draft": 7,
+          "review": {
+            "fixed": 1,
+            "broke": 0,
+            "kept_correct": 7,
+            "kept_wrong": 0,
+            "changed_catalog": 1
+          }
+        }
+      },
+      "cost": {
+        "manual": {
+          "started": 8,
+          "correct": 6,
+          "credits_total": 5.967029,
+          "seconds_total": 1430.563,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.9945048537866223,
+          "seconds_per_correct": 238.4271666666667,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.6338940924543945,
+            2.205342334438916
+          ],
+          "ci95_seconds_per_correct": [
+            150.77700000000002,
+            483.70633333333325
+          ],
+          "resamples_without_correct": 0
+        },
+        "given": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 5.402884,
+          "seconds_total": 1043.397,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.675360528814262,
+          "seconds_per_correct": 130.424625,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.5072549187396351,
+            0.8655344939883914
+          ],
+          "ci95_seconds_per_correct": [
+            104.02687499999999,
+            157.442125
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted": {
+          "started": 8,
+          "correct": 6,
+          "credits_total": 9.91964,
+          "seconds_total": 1917.202,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.65327331840796,
+          "seconds_per_correct": 319.5336666666667,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 6.386461,
+              "seconds": 1166.347
+            },
+            "review": {
+              "credits": 0,
+              "seconds": 0
+            },
+            "adapter": {
+              "credits": 3.533179,
+              "seconds": 750.855
+            }
+          },
+          "ci95_credits_per_correct": [
+            0.7692198754145938,
+            4.367016121890548
+          ],
+          "ci95_seconds_per_correct": [
+            176.73324999999997,
+            697.1277500000001
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-review": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 27.123032,
+          "seconds_total": 2703.821,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 3.390378957587065,
+          "seconds_per_correct": 337.977625,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 4.054451,
+              "seconds": 906.452
+            },
+            "review": {
+              "credits": 16.727991,
+              "seconds": 606.246
+            },
+            "adapter": {
+              "credits": 6.34059,
+              "seconds": 1191.123
+            }
+          },
+          "ci95_credits_per_correct": [
+            2.9595631064262022,
+            3.9517998677031505
+          ],
+          "ci95_seconds_per_correct": [
+            281.427375,
+            411.12925000000007
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "delivery-site",
+      "model": "claude-opus-5.5",
+      "rates": {
+        "manual": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 6,
+          "E": 8,
+          "K": 6,
+          "D": 6,
+          "outcomes": {
+            "passed": 6,
+            "acceptance-failed": 2
+          }
+        },
+        "given": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted-review": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        }
+      },
+      "entry": {
+        "drafted": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          }
+        },
+        "drafted-review": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          },
+          "C_draft": 8,
+          "review": {
+            "fixed": 0,
+            "broke": 0,
+            "kept_correct": 8,
+            "kept_wrong": 0,
+            "changed_catalog": 0
+          }
+        }
+      },
+      "cost": {
+        "manual": {
+          "started": 8,
+          "correct": 6,
+          "credits_total": 21.214996,
+          "seconds_total": 657.681,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 3.5358325904919847,
+          "seconds_per_correct": 109.6135,
+          "note": null,
+          "ci95_credits_per_correct": [
+            2.6952778492537313,
+            6.62259273278054
+          ],
+          "ci95_seconds_per_correct": [
+            81.726125,
+            205.18833333333336
+          ],
+          "resamples_without_correct": 0
+        },
+        "given": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 10.899534,
+          "seconds_total": 435.812,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.3624417309701493,
+          "seconds_per_correct": 54.47650000000001,
+          "note": null,
+          "ci95_credits_per_correct": [
+            1.2264773271973466,
+            1.4971799749170813
+          ],
+          "ci95_seconds_per_correct": [
+            47.50450000000001,
+            62.355500000000006
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 24.386906,
+          "seconds_total": 852.014,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 3.0483632489635157,
+          "seconds_per_correct": 106.50175,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 13.644966,
+              "seconds": 457.874
+            },
+            "review": {
+              "credits": 0,
+              "seconds": 0
+            },
+            "adapter": {
+              "credits": 10.74194,
+              "seconds": 394.14
+            }
+          },
+          "ci95_credits_per_correct": [
+            2.7006717491293535,
+            3.3865557525704806
+          ],
+          "ci95_seconds_per_correct": [
+            95.95,
+            118.216875
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-review": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 48.536626,
+          "seconds_total": 1660.227,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 6.067078210033168,
+          "seconds_per_correct": 207.52837499999998,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 15.789217,
+              "seconds": 522.248
+            },
+            "review": {
+              "credits": 20.286496,
+              "seconds": 668.617
+            },
+            "adapter": {
+              "credits": 12.460912,
+              "seconds": 469.362
+            }
+          },
+          "ci95_credits_per_correct": [
+            5.726182080058042,
+            6.39762240518242
+          ],
+          "ci95_seconds_per_correct": [
+            188.80175000000003,
+            228.10999999999996
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "rates": {
+        "manual": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 8,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "acceptance-failed": 7,
+            "passed": 1
+          }
+        },
+        "given": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        },
+        "drafted": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 6,
+          "E": 8,
+          "K": 6,
+          "D": 6,
+          "outcomes": {
+            "passed": 6,
+            "acceptance-failed": 2
+          }
+        },
+        "drafted-review": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 8,
+          "E": 8,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 8
+          }
+        }
+      },
+      "entry": {
+        "drafted": {
+          "observed": 8,
+          "C": 6,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 2,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 2,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              6,
+              6
+            ],
+            "C=0": [
+              0,
+              2
+            ]
+          }
+        },
+        "drafted-review": {
+          "observed": 8,
+          "C": 8,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              8,
+              8
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          },
+          "C_draft": 8,
+          "review": {
+            "fixed": 0,
+            "broke": 0,
+            "kept_correct": 8,
+            "kept_wrong": 0,
+            "changed_catalog": 0
+          }
+        }
+      },
+      "cost": {
+        "manual": {
+          "started": 8,
+          "correct": 1,
+          "credits_total": 11.135063,
+          "seconds_total": 915.302,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 11.135063235820896,
+          "seconds_per_correct": 915.3019999999999,
+          "note": null,
+          "ci95_credits_per_correct": [
+            3.521592989751244,
+            12.426864213830846
+          ],
+          "ci95_seconds_per_correct": [
+            283.42366666666663,
+            1025.631
+          ],
+          "resamples_without_correct": 3385
+        },
+        "given": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 5.63391,
+          "seconds_total": 447.516,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.7042388105721393,
+          "seconds_per_correct": 55.93950000000001,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.6544111566666668,
+            0.754071350261194
+          ],
+          "ci95_seconds_per_correct": [
+            51.672625,
+            60.677625000000006
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted": {
+          "started": 8,
+          "correct": 6,
+          "credits_total": 11.983384,
+          "seconds_total": 1022.464,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 1.9972307479104476,
+          "seconds_per_correct": 170.41066666666663,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 5.707995,
+              "seconds": 476.138
+            },
+            "review": {
+              "credits": 0,
+              "seconds": 0
+            },
+            "adapter": {
+              "credits": 6.275389,
+              "seconds": 546.326
+            }
+          },
+          "ci95_credits_per_correct": [
+            1.4760371447636813,
+            3.1971071337810946
+          ],
+          "ci95_seconds_per_correct": [
+            125.62737499999999,
+            279.90749999999997
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-review": {
+          "started": 8,
+          "correct": 8,
+          "credits_total": 32.947693,
+          "seconds_total": 1768.043,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 4.1184616261318405,
+          "seconds_per_correct": 221.00537500000002,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 7.072439,
+              "seconds": 619.314
+            },
+            "review": {
+              "credits": 20.008693,
+              "seconds": 658.79
+            },
+            "adapter": {
+              "credits": 5.86656,
+              "seconds": 489.939
+            }
+          },
+          "ci95_credits_per_correct": [
+            3.894199235858209,
+            4.405574981471808
+          ],
+          "ci95_seconds_per_correct": [
+            202.153375,
+            241.72775000000001
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "delivery-site",
+      "model": "qwen3-coder-next",
+      "rates": {
+        "manual": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 0,
+          "E": 5,
+          "K": 0,
+          "D": 0,
+          "outcomes": {
+            "acceptance-failed": 8
+          }
+        },
+        "given": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 7,
+          "E": 7,
+          "K": 8,
+          "D": 8,
+          "outcomes": {
+            "passed": 7,
+            "acceptance-failed": 1
+          }
+        },
+        "drafted": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 0,
+          "E": 2,
+          "K": 0,
+          "D": 0,
+          "outcomes": {
+            "draft-invalid": 5,
+            "acceptance-failed": 2,
+            "scope-violation": 1
+          }
+        },
+        "drafted-review": {
+          "planned": 8,
+          "observed": 8,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 4,
+          "E": 4,
+          "K": 4,
+          "D": 4,
+          "outcomes": {
+            "draft-invalid": 4,
+            "passed": 4
+          }
+        }
+      },
+      "entry": {
+        "drafted": {
+          "observed": 8,
+          "C": 0,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 1,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 7,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 7,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 1,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              0,
+              0
+            ],
+            "C=0": [
+              0,
+              8
+            ]
+          }
+        },
+        "drafted-review": {
+          "observed": 8,
+          "C": 4,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 4,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 4,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              4,
+              4
+            ],
+            "C=0": [
+              0,
+              4
+            ]
+          },
+          "C_draft": 2,
+          "review": {
+            "fixed": 2,
+            "broke": 0,
+            "kept_correct": 2,
+            "kept_wrong": 4,
+            "changed_catalog": 2
+          }
+        }
+      },
+      "cost": {
+        "manual": {
+          "started": 8,
+          "correct": 0,
+          "credits_total": 6.948923,
+          "seconds_total": 1996.533,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": null,
+          "seconds_per_correct": null,
+          "note": "no correct result"
+        },
+        "given": {
+          "started": 8,
+          "correct": 7,
+          "credits_total": 4.383161,
+          "seconds_total": 1051.935,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.6261658708836768,
+          "seconds_per_correct": 150.27642857142857,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.4113534767827529,
+            1.1417718577114429
+          ],
+          "ci95_seconds_per_correct": [
+            109.471125,
+            257.8292
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted": {
+          "started": 8,
+          "correct": 0,
+          "credits_total": 6.768016,
+          "seconds_total": 1892.664,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": null,
+          "seconds_per_correct": null,
+          "note": "no correct result",
+          "per_stage": {
+            "draft": {
+              "credits": 4.250519,
+              "seconds": 1294.028
+            },
+            "review": {
+              "credits": 0,
+              "seconds": 0
+            },
+            "adapter": {
+              "credits": 2.517497,
+              "seconds": 598.636
+            }
+          }
+        },
+        "drafted-review": {
+          "started": 8,
+          "correct": 4,
+          "credits_total": 18.635448,
+          "seconds_total": 2320.835,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 4.658861989966832,
+          "seconds_per_correct": 580.20875,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 4.329266,
+              "seconds": 1041.921
+            },
+            "review": {
+              "credits": 10.075759,
+              "seconds": 334.343
+            },
+            "adapter": {
+              "credits": 4.230423,
+              "seconds": 944.571
+            }
+          },
+          "ci95_credits_per_correct": [
+            3.7352081295190716,
+            6.824384054726368
+          ],
+          "ci95_seconds_per_correct": [
+            419.32079999999996,
+            1085.591
+          ],
+          "resamples_without_correct": 48
+        }
+      }
+    }
+  ],
+  "audit": [
+    {
+      "task": "return",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--001",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "return",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "return",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "return",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "return",
+      "model": "gpt-5.6-luna",
+      "trial": "drafted--008",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "return",
+      "model": "qwen3-coder-next",
+      "trial": "drafted--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "return",
+      "model": "qwen3-coder-next",
+      "trial": "drafted--003",
+      "retrieval_attempt": [
+        "sleep 2 && curl -s http://127.0.0.1:8080/health 2>&1 || echo \"Server not ready yet\"",
+        "sleep 2 && curl -s http://127.0.0.1:8080/health 2>&1",
+        "sleep 2 && curl -s http://127.0.0.1:8080/health 2>&1",
+        "sleep 2 && curl -s http://127.0.0.1:8080/health 2>&1; pkill -f \"cmd/server/main.go\" 2>/dev/null; echo \"done\"",
+        "sleep 2 && curl -s http://127.0.0.1:8080/health 2>&1",
+        "sleep 2 && curl -s http://127.0.0.1:8080/health 2>&1; pkill -f \"go run cmd/server\" 2>/dev/null; echo \"done\""
+      ],
+      "network_denied": [
+        "http://127.0.0.1:8080/health",
+        "http://127.0.0.1:8080/health",
+        "http://127.0.0.1:8080/health",
+        "http://127.0.0.1:8080/health",
+        "http://127.0.0.1:8080/health",
+        "http://127.0.0.1:8080/health"
+      ]
+    },
+    {
+      "task": "return",
+      "model": "qwen3-coder-next",
+      "trial": "drafted-review--006",
+      "retrieval_attempt": [
+        "sleep 2 && curl -s http://127.0.0.1:8080/health 2>/dev/null || echo \"Server not responding yet\""
+      ],
+      "network_denied": [
+        "http://127.0.0.1:8080/health"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--001",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "drafted-review--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--002",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--003",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--004",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--005",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "manual--007",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "gpt-5.6-luna",
+      "trial": "drafted-review--008",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    },
+    {
+      "task": "delivery-site",
+      "model": "qwen3-coder-next",
+      "trial": "drafted--008",
+      "retrieval_attempt": [],
+      "network_denied": [
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org",
+        "proxy.golang.org"
+      ]
+    }
+  ],
+  "telemetry_hosts_not_counted": [
+    "app.kiro.dev",
+    "client-telemetry.us-east-1.amazonaws.com",
+    "telemetry.eu-central-1.kiro.dev",
+    "telemetry.us-east-1.kiro.dev"
+  ]
+}

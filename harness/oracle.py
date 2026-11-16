@@ -169,6 +169,11 @@ class Run:
         self.prefix = 'v7-' + hashlib.sha256(seed.encode()).hexdigest()[:12] + '-'
         self.ids = {k: self.prefix + k for k in ('p1', 'p2', 'p3', 'own', 'other', 'done', 'gone', 'out', 'big', 'second', 'missing')}
         self.ids['uni'] = '界' * 33 + 'u'
+        # Byte order puts 'Zed' before 'p1'/'p2'/'p3' (0x5A < 0x70); a linguistic collation (glibc/ICU en_US)
+        # puts it after them. Batch responses and per-target history rows are checked in Python byte order, so a
+        # candidate that pairs values or builds responses in database order fails here under glibc.
+        self.ids['zed'] = self.prefix + 'Zed'
+        assert self.ids['zed'].encode() < self.ids['p1'].encode()
         self.current = None
         self.op = 'existing'  # operation label of a step: the task operation, or 'existing' for the old API
 
@@ -179,7 +184,8 @@ class Run:
                 ('p3', 'tenant-a', 'zoe', 'submitted', 'carol'), ('uni', 'tenant-a', 'alice', 'submitted', None),
                 ('own', 'tenant-a', 'carol', 'submitted', None), ('other', 'tenant-b', 'dave', 'submitted', 'erin'),
                 ('done', 'tenant-a', 'alice', 'approved', 'bob'), ('gone', 'tenant-a', 'alice', 'rejected', None),
-                ('big', 'tenant-a', 'alice', 'submitted', None), ('second', 'tenant-a', 'alice', 'pending-second', None)]
+                ('big', 'tenant-a', 'alice', 'submitted', None), ('second', 'tenant-a', 'alice', 'pending-second', None),
+                ('zed', 'tenant-a', 'alice', 'submitted', 'bob')]
         if self.task == 'withdraw':
             rows.append(('out', 'tenant-a', 'alice', 'withdrawn', None))
         amounts = {'big': 60000, 'second': 70000}
@@ -188,7 +194,7 @@ class Run:
             r = {'id': i[name], 'tenantId': tenant, 'createdBy': creator, 'title': 'v7 fixture', 'amount': amounts.get(name, 9),
                  'status': status, 'assigneeId': assignee}
             if self.task == 'cost-center':
-                r['costCenterId'] = {'p1': 'CC-OPS', 'p3': 'CC-RND', 'other': 'CC-B1'}.get(name)
+                r['costCenterId'] = {'p1': 'CC-OPS', 'p3': 'CC-RND', 'other': 'CC-B1', 'zed': 'CC-RND'}.get(name)
             table.append(r)
         changer = {'tenant-a': 'bob', 'tenant-b': 'erin'}
         history = [{'tenantId': r['tenantId'], 'purchaseId': r['id'], 'fromAssignee': None, 'toAssignee': r['assigneeId'],
@@ -450,13 +456,15 @@ def regression(run):
              lambda: run.refuse(lambda: post('/purchases/%s/reopen' % i['p1'], {'reason': 'x'}, 'alice'), targets=[i['p1']]))
 
     def reassign():
-        call = lambda: post('/purchases/bulk-reassign', {'ids': [i['p2'], i['p1']], 'assignee': 'hana'}, 'carol')
-        ids = sorted([i['p1'], i['p2']])
+        call = lambda: post('/purchases/bulk-reassign', {'ids': [i['p2'], i['zed'], i['p1']], 'assignee': 'hana'}, 'carol')
+        ids = sorted([i['p1'], i['p2'], i['zed']], key=lambda s: s.encode())
         r, b, a = run.apply(call, lambda p: update(p, set(ids), assigneeId='hana'), ids)
         assert r['status'] == 200 and r['body'] == {'reassignedIds': ids, 'assignee': 'hana'}, r
         hist = [{'tenantId': 'tenant-a', 'purchaseId': i['p1'], 'fromAssignee': 'bob', 'toAssignee': 'hana', 'changedBy': 'carol',
                  'operation': REASSIGN, 'idempotencyKey': 'key'},
                 {'tenantId': 'tenant-a', 'purchaseId': i['p2'], 'fromAssignee': None, 'toAssignee': 'hana', 'changedBy': 'carol',
+                 'operation': REASSIGN, 'idempotencyKey': 'key'},
+                {'tenantId': 'tenant-a', 'purchaseId': i['zed'], 'fromAssignee': 'bob', 'toAssignee': 'hana', 'changedBy': 'carol',
                  'operation': REASSIGN, 'idempotencyKey': 'key'}]
         exact(b, a, {x: {'assigneeId': 'hana'} for x in ids},
               {'AssignmentHistory': hist, 'PurchaseEvent': [event(x, 'purchase.reassigned', 'carol') for x in ids],
@@ -472,6 +480,7 @@ def regression(run):
         assert r['status'] == 200 and isinstance(r['body'], list), r
         assert sorted(p['id'] for p in r['body']) == sorted(v for k, v in i.items() if k not in ('other', 'missing') and
                                                             (k != 'out' or run.task == 'withdraw')), r['body']
+        # The listing order is not part of any contract; only its content is checked.
         assert all(set(p) == {'id', 'tenantId', 'createdBy', 'title', 'amount', 'status'} for p in r['body']), r['body'][:1]
     run.case('list is tenant scoped', G, listing)
 
@@ -628,7 +637,7 @@ def cost_center_cases(run):
     i = run.ids
     OP = 'bulk-cost-center.v7'
     run.op = OP
-    initial = {i['p1']: 'CC-OPS', i['p2']: None, i['p3']: 'CC-RND', i['uni']: None, i['other']: 'CC-B1'}
+    initial = {i['p1']: 'CC-OPS', i['p2']: None, i['p3']: 'CC-RND', i['uni']: None, i['other']: 'CC-B1', i['zed']: 'CC-RND'}
 
     def call(ids, cc='CC-RND', user='carol', key='key', raw=None, headers=None):
         return lambda: post('/purchases/bulk-cost-center', {'ids': ids, 'costCenter': cc}, user, key, raw, headers)
@@ -648,7 +657,7 @@ def cost_center_cases(run):
 
     E = 'cost-center-'
     run.case('single target', E + 'functional', lambda: success([i['p1']]))
-    run.case('batch is sorted', E + 'functional', lambda: success([i['p3'], i['uni'], i['p2']], 'CC-OPS'))
+    run.case('batch is sorted', E + 'functional', lambda: success([i['p3'], i['uni'], i['zed'], i['p2']], 'CC-OPS'))
     run.case('other tenant approver', E + 'functional', lambda: success([i['other']], 'CC-B2', user='erin'))
     run.case('mixed previous values', E + 'functional', lambda: success([i['p2'], i['p1']], 'CC-RND'))
     run.case('requester', E + 'authorization', lambda: run.refuse(call([i['p1']], user='alice'), (403,), [i['p1']]))
@@ -692,7 +701,7 @@ def cost_center_cases(run):
         run.ar_row(b, a, 'tenant-a', 'carol', OP, 'key')
     run.case('concurrent identical', E + 'concurrency', concurrent_same)
 
-    targets = sorted([i['p1'], i['p2']])
+    targets = sorted([i['p1'], i['p2']], key=lambda s: s.encode())
 
     def broken_chain(b, a, rs):
         """Both requests applied but some target's new history does not form one chain: a lost update."""
@@ -751,7 +760,7 @@ def cost_center_cases(run):
                  'operation': OP, 'idempotencyKey': 'key'} for pid in sorted(ids, key=lambda s: s.encode())]
         assert got == want, {'new history rows': got, 'expected': want}
     run.case('history row', 'implicit-history', lambda: recorded([i['p1']]))
-    run.case('history rows per target with previous value', 'implicit-history', lambda: recorded([i['p2'], i['p3']], 'CC-OPS'))
+    run.case('history rows per target with previous value', 'implicit-history', lambda: recorded([i['p2'], i['zed'], i['p1']], 'CC-OPS'))
 
     def chained(b, a, final):
         new = added(b, a, 'CostCenterHistory')

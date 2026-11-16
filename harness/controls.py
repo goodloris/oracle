@@ -191,12 +191,16 @@ def main():
     for control in spec['controls']:
         if a.only and control['variant'] not in a.only: continue
         result = evaluate_control(a.task, spec, control['variant'], work, plan, fixtures)
-        good, got, want = compare(control['expect'], result)
+        # A control may expect a different result when the database does not sort ids in byte order.
+        linguistic = not json.loads(plan.read_text())['database']['byte_order']
+        expect = control.get('expect_linguistic', control['expect']) if linguistic else control['expect']
+        good, got, want = compare(expect, result)
         control = {**control, 'cell': variant(spec, control['variant'])['cell']}
         initial = json.loads((work / 'controls' / control['variant'] / 'manifest.json').read_text())['initial_sha']
         vok, vgot = verifier_check(public, control, result, work / 'controls' / control['variant'] / 'restored', initial)
         good = good and vok
         entry = {'variant': control['variant'], 'kind': control['kind'], 'ok': good, 'got': got, 'verifier': vgot,
+                 'collation': 'linguistic' if linguistic else 'byte-order',
                  **({} if good else {'want': want}), 'evaluation_seconds': result.get('evaluation_seconds'),
                  'safety_cases': {k: v['cases'] for k, v in result.get('safety', {}).items() if v['count']}}
         report['controls'].append(entry)

@@ -39,7 +39,7 @@ POSITIONAL = '''	previous := []*string{}
 	return previous, nil'''
 
 
-def run(kernel_patch):
+def run(kernel_patch, collation):
     src = verifier.public()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
@@ -59,16 +59,27 @@ def run(kernel_patch):
         (tmp / 'internal/opkernel/opkernel_v7_test.go').write_bytes((ROOT / 'harness/kernel/opkernel_v7_test.go.txt').read_bytes())
         r = subprocess.run([os.environ.get('POC_GO', 'go'), 'test', './internal/opkernel', '-count=1', '-v',
                             '-run', '^TestV7FieldUpdatesPairOldValuesByIDUnderLinguisticCollation$'],
-                           cwd=tmp, capture_output=True, text=True, timeout=900, env={**os.environ, 'POC_DB_RESET': '1'})
+                           cwd=tmp, capture_output=True, text=True, timeout=900, env={**os.environ, 'POC_DB_RESET': '1', 'V7_ID_COLLATION': collation})
         out = r.stdout + r.stderr
-        return {'returncode': r.returncode, 'pass': '--- PASS: TestV7' in out, 'skip': '--- SKIP' in out, 'tail': out[-600:]}
+        return {'returncode': r.returncode, 'pass': '--- PASS: TestV7' in out, 'skip': '--- SKIP' in out,
+                'not_linguistic': 'collation not linguistic' in out, 'tail': out[-600:]}
+
+
+def mode(collation):
+    fixed, positional = run(False, collation), run(True, collation)
+    return {'fixed_kernel': fixed, 'positional_kernel_negative': positional,
+            'ok': fixed['pass'] and not fixed['skip'] and positional['returncode'] != 0 and not positional['pass']
+            and 'pairs old value with its own target' in positional['tail']}
 
 
 def main():
-    fixed, positional = run(False), run(True)
-    report = {'public_commit': verifier.PUBLIC_COMMIT, 'fixed_kernel': fixed, 'positional_kernel_negative': positional,
-              'ok': fixed['pass'] and not fixed['skip'] and positional['returncode'] != 0 and not positional['pass']
-              and 'pairs old value with its own target' in positional['tail']}
+    """ICU always; the database default collation too. A byte-order default (musl/alpine, C) cannot show the bug:
+    it is reported as not applicable unless POC_REQUIRE_LINGUISTIC_DEFAULT=1 (set on the evaluation host)."""
+    icu, default = mode('icu'), mode('default')
+    required = os.environ.get('POC_REQUIRE_LINGUISTIC_DEFAULT') == '1'
+    default['applicable'] = not default['fixed_kernel']['not_linguistic']
+    report = {'public_commit': verifier.PUBLIC_COMMIT, 'icu': icu, 'database_default': default,
+              'ok': icu['ok'] and (default['ok'] if (required or default['applicable']) else True)}
     print(json.dumps(report))
     return 0 if report['ok'] else 1
 

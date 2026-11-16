@@ -1,8 +1,9 @@
 #!/bin/bash
 # Start/stop the lane's disposable PostgreSQL on the evaluation host (127.0.0.1:5670<lane> only).
-# Uses Docker's builtin seccomp profile. On 10.30.11.112 postgres:17-alpine cannot initdb under it (kernel 3.10 +
-# libseccomp 2.3.1, see docs/evidence/seccomp-2026-11-16/); the image choice for the host is pending (no unconfined).
-IMAGE=${POC_PG_IMAGE:-postgres:17-alpine}
+# Uses Docker's builtin seccomp profile. postgres:17-alpine cannot initdb under it on 10.30.11.112 (kernel 3.10 +
+# libseccomp 2.3.1, docs/evidence/seccomp-2026-11-16/), so the host uses the pinned Debian/glibc PostgreSQL 17.2
+# image (option B); it must match POC_PG_IMAGE in scripts/host_env.sh.
+IMAGE=${POC_PG_IMAGE:-postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341}
 # Usage: host_db.sh up|down <lane> [host]
 set -eu
 ACTION=$1; LANE=$2; HOST=${3:-root@10.30.11.112}

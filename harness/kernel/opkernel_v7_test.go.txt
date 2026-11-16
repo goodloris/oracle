@@ -2,6 +2,7 @@ package opkernel
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/XUJiahua/enterprise_agent/internal/opdef"
@@ -11,18 +12,24 @@ import (
 // under a linguistic collation ORDER BY p.id differs from the Go byte order of ids ("B2" < "a1" in bytes,
 // "a1" < "B2" in en-US). The private kernel's two managed columns must both pair every old value with its
 // own target in the column's history table.
+// V7_ID_COLLATION=icu switches Purchase.id to ICU en-US; =default keeps the database default collation
+// (glibc en_US.utf8 on the evaluation host), which must itself be linguistic for the test to mean anything.
 func TestV7FieldUpdatesPairOldValuesByIDUnderLinguisticCollation(t *testing.T) {
 	d := open(t)
 	ctx := context.Background()
-	var icu bool
-	if err := d.admin.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM pg_collation WHERE collname='en-US-x-icu')`).Scan(&icu); err != nil || !icu {
-		t.Fatal("ICU collation en-US-x-icu required for the v7 regression") // never a skip
+	sqls := []string{`DROP TABLE IF EXISTS "CostCenterHistory","CostCenter" CASCADE`}
+	switch os.Getenv("V7_ID_COLLATION") {
+	case "icu":
+		var icu bool
+		if err := d.admin.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM pg_collation WHERE collname='en-US-x-icu')`).Scan(&icu); err != nil || !icu {
+			t.Fatal("ICU collation en-US-x-icu required for the v7 regression") // never a skip
+		}
+		sqls = append(sqls, `ALTER TABLE "Purchase" ALTER COLUMN id TYPE text COLLATE "en-US-x-icu"`)
+	case "default":
+	default:
+		t.Fatal("V7_ID_COLLATION must be icu or default")
 	}
-	for _, sql := range []string{
-		`DROP TABLE IF EXISTS "CostCenterHistory","CostCenter" CASCADE`,
-		`ALTER TABLE "Purchase" ALTER COLUMN id TYPE text COLLATE "en-US-x-icu"`,
-		read(t, "tasks/cost-center/schema.sql"),
-	} {
+	for _, sql := range append(sqls, read(t, "tasks/cost-center/schema.sql")) {
 		if _, err := d.admin.Exec(ctx, sql); err != nil {
 			t.Fatal(err)
 		}

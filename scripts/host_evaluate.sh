@@ -3,7 +3,8 @@
 # Usage: host_evaluate.sh <run> <lane> [host]    (the lane's database must be up: host_db.sh up <lane>)
 set -eu
 RUN=$1; LANE=$2; HOST=${3:-root@10.30.11.112}
-ssh -o BatchMode=yes "$HOST" "set -u; cd /opt/poc-oracle/private; . scripts/host_env.sh $LANE; R=/opt/poc-oracle/runs/$RUN
+P=${PRIVATE_DIR:-/opt/poc-oracle/private}  # an older harness checkout for runs prepared at an earlier commit
+ssh -o BatchMode=yes "$HOST" "set -u; cd $P; . scripts/host_env.sh $LANE; R=/opt/poc-oracle/runs/$RUN
   test \"\$(git rev-parse HEAD)\" = \"\$(cat \$R/harness_sha.txt)\" || { echo 'harness moved since prepare' >&2; exit 1; }
   mkdir -p \$R/eval \$R/evaluations \$R/ops
   for t in \$(cat \$R/order.txt); do

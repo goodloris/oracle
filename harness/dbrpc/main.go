@@ -177,6 +177,14 @@ func handle(ctx context.Context, db *pgx.Conn, r request) (any, error) {
 			}
 		}
 		return result, nil
+	case "env":
+		// The database the Oracle runs against: server version and the database's collation and ctype.
+		// byte_order: whether the default collation orders the Oracle's "Zed" before "p1" like UTF-8 bytes do.
+		var version, collate, ctype, provider string
+		var bytes bool
+		err := db.QueryRow(ctx, `SELECT version(), datcollate, datctype, datlocprovider::text, 'v7-Zed' < 'v7-p1' FROM pg_database WHERE datname=current_database()`).
+			Scan(&version, &collate, &ctype, &provider, &bytes)
+		return map[string]any{"version": version, "collate": collate, "ctype": ctype, "provider": provider, "byte_order": bytes}, err
 	case "fault":
 		if err := clearFault(ctx, db); err != nil {
 			return nil, err

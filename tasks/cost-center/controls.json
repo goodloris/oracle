@@ -204,6 +204,36 @@
           "new": "\t\tvar valid bool\n\t\tif err = tx.QueryRow(ctx, `SELECT active FROM \"CostCenter\" WHERE \"tenantId\"=$1 AND code=$2`,\n\t\t\tu.Tenant, costCenter).Scan(&valid); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n"
         }
       ]
+    },
+    "neg-db-order-history": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id FOR UPDATE`"
+        }
+      ]
+    },
+    "neg-db-order-response": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id FOR UPDATE`"
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tprevious := []*string{}\n\t\tfor rows.Next() {\n\t\t\tvar id string\n\t\t\tvar old *string\n\t\t\tif err = rows.Scan(&id, &old); err != nil {\n\t\t\t\trows.Close()\n\t\t\t\treturn protocol.ParamResult{}, false, err\n\t\t\t}\n\t\t\tprevious = append(previous, old)\n\t\t}",
+          "new": "\t\tprevious := []*string{}\n\t\tordered := []string{}\n\t\tfor rows.Next() {\n\t\t\tvar id string\n\t\t\tvar old *string\n\t\t\tif err = rows.Scan(&id, &old); err != nil {\n\t\t\t\trows.Close()\n\t\t\t\treturn protocol.ParamResult{}, false, err\n\t\t\t}\n\t\t\tprevious = append(previous, old)\n\t\t\tordered = append(ordered, id)\n\t\t}"
+        },
+        {
+          "file": "internal/candidate/costcenter.go",
+          "old": "\t\tfor i, id := range ids {\n",
+          "new": "\t\tids = ordered // database order: pairing stays right, the response order does not\n\t\tfor i, id := range ids {\n"
+        }
+      ]
     }
   },
   "controls": [
@@ -389,6 +419,34 @@
           "service_error"
         ]
       }
+    },
+    {
+      "variant": "neg-db-order-history",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ]
+      },
+      "note": "pairs old values by database order; only a linguistic collation separates it from the reference"
+    },
+    {
+      "variant": "neg-db-order-response",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "cost-center-functional"
+        ]
+      },
+      "note": "returns updatedIds in database order instead of UTF-8 byte order"
     }
   ]
 }

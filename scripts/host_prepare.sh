@@ -1,6 +1,7 @@
 #!/bin/bash
 # On the evaluation host: fixtures (seed stays there) + plan + one kit per trial, in plan order.
 # Usage: host_prepare.sh <run> <task> <model> <repetitions> [--synthetic] [host]
+# Needs the lane-1 database up (host_db.sh up 1): plan records the measured database environment.
 set -eu
 RUN=$1; TASK=$2; MODEL=$3; REPS=$4; SYN=${5:-}; HOST=${6:-root@10.30.11.112}
 [ "$SYN" = --synthetic ] || [ -z "$SYN" ] || { echo "5th argument must be --synthetic or empty" >&2; exit 2; }

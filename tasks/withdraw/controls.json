@@ -191,6 +191,16 @@
           "new": "\t\tif strings.HasPrefix(id, \"界\") {\n\t\t\ttime.Sleep(12 * time.Second) // the client gives up first\n\t\t\treturn protocol.ItemResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\ttx, err := pool.Begin(ctx)\n"
         }
       ]
+    },
+    "neg-db-order-regression": {
+      "base": "ref-go-manual",
+      "edits": [
+        {
+          "file": "internal/candidate/reassign.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id FOR UPDATE`"
+        }
+      ]
     }
   },
   "controls": [
@@ -370,6 +380,20 @@
           "undecidable"
         ]
       }
+    },
+    {
+      "variant": "neg-db-order-regression",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "regression"
+        ]
+      },
+      "note": "the existing hand-written bulk-reassign pairs old assignees by database order (regression case with three targets)"
     }
   ]
 }

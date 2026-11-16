@@ -111,6 +111,7 @@ def load_plan(path):
     for p, h in value['frozen'].items():
         if digest(ROOT / p) != h: raise ValueError('evaluator drift: ' + p)
     if value['base_sha'] != PUBLIC_BASE: raise ValueError('unexpected base provenance')
+    if set(value.get('database', {})) != {'image', 'version', 'collate', 'ctype', 'provider', 'byte_order'}: raise ValueError('database environment missing')
     if type(value['generation_budget_seconds']) is not int or value['generation_budget_seconds'] < 1:
         raise ValueError('invalid generation budget')
     if value['reasoning_effort'] not in ('low', 'medium', 'high') or not value['model'] or value.get('engine') not in ('codex', 'kiro'):
@@ -135,6 +136,19 @@ def load_plan(path):
 def verifier(): return module('v7_verifier', HERE / 'verifier.py')
 
 
+def database_env():
+    """Measured evaluation database (version, collation, ctype) plus the operator-declared image (POC_PG_IMAGE)."""
+    import tempfile
+    oracle = module('v7_oracle_env', HERE / 'oracle.py')
+    with tempfile.TemporaryDirectory() as tmp:
+        db = oracle.Database(dbrpc(Path(tmp)))
+        try:
+            value = db.call('env')
+        finally:
+            db.close()
+    return {'image': os.environ.get('POC_PG_IMAGE', 'unspecified'), **value}
+
+
 def fixtures(args): save(args.output, {'version': 1, 'seed': secrets.token_hex(32)})
 
 
@@ -155,6 +169,8 @@ def plan(args):
     # catalog digest is frozen here (the public opdef_test pins only the public digest).
     v = verifier()
     value['verifier'] = {**v.manifest(args.task), 'catalog_digest': v.digest(args.task)}
+    # The database the trials will be evaluated on; evaluate refuses a different one (sort order matters).
+    value['database'] = database_env()
     for instance in range(1, args.repetitions + 1):
         block = []
         for c in CELLS:
@@ -291,7 +307,11 @@ def evaluate(args):
     server = None; db = None; binary = out / 'server'; start = time.monotonic()
     try:
         process([go(), 'version'], timeout=10)
-        db = oracle.Database(dbrpc(out)); db.call('init', files=[str(ROOT / f) for f in schema_files(p['task'])])
+        db = oracle.Database(dbrpc(out))
+        env = {'image': os.environ.get('POC_PG_IMAGE', 'unspecified'), **db.call('env')}
+        if env != p['database']: raise oracle.InfrastructureError('evaluation database differs from plan: %s' % env)
+        result['database'] = env
+        db.call('init', files=[str(ROOT / f) for f in schema_files(p['task'])])
     except (OSError, subprocess.SubprocessError, oracle.InfrastructureError) as error:
         result.update({'outcome': 'infrastructure-blocked', 'error': str(error)[:1000]})
     else:

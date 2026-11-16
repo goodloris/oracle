@@ -79,7 +79,7 @@ v7 检验：**由平台预先给定的权威业务语义，能否把局部收益
 
 - 每个通道、每组的 A、E、K、D 率；各层的配对符号检验 p 值（探索性）。
 - safety：每组七类的 trial 数与用例数；逐个列出 `unauthorized_write`、`partial_batch`、`double_apply`、`wrong_commit` 不为 0 的 trial。
-- S：块内差的单侧 Wilcoxon 符号秩检验（opdef 对 manual），探索性。
+- S：块内差 S_opdef − S_manual 的单侧 Wilcoxon 符号秩检验，探索性。差为 0 的块剔除；n ≤ 50 用中秩的精确分布，否则用带结校正的正态近似。
 - Verifier 样本外评估：私有构建的 `appctl operations`（公开 `fad8adf` + 私有目录叠加，目录摘要见附录 A）对全部已评分候选的判定，与 Oracle 隐含约定结果对照，报告 TP/FP/FN 与 unverifiable 数。规则不再调整。
 - 与 v6 对照：T1/T2 不是 v6 任务，只做方向性对照，不做检验。
 
@@ -125,8 +125,11 @@ v6 中途触发过月度上限（v6 附录 E/F）。事先约定：
 
 ### 附录 A：冻结清单（冻结前由操作员填写）
 
+- 公开平台：PR #27 `fad8adfa89edb753c55410518d531e21489f7d9b`（opdef 未变，公开目录摘要仍为 `sha256:98abea36467340ad3702d12341beb3894e649d42d9129cfac4e45e46a9de0055`；私有目录摘要在重新绑定后核实未变）。
 - 私有仓库提交 SHA：`________`；`git ls-files harness tasks benchmark` 的树 hash：`________`。
 - Verifier：公开 commit `fad8adfa89edb753c55410518d531e21489f7d9b`（公开目录摘要 `sha256:98abea36467340ad3702d12341beb3894e649d42d9129cfac4e45e46a9de0055`）；私有目录摘要 withdraw `sha256:7a6ebca3d84695e38e6ef90733a64227c9a2cf2b0d8cb61a894efc098b87e262`、cost-center `sha256:ab1f5e79cd6f8bd01a004012f7d832ae329193356da687c12f7490ef64efae5c`（以 `python3 harness/verifier.py --task <t> digest` 的输出为准，并与每个计划的 `verifier.catalog_digest` 一致）。
-- 控制：本机与验收主机各 2 × 16 项全部通过（证据目录 `docs/evidence/v7-controls-2026-11-16/`）。
+- 控制：本机与验收主机各 2 × 16 项全部通过，私有内核回归通过（证据目录 `docs/evidence/v7-controls-2026-11-16/`）；`harness/analyze_v7_control.py` 通过。
+- 分析脚本：`harness/analyze_v7.py`（本文全部结局、假设、成本指标的唯一实现），冻结时记录其 SHA256：`________`。
+- 验收主机数据库镜像与 seccomp 配置：`________`（见 `docs/evidence/seccomp-2026-11-16/`）。
 - 网络隔离控制在冻结当天重跑并通过，白名单为 `________`。
 - 8 个计划文件的 SHA256：`________`。

@@ -211,3 +211,11 @@ v8a 实测的每 trial 平均 credit（主机 runs，`docs/evidence/v8a-runs-202
 ### 附录 D（2026-11-17 12:58）：`v9-project-qwen3-coder-next` 第二次预检阻塞
 
 续跑过程中，`given--011` 的 READY 预检再次超时，生成没有开始。处理方式与附录 C 相同：用 `resume_v9.sh` 继续续跑这条通道。做出这一处理时，没有查看任何验收结果。
+
+### 附录 E（2026-11-17 14:50，写于看到结果之后，只记录过程，不改分析）
+
+`v9-project-qwen3-coder-next` 的 `given--011` 在预检时又超时了一次，这已经是第三次。续跑脚本 `resume_v9.sh` 在归档时用了同名目录 `preflight-blocked-20261117/given--011`，因为该目录已经存在，`mv` 失败；被阻塞的目录留在了 `results/` 里，`generate.sh` 把它当作已存在的结果跳过，于是这个 trial 漏跑了。
+
+因为验收的 trial 只有 287 个，比计划少 1 个，这个问题被发现。处理办法是：把这个阻塞目录手动改名，归档为 `given--011-second`，然后用同一个 kit 补跑一次。补跑仍然是这个 trial 的首次生成，预检通过，验收结果为 passed。
+
+之后在主机上把已有的部分汇总改名为 `summary-partial-47.json`，重新生成 48 个 trial 的完整汇总，再运行冻结的分析脚本。整个过程中没有任何 trial 被重跑或替换。

@@ -187,3 +187,9 @@ v8a 实测的每 trial 平均 credit（主机 runs，`docs/evidence/v8a-runs-202
   - `v9-project-claude-opus-5.5`：`02a78d9fc60b46bd4e8f8956566dd14e2a95ffc2e67b0a12aaacc3c6c66f0dea`
   - `v9-project-gpt-5.6-luna`：`489cc801273b6fc4594a1566792f87015e29d6872081f5f2d570ae83682bcc3a`
   - `v9-project-qwen3-coder-next`：`7013d8890d7f11c17d2db353ebee79927264ca185a361549d97ee16e3d9479e9`
+
+### 附录 B（2026-11-17 09:55）：一次预检阻塞（R1）
+
+`v9-hold-claude-opus-5.5` 的 `drafted-rule--009` 在 READY 预检时超时：30 秒的探针被信号终止，记为 budget-exceeded，生成没有开始。按 R1，该通道已停止，阻塞时的结果目录已归档到 `<run>/preflight-blocked-20261117/`。随后的手动 READY 探针恢复正常（opus 和 luna 都正常）。
+
+按 R1 处理：等主驱动的其余通道结束后，用同一计划、同一 kit，从 `drafted-rule--009` 开始按原顺序续跑这条通道，续跑即视为这些 trial 的首次生成。已经完成验收的 25 个 trial 不重跑。做出这一处理时，只看过该通道的生成状态，没有查看任何验收结果。

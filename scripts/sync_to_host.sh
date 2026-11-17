@@ -4,7 +4,7 @@
 # Usage: sync_to_host.sh [host] [dir] [branch]
 set -eu
 cd "$(dirname "$0")/.."
-HOST=${1:-root@10.30.11.112}; DIR=${2:-/opt/poc-oracle/private-v8a}; BRANCH=${3:-$(git rev-parse --abbrev-ref HEAD)}
+HOST=${1:-root@10.30.11.112}; DIR=${2:-/opt/poc-oracle/private-v9}; BRANCH=${3:-$(git rev-parse --abbrev-ref HEAD)}
 case "$BRANCH" in *[!A-Za-z0-9._/-]*|'') echo "invalid branch name" >&2; exit 2 ;; esac
 B=$(mktemp -t oracle.XXXXXX).bundle
 git bundle create -q "$B" --all

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Catalog-bound Verifier (`appctl operations`) for v8a.
+"""Catalog-bound Verifier (`appctl operations`) for v9.
 
 The public platform (PR #27 at fad8adf, pinned commit below) is the Verifier's code. The private build overlays the
-task's platform version (ctl.platform: public opdef/opkernel for return, the deliverySiteId overlay for
+task's platform version (ctl.platform: public opdef/opkernel for hold, the projectId overlay for project; on the rule
+platform plus the event rules and registry.go; the platform version is the trial's cell) and
 delivery-site) and **the catalog of the trial**: the reference catalog (tasks/<task>/catalog.go.txt) for manual and
 given, the trial's frozen draft for drafted and drafted-review. Rules and platform version are frozen in the plan;
-the catalog digest is recorded per trial. The public build is the unmodified public tree; on a v8a candidate it must
+the catalog digest is recorded per trial. The public build is the unmodified public tree; on a v9 candidate it must
 never return pass (control). The public checkout is read with `git archive` and never modified.
 
 Usage: verifier.py --task T digest [--catalog FILE]   # catalog digest as reported by the private appctl
@@ -30,11 +31,11 @@ UPSTREAM = {'internal/opdef/catalog.go': '736429c18304e9a46b602e25af2510b4cf4fdb
             'internal/opkernel/opkernel.go': '55228e1b3e2040b81f4fd0f14a984e955f1c111888774a2fd9a936d1e2663ab0'}
 
 
-def overlay(task):
-    """Platform files of the task (the catalog is per trial and not part of the overlay)."""
+def overlay(task, rule=True):
+    """Platform files of the task, path -> bytes (the catalog is per trial and not part of the overlay)."""
     sys.path.insert(0, str(ROOT / 'harness'))
     import ctl
-    return ctl.platform(task)
+    return {p: v for p, v in ctl.platform(task, rule).items() if p.startswith('internal/')}
 
 
 def public():
@@ -50,11 +51,11 @@ def public():
 def manifest(task):
     """Plan record of the Verifier build: public commit, overlay hashes, private and public catalog digests."""
     return {'public_commit': PUBLIC_COMMIT, 'public_catalog_digest': PUBLIC_CATALOG_DIGEST,
-            'overlay': {p: hashlib.sha256((ROOT / src).read_bytes()).hexdigest() for p, src in overlay(task).items()},
+            'overlay': {kind: {p: hashlib.sha256(v).hexdigest() for p, v in overlay(task, kind == 'rule').items()} for kind in ('rule', 'norule')},
             'upstream': UPSTREAM}
 
 
-def build(task, kind, out, catalog=None):
+def build(task, kind, out, catalog=None, rule=True):
     """Build appctl into out/appctl-<kind>; the source tree is a fresh `git archive` of the pinned commit.
     catalog: catalog.go bytes of the trial (default: the task's reference catalog)."""
     src = public()
@@ -63,8 +64,8 @@ def build(task, kind, out, catalog=None):
         archive = subprocess.run(['git', '-C', str(src), 'archive', PUBLIC_COMMIT], check=True, capture_output=True).stdout
         subprocess.run(['tar', '-x', '-C', tmp], input=archive, check=True)
         if kind == 'private':
-            for p, template in overlay(task).items():
-                (Path(tmp) / p).write_bytes((ROOT / template).read_bytes())
+            for p, data in overlay(task, rule).items():
+                (Path(tmp) / p).write_bytes(data)
             (Path(tmp) / 'internal/opdef/catalog.go').write_bytes(catalog if catalog is not None else
                                                                   (ROOT / 'tasks' / task / 'catalog.go.txt').read_bytes())
         subprocess.run([os.environ.get('POC_GO', 'go'), 'build', '-o', str(binary), './cmd/appctl'], cwd=tmp, check=True,
@@ -83,10 +84,10 @@ def check(binary, root, base):
             **({'error': report['error']} if 'error' in report else {})}
 
 
-def digest(task, catalog=None):
+def digest(task, catalog=None, rule=True):
     """The private catalog digest as reported by the private appctl itself (checked on an empty repository)."""
     with tempfile.TemporaryDirectory() as tmp:
-        binary = build(task, 'private', tmp, catalog)
+        binary = build(task, 'private', tmp, catalog, rule)
         repo = Path(tmp) / 'empty'
         repo.mkdir()
         subprocess.run(['git', 'init', '-q', str(repo)], check=True)
@@ -100,7 +101,7 @@ def digest(task, catalog=None):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('--task', choices=('return', 'delivery-site'), required=True)
+    p.add_argument('--task', choices=('hold', 'project'), required=True)
     p.add_argument('--catalog', help='catalog.go of a trial (default: the reference catalog)')
     sub = p.add_subparsers(dest='command', required=True)
     sub.add_parser('digest')

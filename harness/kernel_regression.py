@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Private kernel regression: the v8a delivery-site overlay kernel pairs old field values by id (public fix fad8adf).
+"""Private kernel regression: the v9 project overlay kernel pairs old field values by id (public fix fad8adf).
 
-Builds the pinned public tree with the delivery-site platform overlay and reference catalog (harness/verifier.py),
-adds harness/kernel/opkernel_v8a_test.go.txt, and runs it on a disposable *_poc database with ICU collation.
+Builds the pinned public tree with the project platform overlay (rule version) and reference catalog (harness/verifier.py),
+adds harness/kernel/opkernel_v9_test.go.txt, and runs it on a disposable *_poc database with ICU collation.
 Negative control: the same test on the overlay kernel with the pre-fix positional pairing must fail.
 Needs ADMIN_DATABASE_URL, DATABASE_URL (POC_DB_RESET is set here) and optionally POC_GO.
 """
@@ -45,9 +45,9 @@ def run(kernel_patch, collation):
         tmp = Path(tmp)
         archive = subprocess.run(['git', '-C', str(src), 'archive', verifier.PUBLIC_COMMIT], check=True, capture_output=True).stdout
         subprocess.run(['tar', '-x', '-C', str(tmp)], input=archive, check=True)
-        for p, template in verifier.overlay('delivery-site').items():
-            (tmp / p).write_bytes((ROOT / template).read_bytes())
-        (tmp / 'internal/opdef/catalog.go').write_bytes((ROOT / 'tasks/delivery-site/catalog.go.txt').read_bytes())
+        for p, data in verifier.overlay('project').items():
+            (tmp / p).write_bytes(data)
+        (tmp / 'internal/opdef/catalog.go').write_bytes((ROOT / 'tasks/project/catalog.go.txt').read_bytes())
         kernel = tmp / 'internal/opkernel/opkernel.go'
         text = kernel.read_text()
         if kernel_patch:
@@ -55,14 +55,14 @@ def run(kernel_patch, collation):
             text = text.replace(FIXED, POSITIONAL).replace('\t\tbyID[id] = old\n', '\t\tbyID[id] = old\n\t\tordered = append(ordered, old)\n')
             text = text.replace('\tbyID := map[string]*string{}\n', '\tbyID := map[string]*string{}\n\tvar ordered []*string\n')
             kernel.write_text(text)
-        (tmp / 'tasks/delivery-site').mkdir(parents=True)
-        (tmp / 'tasks/delivery-site/schema.sql').write_bytes((ROOT / 'tasks/delivery-site/schema.sql').read_bytes())
-        (tmp / 'internal/opkernel/opkernel_v8a_test.go').write_bytes((ROOT / 'harness/kernel/opkernel_v8a_test.go.txt').read_bytes())
+        (tmp / 'tasks/project').mkdir(parents=True)
+        (tmp / 'tasks/project/schema.sql').write_bytes((ROOT / 'tasks/project/schema.sql').read_bytes())
+        (tmp / 'internal/opkernel/opkernel_v9_test.go').write_bytes((ROOT / 'harness/kernel/opkernel_v9_test.go.txt').read_bytes())
         r = subprocess.run([os.environ.get('POC_GO', 'go'), 'test', './internal/opkernel', '-count=1', '-v',
-                            '-run', '^TestV8aFieldUpdatesPairOldValuesByIDUnderLinguisticCollation$'],
+                            '-run', '^TestV9FieldUpdatesPairOldValuesByIDUnderLinguisticCollation$'],
                            cwd=tmp, capture_output=True, text=True, timeout=900, env={**os.environ, 'POC_DB_RESET': '1', 'V7_ID_COLLATION': collation})
         out = r.stdout + r.stderr
-        return {'returncode': r.returncode, 'pass': '--- PASS: TestV8a' in out, 'skip': '--- SKIP' in out,
+        return {'returncode': r.returncode, 'pass': '--- PASS: TestV9' in out, 'skip': '--- SKIP' in out,
                 'not_linguistic': 'collation not linguistic' in out, 'tail': out[-600:]}
 
 

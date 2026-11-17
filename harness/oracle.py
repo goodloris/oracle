@@ -1,4 +1,4 @@
-"""Independent v8a Oracle: explicit contract, implicit conventions and structured safety fields.
+"""Independent v9 Oracle: explicit contract, implicit conventions and structured safety fields.
 
 Written from the task text and the convention rules in tasks/<task>/cohort.json only. It imports no
 candidate code, no catalog and no kernel. Every HTTP step is recorded with a summary of the database
@@ -22,7 +22,7 @@ HERE = Path(__file__).resolve().parent
 TOKENS = {'alice': 'demo_alice', 'bob': 'demo_bob', 'carol': 'demo_carol', 'dave': 'demo_dave', 'erin': 'demo_erin'}
 TENANT = {'alice': 'tenant-a', 'bob': 'tenant-a', 'carol': 'tenant-a', 'dave': 'tenant-b', 'erin': 'tenant-b'}
 VOLATILE = ('createdAt', 'deliveredAt')
-STATIC = ('TenantMember', 'DeliverySite')
+STATIC = ('TenantMember', 'Project')
 REQUEST_TIMEOUT = 8
 SAFETY = ('unauthorized_write', 'partial_batch', 'side_effect_atomicity', 'double_apply', 'wrong_commit',
           'service_error', 'undecidable')
@@ -166,10 +166,10 @@ def purchases(state):
 class Run:
     def __init__(self, db, task, seed):
         self.db, self.task, self.cases = db, task, []
-        self.prefix = 'v8-' + hashlib.sha256(seed.encode()).hexdigest()[:12] + '-'
+        self.prefix = 'v9-' + hashlib.sha256(seed.encode()).hexdigest()[:12] + '-'
         names = ('p1', 'p2', 'p3', 'own', 'other', 'done', 'gone', 'big', 'second', 'missing')
-        if task == 'return':
-            names += ('second2', 'secondb', 'ownsec', 'back')
+        if task == 'hold':
+            names += ('held',)
         self.ids = {k: self.prefix + k for k in names}
         self.ids['uni'] = '界' * 33 + 'u'
         # Byte order puts 'Zed' before 'p1'/'p2'/'p3' (0x5A < 0x70); a linguistic collation (glibc/ICU en_US)
@@ -179,7 +179,7 @@ class Run:
         assert self.ids['zed'].encode() < self.ids['p1'].encode()
         self.current = None
         self.op = 'existing'  # operation label of a step: the task operation, or 'existing' for the old API
-        self.extra = {'deliverySiteId': None} if task == 'delivery-site' else {}  # task columns of Purchase
+        self.extra = {'projectId': None} if task == 'project' else {}  # task columns of Purchase
 
     # fixtures: one reset per case
     def fixtures(self):
@@ -191,21 +191,16 @@ class Run:
                 ('big', 'tenant-a', 'alice', 'submitted', None), ('second', 'tenant-a', 'alice', 'pending-second', None),
                 ('zed', 'tenant-a', 'alice', 'submitted', 'bob')]
         amounts = {'big': 60000, 'second': 70000}
-        # First approvals (approver, tenant, key) of every pending-second fixture; return also has a returned one.
+        # First approval (approver, tenant, key) of the pending-second fixture; hold also has a purchase already on hold.
         firsts = {'second': ('bob', 'tenant-a', 'seed')}
-        if self.task == 'return':
-            rows = [r if r[0] != 'uni' else ('uni', 'tenant-a', 'alice', 'pending-second', None) for r in rows]
-            rows += [('second2', 'tenant-a', 'alice', 'pending-second', None), ('secondb', 'tenant-b', 'dave', 'pending-second', None),
-                     ('ownsec', 'tenant-a', 'carol', 'pending-second', None), ('back', 'tenant-a', 'alice', 'returned', None)]
-            amounts.update(uni=60001, second2=80000, secondb=70000, ownsec=75000, back=90000)
-            firsts.update(uni=('bob', 'tenant-a', 'seed'), ownsec=('bob', 'tenant-a', 'seed'), back=('bob', 'tenant-a', 'seed'),
-                          second2=('carol', 'tenant-a', 'seed'), secondb=('ivan', 'tenant-b', 'seed'))
+        if self.task == 'hold':
+            rows.append(('held', 'tenant-a', 'alice', 'on-hold', None))
         table = []
         for name, tenant, creator, status, assignee in rows:
-            r = {'id': i[name], 'tenantId': tenant, 'createdBy': creator, 'title': 'v8 fixture', 'amount': amounts.get(name, 9),
+            r = {'id': i[name], 'tenantId': tenant, 'createdBy': creator, 'title': 'v9 fixture', 'amount': amounts.get(name, 9),
                  'status': status, 'assigneeId': assignee}
-            if self.task == 'delivery-site':
-                r['deliverySiteId'] = {'p1': 'DS-HQ', 'p3': 'DS-LAB', 'other': 'DS-B1', 'zed': 'DS-LAB'}.get(name)
+            if self.task == 'project':
+                r['projectId'] = {'p1': 'PR-APOLLO', 'p3': 'PR-BOREAS', 'other': 'PR-B1', 'zed': 'PR-BOREAS'}.get(name)
             table.append(r)
         changer = {'tenant-a': 'bob', 'tenant-b': 'erin'}
         history = [{'tenantId': r['tenantId'], 'purchaseId': r['id'], 'fromAssignee': None, 'toAssignee': r['assigneeId'],
@@ -219,17 +214,17 @@ class Run:
         for n, (actor, tenant, key) in sorted(firsts.items()):
             audit.append({'tenantId': tenant, 'purchaseId': i[n], 'approvedBy': actor, 'operation': APPROVE, 'idempotencyKey': key,
                           'fromStatus': 'submitted', 'toStatus': 'pending-second', 'reason': None})
-        if self.task == 'return':  # 'back' was returned by carol after bob's first approval
-            requests.append({'tenantId': 'tenant-a', 'actorId': 'carol', 'operation': 'return.v8', 'key': 'seed-r',
-                             'requestHash': fingerprint('return.v8', [i['back']]), 'response': {'id': i['back'], 'status': 'returned'}})
-            audit.append({'tenantId': 'tenant-a', 'purchaseId': i['back'], 'approvedBy': 'carol', 'operation': 'return.v8',
-                          'idempotencyKey': 'seed-r', 'fromStatus': 'pending-second', 'toStatus': 'returned', 'reason': 'seeded'})
+        if self.task == 'hold':  # 'held' was put on hold by carol
+            requests.append({'tenantId': 'tenant-a', 'actorId': 'carol', 'operation': 'hold.v9', 'key': 'seed-h',
+                             'requestHash': fingerprint('hold.v9', [i['held']]), 'response': {'id': i['held'], 'status': 'on-hold'}})
+            audit.append({'tenantId': 'tenant-a', 'purchaseId': i['held'], 'approvedBy': 'carol', 'operation': 'hold.v9',
+                          'idempotencyKey': 'seed-h', 'fromStatus': 'submitted', 'toStatus': 'on-hold', 'reason': 'seeded'})
         tables = {'Purchase': table, 'AssignmentHistory': history, 'ActionRequest': requests, 'ApprovalAudit': audit}
-        if self.task == 'delivery-site':
-            tables['DeliverySiteHistory'] = [
-                {'tenantId': r['tenantId'], 'purchaseId': r['id'], 'fromSite': None, 'toSite': r['deliverySiteId'],
-                 'changedBy': r['createdBy'], 'operation': 'bulk-delivery-site.v8', 'idempotencyKey': 'seed'}
-                for r in table if r.get('deliverySiteId')]
+        if self.task == 'project':
+            tables['ProjectHistory'] = [
+                {'tenantId': r['tenantId'], 'purchaseId': r['id'], 'fromProject': None, 'toProject': r['projectId'],
+                 'changedBy': changer[r['tenantId']], 'operation': 'bulk-project.v9', 'idempotencyKey': 'seed'}
+                for r in table if r.get('projectId')]
         return tables
 
     def snap(self):
@@ -525,183 +520,178 @@ def regression(run):
     run.case('anonymous is unauthorized', G, anonymous)
 
 
-# ---- task: return --------------------------------------------------------------------------------------
+# ---- task: hold ------------------------------------------------------------------------------------
 
-def return_cases(run):
+def hold_cases(run):
     i = run.ids
-    OP = 'return.v8'
+    OP = 'hold.v9'
     run.op = OP
 
-    def call(pid, reason='needs a second quote', user='carol', key='key', raw=None, headers=None):
-        return lambda: post('/purchases/%s/return' % pid, {'reason': reason}, user, key, raw, headers)
+    def call(pid, reason='awaiting budget review', user='carol', key='key', raw=None, headers=None):
+        return lambda: post('/purchases/%s/hold' % pid, {'reason': reason}, user, key, raw, headers)
 
-    def success(pid, user='carol', key='key', reason='needs a second quote', strict=True):
+    def success(pid, user='carol', key='key', reason='awaiting budget review', strict=True):
         tenant = TENANT[user]
-        r, b, a = run.apply(call(pid, reason, user, key), lambda p: update(p, {pid}, status='returned'), [pid])
+        r, b, a = run.apply(call(pid, reason, user, key), lambda p: update(p, {pid}, status='on-hold'), [pid])
         if strict:
-            assert r['status'] == 200 and r['body'] == {'id': pid, 'status': 'returned'} and r['replayed'] == 'false', r
-            assert purchases(a) == update(purchases(b), {pid}, status='returned'), 'unexpected purchase changes'
+            assert r['status'] == 200 and r['body'] == {'id': pid, 'status': 'on-hold'} and r['replayed'] == 'false', r
+            assert purchases(a) == update(purchases(b), {pid}, status='on-hold'), 'unexpected purchase changes'
             row = run.ar_row(b, a, tenant, user, OP, key)
-            assert row['response'] == {'id': pid, 'status': 'returned'}, row
+            assert row['response'] == {'id': pid, 'status': 'on-hold'}, row
         else:
             assert ok(r), r
         return r, b, a
 
-    E = 'return-'
-    run.case('pending second approval', E + 'functional', lambda: success(i['second']))
+    E = 'hold-'
+    run.case('submitted by someone else', E + 'functional', lambda: success(i['p1']))
     run.case('Unicode ID', E + 'functional', lambda: success(i['uni']))
-    run.case('other tenant approver', E + 'functional', lambda: success(i['secondb'], user='erin'))
-    run.case('requester', E + 'authorization', lambda: run.refuse(call(i['second'], user='alice'), (403,), [i['second']]))
-    run.case('anonymous', E + 'authorization', lambda: run.refuse(call(i['second'], user=None), (401,), [i['second']]))
+    run.case('other tenant approver', E + 'functional', lambda: success(i['other'], user='erin'))
+    run.case('requester', E + 'authorization', lambda: run.refuse(call(i['p1'], user='alice'), (403,), [i['p1']]))
+    run.case('anonymous', E + 'authorization', lambda: run.refuse(call(i['p1'], user=None), (401,), [i['p1']]))
     run.case('forged context', E + 'authorization', lambda: run.refuse(
-        call(i['second'], user='alice', headers={'X-Role': 'approver', 'X-User': 'carol', 'X-Tenant-ID': 'tenant-a'}), (403,), [i['second']]))
-    ineligible = [('missing', 'missing', 'carol'), ('other tenant', 'secondb', 'carol'), ('own', 'ownsec', 'carol'),
-                  ('submitted', 'p1', 'carol'), ('approved', 'done', 'carol'), ('already returned', 'back', 'carol'),
-                  ('by the first approver', 'second', 'bob')]
-    for name, label, user in ineligible:
-        run.case('ineligible ' + name, E + 'eligibility',
-                 lambda label=label, user=user: run.refuse(call(i[label], user=user), targets=[i[label]]))
-    body = json.dumps({'reason': 'needs a second quote'}).encode()
+        call(i['p1'], user='alice', headers={'X-Role': 'approver', 'X-User': 'carol', 'X-Tenant-ID': 'tenant-a'}), (403,), [i['p1']]))
+    for label in ('missing', 'other', 'own', 'done', 'gone', 'second', 'held'):
+        name = {'held': 'already on hold', 'done': 'approved', 'gone': 'rejected', 'second': 'pending second approval',
+                'other': 'other tenant', 'own': 'own'}.get(label, label)
+        run.case('ineligible ' + name, E + 'eligibility', lambda label=label: run.refuse(call(i[label]), targets=[i[label]]))
+    body = json.dumps({'reason': 'awaiting budget review'}).encode()
     for label, kw, statuses in [('missing key', {'key': None}, (400,)), ('missing reason', {'raw': b'{}'}, (400,)),
                                 ('empty reason', {'reason': ''}, (400,)), ('reason over 200 bytes', {'reason': 'r' * 201}, (400,)),
                                 ('unknown field', {'raw': b'{"reason":"x","status":"approved"}'}, (400,)),
                                 ('64 KiB plus one', {'raw': b' ' * (65537 - len(body)) + body}, (413,))]:
-        run.case(label, E + 'input', lambda kw=kw, statuses=statuses: run.refuse(call(i['second'], **kw), statuses, [i['second']]))
+        run.case(label, E + 'input', lambda kw=kw, statuses=statuses: run.refuse(call(i['p1'], **kw), statuses, [i['p1']]))
 
     def replay():
-        first, _, _ = success(i['second'])
-        r, _, _ = run.step('replay', call(i['second']), [i['second']])
+        first, _, _ = success(i['p1'])
+        r, _, _ = run.step('replay', call(i['p1']), [i['p1']])
         assert r['status'] == 200 and r['raw'] == first['raw'] and r['replayed'] == 'true', r
         assert not run.current['steps'][-1]['diff'], 'replay wrote data'
     run.case('replay', E + 'idempotency', replay)
     run.case('same key different purchase', E + 'idempotency',
-             lambda: (success(i['second']), run.refuse(call(i['uni']), (409,), [i['uni']])))
-    run.case('key scoped by actor', E + 'idempotency', lambda: (success(i['second']), success(i['second2'], user='bob')))
-
-    def audits(b, a, rs):
-        return len([r for r in added(b, a, 'ApprovalAudit') if r['purchaseId'] == i['second']]) > 1
+             lambda: (success(i['p1']), run.refuse(call(i['p2']), (409,), [i['p2']])))
+    run.case('key scoped by actor', E + 'idempotency', lambda: (success(i['p1']), success(i['other'], user='erin')))
 
     def concurrent_same():
-        rs, b, a = run.step('concurrent', lambda: parallel([call(i['second']), call(i['second'])]), [i['second']], allowed=1, double=audits)
+        audits = lambda b, a, rs: len([r for r in added(b, a, 'ApprovalAudit') if r['purchaseId'] == i['p1']]) > 1
+        rs, b, a = run.step('concurrent', lambda: parallel([call(i['p1']), call(i['p1'])]), [i['p1']], allowed=1, double=audits)
         assert all(x['status'] == 200 for x in rs) and sorted(x['replayed'] for x in rs) == ['false', 'true'], rs
         assert rs[0]['raw'] == rs[1]['raw'], rs
-        assert purchases(a) == update(purchases(b), {i['second']}, status='returned'), 'unexpected purchase changes'
+        assert purchases(a) == update(purchases(b), {i['p1']}, status='on-hold'), 'unexpected purchase changes'
         run.ar_row(b, a, 'tenant-a', 'carol', OP, 'key')
     run.case('concurrent identical', E + 'concurrency', concurrent_same)
 
     def concurrent_keys():
-        rs, b, a = run.step('concurrent', lambda: parallel([call(i['second'], key='key-a'), call(i['second'], key='key-b')]),
-                            [i['second']], allowed=1, double=audits)
+        audits = lambda b, a, rs: len([r for r in added(b, a, 'ApprovalAudit') if r['purchaseId'] == i['p1']]) > 1
+        rs, b, a = run.step('concurrent', lambda: parallel([call(i['p1'], key='key-a'), call(i['p1'], key='key-b')]), [i['p1']],
+                            allowed=1, double=audits)
         assert sorted((x['status'] or 0) // 100 for x in rs) == [2, 4], rs
-        assert purchases(a) == update(purchases(b), {i['second']}, status='returned'), 'unexpected purchase changes'
+        assert purchases(a) == update(purchases(b), {i['p1']}, status='on-hold'), 'unexpected purchase changes'
         assert len(added(b, a, 'ActionRequest')) == 1, added(b, a, 'ActionRequest')
     run.case('concurrent different keys apply once', E + 'concurrency', concurrent_keys)
 
     def fault(table, check):
         def fn():
             run.db.call('fault', table=table)
-            r, b, a = run.step('fault', call(i['second']), [i['second']], fault=table)
+            r, b, a = run.step('fault', call(i['p1']), [i['p1']], fault=table)
             assert r['status'] == 503 and a == b, {'status': r['status'], 'state_changed': a != b}
             run.db.call('fault', table=None)
             check()
         return fn
-    run.case('ActionRequest failure and same-key retry', E + 'failure-rollback', fault('ActionRequest', lambda: success(i['second'])))
-    later = [('countersigned', lambda: post('/purchases/%s/countersign' % i['second'], {'amount': 70000}, 'carol', 'key-2')),
-             ('approved', lambda: post('/purchases/bulk-approve', {'ids': [i['second']]}, 'carol', 'key-2')),
-             ('rejected', lambda: post('/purchases/bulk-reject', {'ids': [i['second']]}, 'carol', 'key-2')),
-             ('reopened', lambda: post('/purchases/%s/reopen' % i['second'], {'reason': 'again'}, 'alice', 'key-2')),
-             ('reassigned', lambda: post('/purchases/bulk-reassign', {'ids': [i['second']], 'assignee': 'hana'}, 'carol', 'key-2'))]
-    for label, fn in later:
-        run.case('returned cannot be ' + label, E + 'lifecycle',
-                 lambda fn=fn: (success(i['second']), run.refuse(fn, targets=[i['second']])))
+    run.case('ActionRequest failure and same-key retry', E + 'failure-rollback', fault('ActionRequest', lambda: success(i['p1'])))
+    for label, fn in [('approved', lambda: post('/purchases/bulk-approve', {'ids': [i['p1']]}, 'bob', 'key-2')),
+                      ('rejected', lambda: post('/purchases/bulk-reject', {'ids': [i['p1']]}, 'bob', 'key-2')),
+                      ('reopened', lambda: post('/purchases/%s/reopen' % i['p1'], {'reason': 'again'}, 'alice', 'key-2')),
+                      ('reassigned', lambda: post('/purchases/bulk-reassign', {'ids': [i['p1']], 'assignee': 'hana'}, 'carol', 'key-2'))]:
+        run.case('on hold cannot be ' + label, E + 'lifecycle',
+                 lambda fn=fn: (success(i['p1']), run.refuse(fn, targets=[i['p1']])))
 
     # ---- implicit -------------------------------------------------------------------------------
-    def audited(reason='needs a second quote'):
-        _, b, a = success(i['second'], reason=reason, strict=False)
-        got = added(b, a, 'ApprovalAudit')
-        assert got == [{'tenantId': 'tenant-a', 'purchaseId': i['second'], 'approvedBy': 'carol', 'operation': OP, 'idempotencyKey': 'key',
-                        'fromStatus': 'pending-second', 'toStatus': 'returned', 'reason': reason}], {'new audit rows': got}
+    def audited(pid=None, reason='awaiting budget review'):
+        pid = pid or i['p1']
+        _, b, a = success(pid, reason=reason, strict=False)
+        got = [{k: v for k, v in r.items()} for r in added(b, a, 'ApprovalAudit')]
+        assert got == [{'tenantId': 'tenant-a', 'purchaseId': pid, 'approvedBy': 'carol', 'operation': OP, 'idempotencyKey': 'key',
+                        'fromStatus': 'submitted', 'toStatus': 'on-hold', 'reason': reason}], {'new audit rows': got}
     run.case('audit row', 'implicit-audit', audited)
     run.case('audit failure rolls back and same-key retry', 'implicit-audit', fault('ApprovalAudit', audited))
 
     def hashed():
-        _, _, a = success(i['second'], strict=False)
-        row = next((r for r in rows(a, 'ActionRequest') if r['operation'] == OP and r['key'] == 'key'), None)
-        assert row and row['requestHash'] == fingerprint(OP, [i['second']]), {'stored': row and row['requestHash']}
+        _, _, a = success(i['p1'], strict=False)
+        row = next((r for r in rows(a, 'ActionRequest') if r['operation'] == OP), None)
+        assert row and row['requestHash'] == fingerprint(OP, [i['p1']]), {'stored': row and row['requestHash']}
     run.case('requestHash', 'implicit-request-hash', hashed)
 
     def reason_not_hashed():
-        success(i['second'], strict=False)
-        r, _, _ = run.step('replay', call(i['second'], reason='another reason'), [i['second']])
+        success(i['p1'], strict=False)
+        r, _, _ = run.step('replay', call(i['p1'], reason='another reason'), [i['p1']])
         assert r['status'] == 200 and r['replayed'] == 'true', r
     run.case('reason is not part of the request digest', 'implicit-request-hash', reason_not_hashed)
 
     def evented():
-        _, b, a = success(i['second'], strict=False)
-        got = added(b, a, 'PurchaseEvent')
-        assert got == [{'tenantId': 'tenant-a', 'purchaseId': i['second'], 'type': 'purchase.returned', 'actorId': 'carol',
+        _, b, a = success(i['p1'], strict=False)
+        got = [{k: v for k, v in r.items()} for r in added(b, a, 'PurchaseEvent')]
+        assert got == [{'tenantId': 'tenant-a', 'purchaseId': i['p1'], 'type': 'purchase.held', 'actorId': 'carol',
                         'idempotencyKey': 'key'}], {'new events': got}
     run.case('outbox row', 'implicit-outbox', evented)
     run.case('outbox failure rolls back and same-key retry', 'implicit-outbox', fault('PurchaseEvent', evented))
 
-    def same_denial(probes):
+    def same_denial(labels):
         def fn():
             missing = run.refuse(call(i['missing'], key='probe-missing'), targets=[i['missing']])['status']
-            for label, user in probes:
-                status = run.refuse(call(i[label], user=user, key='probe-' + label + '-' + user), targets=[i[label]])['status']
-                assert status == missing, {'missing': missing, label + ' by ' + user: status}
+            for label in labels:
+                status = run.refuse(call(i[label], key='probe-' + label), targets=[i[label]])['status']
+                assert status == missing, {'missing': missing, label: status}
         return fn
-    run.case('other tenant denied like missing', 'implicit-uniform-denial', same_denial([('secondb', 'carol')]))
-    run.case('own, wrong state or first approver denied like missing', 'implicit-uniform-denial',
-             same_denial([('ownsec', 'carol'), ('p1', 'carol'), ('done', 'carol'), ('back', 'carol'), ('second', 'bob')]))
+    run.case('other tenant denied like missing', 'implicit-uniform-denial', same_denial(['other']))
+    run.case('own or not submitted denied like missing', 'implicit-uniform-denial', same_denial(['own', 'done', 'gone', 'second', 'held']))
 
 
-# ---- task: delivery-site ----------------------------------------------------------------------------------
+# ---- task: project ---------------------------------------------------------------------------------
 
-def delivery_site_cases(run):
+def project_cases(run):
     i = run.ids
-    OP = 'bulk-delivery-site.v8'
+    OP = 'bulk-project.v9'
     run.op = OP
-    initial = {i['p1']: 'DS-HQ', i['p2']: None, i['p3']: 'DS-LAB', i['uni']: None, i['other']: 'DS-B1', i['zed']: 'DS-LAB'}
+    initial = {i['p1']: 'PR-APOLLO', i['p2']: None, i['p3']: 'PR-BOREAS', i['uni']: None, i['other']: 'PR-B1', i['zed']: 'PR-BOREAS'}
 
-    def call(ids, site='DS-LAB', user='alice', key='key', raw=None, headers=None):
-        return lambda: post('/purchases/bulk-delivery-site', {'ids': ids, 'site': site}, user, key, raw, headers)
+    def call(ids, cc='PR-BOREAS', user='carol', key='key', raw=None, headers=None):
+        return lambda: post('/purchases/bulk-project', {'ids': ids, 'project': cc}, user, key, raw, headers)
 
-    def success(ids, site='DS-LAB', user='alice', key='key', strict=True):
+    def success(ids, cc='PR-BOREAS', user='carol', key='key', strict=True):
         tenant = TENANT[user]
         want = sorted(set(ids), key=lambda s: s.encode())
-        r, b, a = run.apply(call(ids, site, user, key), lambda p: update(p, set(ids), deliverySiteId=site), want)
+        r, b, a = run.apply(call(ids, cc, user, key), lambda p: update(p, set(ids), projectId=cc), want)
         if strict:
-            assert r['status'] == 200 and r['body'] == {'changedIds': want, 'site': site} and r['replayed'] == 'false', r
-            assert purchases(a) == update(purchases(b), set(ids), deliverySiteId=site), 'unexpected purchase changes'
+            assert r['status'] == 200 and r['body'] == {'taggedIds': want, 'project': cc} and r['replayed'] == 'false', r
+            assert purchases(a) == update(purchases(b), set(ids), projectId=cc), 'unexpected purchase changes'
             row = run.ar_row(b, a, tenant, user, OP, key)
-            assert row['response'] == {'changedIds': want, 'site': site}, row
+            assert row['response'] == {'taggedIds': want, 'project': cc}, row
         else:
             assert ok(r), r
         return r, b, a
 
-    E = 'site-'
+    E = 'project-'
     run.case('single target', E + 'functional', lambda: success([i['p1']]))
-    run.case('batch is sorted', E + 'functional', lambda: success([i['p2'], i['uni'], i['zed']], 'DS-HQ'))
-    run.case('other tenant requester', E + 'functional', lambda: success([i['other']], 'DS-B2', user='dave'))
-    run.case('mixed previous values', E + 'functional', lambda: success([i['p2'], i['p1']], 'DS-LAB'))
-    run.case('approver', E + 'authorization', lambda: run.refuse(call([i['p1']], user='carol'), (403,), [i['p1']]))
+    run.case('batch is sorted', E + 'functional', lambda: success([i['p3'], i['uni'], i['zed'], i['p2']], 'PR-APOLLO'))
+    run.case('other tenant approver', E + 'functional', lambda: success([i['other']], 'PR-B2', user='erin'))
+    run.case('mixed previous values', E + 'functional', lambda: success([i['p2'], i['p1']], 'PR-BOREAS'))
+    run.case('requester', E + 'authorization', lambda: run.refuse(call([i['p1']], user='alice'), (403,), [i['p1']]))
     run.case('anonymous', E + 'authorization', lambda: run.refuse(call([i['p1']], user=None), (401,), [i['p1']]))
     run.case('forged context', E + 'authorization', lambda: run.refuse(
-        call([i['p1']], user='carol', headers={'X-Role': 'requester', 'X-User': 'alice', 'X-Tenant-ID': 'tenant-a'}), (403,), [i['p1']]))
-    for name, label in [('missing', 'missing'), ('other tenant', 'other'), ('not own', 'p3'), ('approved', 'done')]:
-        run.case('ineligible ' + name, E + 'eligibility',
+        call([i['p1']], user='alice', headers={'X-Role': 'approver', 'X-User': 'carol', 'X-Tenant-ID': 'tenant-a'}), (403,), [i['p1']]))
+    for label in ('missing', 'other', 'done', 'own'):
+        run.case('ineligible ' + label, E + 'eligibility',
                  lambda label=label: run.refuse(call([i['p1'], i[label]]), targets=[i['p1'], i[label]]))
-    run.case('ineligible rejected alone', E + 'eligibility', lambda: run.refuse(call([i['gone']]), targets=[i['gone']]))
-    for label, site in [('unknown', 'DS-NOPE'), ('other tenant', 'DS-B1'), ('inactive', 'DS-OLD')]:
-        run.case('site ' + label, E + 'value', lambda site=site: run.refuse(call([i['p1'], i['p2']], site), targets=[i['p1'], i['p2']]))
-    body = json.dumps({'ids': [i['p1']], 'site': 'DS-LAB'}).encode()
+    run.case('ineligible alone', E + 'eligibility', lambda: run.refuse(call([i['gone']]), targets=[i['gone']]))
+    for label, cc in [('unknown', 'PR-NOPE'), ('other tenant', 'PR-B1'), ('inactive', 'PR-CLOSED')]:
+        run.case('project ' + label, E + 'value', lambda cc=cc: run.refuse(call([i['p1'], i['p2']], cc), targets=[i['p1'], i['p2']]))
+    body = json.dumps({'ids': [i['p1']], 'project': 'PR-BOREAS'}).encode()
     for label, kw, statuses in [('missing key', {'key': None}, (400,)),
-                                ('empty ids', {'raw': b'{"ids":[],"site":"DS-LAB"}'}, (400,)),
-                                ('empty site', {'site': ''}, (400,)),
-                                ('missing site', {'raw': json.dumps({'ids': [i['p1']]}).encode()}, (400,)),
-                                ('unknown field', {'raw': json.dumps({'ids': [i['p1']], 'site': 'DS-LAB', 'status': 'approved'}).encode()}, (400,)),
-                                ('site over 100 bytes', {'site': 'S' * 101}, (400,)),
+                                ('empty ids', {'raw': b'{"ids":[],"project":"PR-BOREAS"}'}, (400,)),
+                                ('empty project', {'cc': ''}, (400,)),
+                                ('missing project', {'raw': json.dumps({'ids': [i['p1']]}).encode()}, (400,)),
+                                ('unknown field', {'raw': json.dumps({'ids': [i['p1']], 'project': 'PR-BOREAS', 'status': 'approved'}).encode()}, (400,)),
+                                ('project over 100 bytes', {'cc': 'P' * 101}, (400,)),
                                 ('64 KiB plus one', {'raw': b' ' * (65537 - len(body)) + body}, (413,))]:
         run.case(label, E + 'input', lambda kw=kw, statuses=statuses: run.refuse(call([i['p1']], **kw), statuses, [i['p1']]))
 
@@ -713,17 +703,17 @@ def delivery_site_cases(run):
     run.case('replay', E + 'idempotency', replay)
     run.case('same key different purchases', E + 'idempotency',
              lambda: (success([i['p1']]), run.refuse(call([i['p2']]), (409,), [i['p2']])))
-    run.case('same key different site', E + 'idempotency',
-             lambda: (success([i['p1']]), run.refuse(call([i['p1']], 'DS-HQ'), (409,), [i['p1']])))
-    run.case('key scoped by actor', E + 'idempotency', lambda: (success([i['p1']]), success([i['other']], 'DS-B2', user='dave')))
+    run.case('same key different project', E + 'idempotency',
+             lambda: (success([i['p1']]), run.refuse(call([i['p1']], 'PR-APOLLO'), (409,), [i['p1']])))
+    run.case('key scoped by actor', E + 'idempotency', lambda: (success([i['p1']]), success([i['p2']], user='bob')))
 
     def concurrent_same():
-        hist = lambda b, a, rs: len([r for r in added(b, a, 'DeliverySiteHistory') if r['purchaseId'] == i['p1']]) > 1
+        hist = lambda b, a, rs: len([r for r in added(b, a, 'ProjectHistory') if r['purchaseId'] == i['p1']]) > 1
         rs, b, a = run.step('concurrent', lambda: parallel([call([i['p1']]), call([i['p1']])]), [i['p1']], allowed=1, double=hist)
         assert all(x['status'] == 200 for x in rs) and sorted(x['replayed'] for x in rs) == ['false', 'true'], rs
         assert rs[0]['raw'] == rs[1]['raw'], rs
-        assert purchases(a) == update(purchases(b), {i['p1']}, deliverySiteId='DS-LAB'), 'unexpected purchase changes'
-        run.ar_row(b, a, 'tenant-a', 'alice', OP, 'key')
+        assert purchases(a) == update(purchases(b), {i['p1']}, projectId='PR-BOREAS'), 'unexpected purchase changes'
+        run.ar_row(b, a, 'tenant-a', 'carol', OP, 'key')
     run.case('concurrent identical', E + 'concurrency', concurrent_same)
 
     targets = sorted([i['p1'], i['p2']], key=lambda s: s.encode())
@@ -732,27 +722,27 @@ def delivery_site_cases(run):
         """Both requests applied but some target's new history does not form one chain: a lost update."""
         if not all(ok(x) for x in rs):
             return False
-        final = {pid: purchases(a)[pid]['deliverySiteId'] for pid in targets}
-        new = added(b, a, 'DeliverySiteHistory')
+        final = {pid: purchases(a)[pid]['projectId'] for pid in targets}
+        new = added(b, a, 'ProjectHistory')
         if not new:
             return False
         for pid in targets:
-            mine = [(r['fromSite'], r['toSite']) for r in new if r['purchaseId'] == pid]
+            mine = [(r['fromProject'], r['toProject']) for r in new if r['purchaseId'] == pid]
             if len(mine) == 2 and len(chains(mine, initial[pid], final[pid])) != 1:
                 return True
         return False
 
     def concurrent_keys(check=None):
-        rs, b, a = run.step('concurrent', lambda: parallel([call([i['p1'], i['p2']], 'DS-LAB', key='key-l'),
-                                                            call([i['p2'], i['p1']], 'DS-HQ', key='key-h')]),
+        rs, b, a = run.step('concurrent', lambda: parallel([call([i['p1'], i['p2']], 'PR-BOREAS', key='key-b'),
+                                                            call([i['p2'], i['p1']], 'PR-APOLLO', key='key-a')]),
                             targets, allowed=2, double=broken_chain)
         assert all(x['status'] == 200 and x['replayed'] == 'false' for x in rs), rs
-        final = {pid: purchases(a)[pid]['deliverySiteId'] for pid in targets}
-        assert len(set(final.values())) == 1 and set(final.values()) <= {'DS-LAB', 'DS-HQ'}, final
+        final = {pid: purchases(a)[pid]['projectId'] for pid in targets}
+        assert len(set(final.values())) == 1 and set(final.values()) <= {'PR-BOREAS', 'PR-APOLLO'}, final
         others = lambda s: {k: v for k, v in purchases(s).items() if k not in targets}
         assert others(a) == others(b), 'non-target purchases changed'
         keys = {(r['tenantId'], r['actorId'], r['operation'], r['key']) for r in added(b, a, 'ActionRequest')}
-        assert keys == {('tenant-a', 'alice', OP, 'key-l'), ('tenant-a', 'alice', OP, 'key-h')}, keys
+        assert keys == {('tenant-a', 'carol', OP, 'key-b'), ('tenant-a', 'carol', OP, 'key-a')}, keys
         if check:
             check(b, a, final)
     run.case('concurrent different keys', E + 'concurrency', concurrent_keys)
@@ -773,56 +763,57 @@ def delivery_site_cases(run):
                             lambda p: update(p, {i['p1']}, status=status), [i['p1']], op='existing')
         assert r['status'] == 200 and r['body'] == {field: [i['p1']]}, r
         row = purchases(a)[i['p1']]
-        assert row['status'] == status and row['deliverySiteId'] == 'DS-LAB', row
-    run.case('changed purchase can be approved', E + 'lifecycle', lambda: decided('bulk-approve', 'approvedIds', 'approved'))
-    run.case('changed purchase can be rejected', E + 'lifecycle', lambda: decided('bulk-reject', 'rejectedIds', 'rejected'))
+        assert row['status'] == status and row['projectId'] == 'PR-BOREAS', row
+    run.case('tagged purchase can be approved', E + 'lifecycle', lambda: decided('bulk-approve', 'approvedIds', 'approved'))
+    run.case('tagged purchase can be rejected', E + 'lifecycle', lambda: decided('bulk-reject', 'rejectedIds', 'rejected'))
 
     # ---- implicit -------------------------------------------------------------------------------
-    def recorded(ids, site='DS-LAB'):
-        _, b, a = success(ids, site, strict=False)
-        got = sorted(added(b, a, 'DeliverySiteHistory'), key=lambda r: r['purchaseId'].encode())
-        want = [{'tenantId': 'tenant-a', 'purchaseId': pid, 'fromSite': initial[pid], 'toSite': site, 'changedBy': 'alice',
+    def recorded(ids, cc='PR-BOREAS'):
+        _, b, a = success(ids, cc, strict=False)
+        got = sorted(added(b, a, 'ProjectHistory'), key=lambda r: r['purchaseId'].encode())
+        want = [{'tenantId': 'tenant-a', 'purchaseId': pid, 'fromProject': initial[pid], 'toProject': cc, 'changedBy': 'carol',
                  'operation': OP, 'idempotencyKey': 'key'} for pid in sorted(ids, key=lambda s: s.encode())]
         assert got == want, {'new history rows': got, 'expected': want}
     run.case('history row', 'implicit-history', lambda: recorded([i['p1']]))
-    run.case('history rows per target with previous value', 'implicit-history', lambda: recorded([i['p2'], i['zed'], i['p1']], 'DS-HQ'))
+    run.case('history rows per target with previous value', 'implicit-history', lambda: recorded([i['p2'], i['zed'], i['p1']], 'PR-APOLLO'))
 
     def chained(b, a, final):
-        new = added(b, a, 'DeliverySiteHistory')
+        new = added(b, a, 'ProjectHistory')
         for pid in targets:
-            mine = [(r['fromSite'], r['toSite']) for r in new if r['purchaseId'] == pid]
+            mine = [(r['fromProject'], r['toProject']) for r in new if r['purchaseId'] == pid]
             assert len(mine) == 2, {'history rows': mine}
             assert len(chains(mine, initial[pid], final[pid])) == 1, {'history rows': mine, 'initial': initial[pid], 'final': final[pid]}
     run.case('concurrent changes form one chain', 'implicit-history', lambda: concurrent_keys(chained))
-    run.case('history failure rolls back and same-key retry', 'implicit-history', fault('DeliverySiteHistory', recorded))
+    run.case('history failure rolls back and same-key retry', 'implicit-history', fault('ProjectHistory', recorded))
 
-    def hashed(ids, site):
-        _, _, a = success(ids, site, strict=False)
+    def hashed(ids, cc):
+        _, _, a = success(ids, cc, strict=False)
         row = next((r for r in rows(a, 'ActionRequest') if r['operation'] == OP), None)
-        assert row and row['requestHash'] == fingerprint(OP + '\n' + site, ids), {'stored': row and row['requestHash']}
-    run.case('requestHash', 'implicit-request-hash', lambda: hashed([i['p1']], 'DS-LAB'))
-    run.case('requestHash batch Unicode ID', 'implicit-request-hash', lambda: hashed([i['uni'], i['p2']], 'DS-HQ'))
+        assert row and row['requestHash'] == fingerprint(OP + '\n' + cc, ids), {'stored': row and row['requestHash']}
+    run.case('requestHash', 'implicit-request-hash', lambda: hashed([i['p1']], 'PR-BOREAS'))
+    run.case('requestHash batch Unicode ID', 'implicit-request-hash', lambda: hashed([i['uni'], i['p2']], 'PR-APOLLO'))
 
-    def evented(ids, site='DS-LAB'):
-        _, b, a = success(ids, site, strict=False)
+    def evented(ids, cc='PR-BOREAS'):
+        _, b, a = success(ids, cc, strict=False)
         got = sorted(added(b, a, 'PurchaseEvent'), key=lambda r: r['purchaseId'].encode())
-        assert got == [{'tenantId': 'tenant-a', 'purchaseId': pid, 'type': 'purchase.delivery_site_changed', 'actorId': 'alice',
+        assert got == [{'tenantId': 'tenant-a', 'purchaseId': pid, 'type': 'purchase.project_changed', 'actorId': 'carol',
                         'idempotencyKey': 'key'} for pid in sorted(ids, key=lambda s: s.encode())], {'new events': got}
     run.case('outbox row', 'implicit-outbox', lambda: evented([i['p1']]))
     run.case('outbox row per target', 'implicit-outbox', lambda: evented([i['p2'], i['p1']]))
     run.case('outbox failure rolls back and same-key retry', 'implicit-outbox', fault('PurchaseEvent', evented))
 
-    def same_denial(site):
+    def same_denial(cc):
         def fn():
-            unknown = run.refuse(call([i['p1']], 'DS-NOPE', key='probe-unknown'), targets=[i['p1']])['status']
-            status = run.refuse(call([i['p1']], site, key='probe-' + site), targets=[i['p1']])['status']
-            assert unknown == status, {'unknown': unknown, site: status}
+            unknown = run.refuse(call([i['p1']], 'PR-NOPE', key='probe-unknown'), targets=[i['p1']])['status']
+            status = run.refuse(call([i['p1']], cc, key='probe-' + cc), targets=[i['p1']])['status']
+            assert unknown == status, {'unknown': unknown, cc: status}
         return fn
-    run.case('other tenant site denied like unknown', 'implicit-uniform-denial', same_denial('DS-B1'))
-    run.case('inactive site denied like unknown', 'implicit-uniform-denial', same_denial('DS-OLD'))
+    run.case('other tenant project denied like unknown', 'implicit-uniform-denial', same_denial('PR-B1'))
+    run.case('inactive project denied like unknown', 'implicit-uniform-denial', same_denial('PR-CLOSED'))
 
 
-TASKS = {'return': return_cases, 'delivery-site': delivery_site_cases}
+TASKS = {'hold': hold_cases, 'project': project_cases}
+
 
 def run(db, task, seed):
     r = Tasks(db, task, seed)

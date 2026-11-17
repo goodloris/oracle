@@ -1,0 +1,438 @@
+{
+  "note": "Edits apply to tasks/hold/catalog.go.txt (the reference catalog); source=base uses the public catalog (no entry). expect_wrong: logical fields (harness/entry_oracle.py). rule_controls: Validate() on the rule and on the norule platform.",
+  "controls": [
+    {
+      "name": "reference",
+      "kind": "equivalent",
+      "edits": [],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-field-order",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Hold, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"submitted\", To: \"on-hold\",\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tDenial: UniformDenial, Event: \"purchase.held\",\n\t\tRecord: ApprovalAudit, Fingerprint: []string{IDs}, Inputs: []string{IDs, Reason},\n\t\tTo: \"on-hold\", From: \"submitted\",\n\t\tSubject: Others, Role: \"approver\", Kind: Transition, Name: Hold,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-literals",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Hold, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"submitted\", To: \"on-hold\",\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tName: \"hold.v9\", Kind: \"transition\", Role: \"approver\", Subject: \"others\",\n\t\tFrom: \"submitted\", To: \"on-hold\",\n\t\tInputs: []string{\"ids\", \"reason\"}, Fingerprint: []string{\"ids\"}, Record: \"ApprovalAudit\",\n\t\tEvent: \"purchase.held\", Denial: 409,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-identifier",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\tHold         Name = \"hold.v9\"\n",
+          "new": "\tPutOnHold    Name = \"hold.v9\"\n"
+        },
+        {
+          "old": "Name: Hold,",
+          "new": "Name: PutOnHold,"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-position-and-zero-values",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Hold, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"submitted\", To: \"on-hold\",\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n\t},\n",
+          "new": ""
+        },
+        {
+          "old": "var catalog = []Operation{\n",
+          "new": "var catalog = []Operation{\n\t{\n\t\tName: Hold, Kind: Transition, Role: \"approver\", Subject: Others,\n\t\tFrom: \"submitted\", To: \"on-hold\", Tier: nil, ConfirmAmount: false, Response: \"\", Separation: NoSeparation,\n\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "field-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\tHold         Name = \"hold.v9\"\n",
+          "new": "\tHold         Name = \"suspend.v9\"\n"
+        }
+      ],
+      "expect_wrong": [
+        "name"
+      ]
+    },
+    {
+      "name": "field-kind",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Name: Hold, Kind: Transition,",
+          "new": "Name: Hold, Kind: FieldUpdate,"
+        }
+      ],
+      "expect_wrong": [
+        "kind"
+      ]
+    },
+    {
+      "name": "field-role",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Hold, Kind: Transition, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Hold, Kind: Transition, Role: \"requester\", Subject: Others,\n"
+        }
+      ],
+      "expect_wrong": [
+        "role"
+      ]
+    },
+    {
+      "name": "field-subject",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Hold, Kind: Transition, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Hold, Kind: Transition, Role: \"approver\", Subject: Own,\n"
+        }
+      ],
+      "expect_wrong": [
+        "subject"
+      ]
+    },
+    {
+      "name": "field-from",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"pending-second\", To: \"on-hold\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "from"
+      ]
+    },
+    {
+      "name": "field-to",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"rejected\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "to"
+      ]
+    },
+    {
+      "name": "field-tier",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"on-hold\", Tier: &Tier{Over: 50000, To: \"approved\"},\n"
+        }
+      ],
+      "expect_wrong": [
+        "tier"
+      ]
+    },
+    {
+      "name": "field-status",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"on-hold\", Status: \"submitted\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "status"
+      ]
+    },
+    {
+      "name": "field-column",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"on-hold\", Column: \"status\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "column"
+      ]
+    },
+    {
+      "name": "field-param",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"on-hold\", Param: \"note\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "param"
+      ]
+    },
+    {
+      "name": "field-response",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"on-hold\", Response: \"heldIds\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "response"
+      ]
+    },
+    {
+      "name": "field-inputs",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tInputs: []string{IDs}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "inputs"
+      ]
+    },
+    {
+      "name": "field-fingerprint",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs, Reason}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "fingerprint"
+      ]
+    },
+    {
+      "name": "field-record",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: ApprovalAudit,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tInputs: []string{IDs, Reason}, Fingerprint: []string{IDs}, Record: AssignmentHistory,\n\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "record"
+      ]
+    },
+    {
+      "name": "field-event",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tEventExemption: \"approvers see held purchases in their queue\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-event-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.on_hold\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-separation",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"on-hold\", Separation: DistinctFromPreviousApprover,\n"
+        }
+      ],
+      "expect_wrong": [
+        "separation"
+      ]
+    },
+    {
+      "name": "field-confirmAmount",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tFrom: \"submitted\", To: \"on-hold\",\n",
+          "new": "\t\tFrom: \"submitted\", To: \"on-hold\", ConfirmAmount: true,\n"
+        }
+      ],
+      "expect_wrong": [
+        "confirmAmount"
+      ]
+    },
+    {
+      "name": "field-denial",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.held\", Denial: 403,\n"
+        }
+      ],
+      "expect_wrong": [
+        "denial"
+      ]
+    },
+    {
+      "name": "field-catalog",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.countersigned\", Denial: UniformDenial,",
+          "new": "\t\tEvent: \"purchase.countersign\", Denial: UniformDenial,"
+        }
+      ],
+      "expect_wrong": [
+        "catalog"
+      ]
+    },
+    {
+      "name": "missing-entry",
+      "kind": "missing",
+      "source": "base",
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial"
+      ]
+    },
+    {
+      "name": "not-compiling",
+      "kind": "missing",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: purchase.held, Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial",
+        "catalog"
+      ]
+    }
+  ],
+  "rule_controls": [
+    {
+      "name": "rule-reference-passes",
+      "edits": [],
+      "rule": true,
+      "norule": true
+    },
+    {
+      "name": "rule-missing-event",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tDenial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": false
+    },
+    {
+      "name": "rule-event-without-consumer",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.on_hold\", Denial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": true
+    },
+    {
+      "name": "rule-event-used-by-another-entry",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.rejected\", Denial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": false
+    },
+    {
+      "name": "rule-self-declared-exemption",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.held\", Denial: UniformDenial,\n",
+          "new": "\t\tEventExemption: \"approvers see held purchases in their queue\", Denial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": true
+    },
+    {
+      "name": "rule-public-exemption-stays-valid",
+      "source": "base",
+      "rule": true,
+      "norule": true,
+      "note": "bulk-approve.v3 keeps its listed exemption; the other public events all have consumers"
+    }
+  ]
+}

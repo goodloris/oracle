@@ -1,0 +1,22 @@
+package candidate
+
+import (
+	"context"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/opdef"
+	"github.com/XUJiahua/enterprise_agent/internal/opkernel"
+	"github.com/XUJiahua/enterprise_agent/internal/protocol"
+)
+
+// holdSubmitted is a negative control: it reports the state the purchase left instead of the one it entered.
+func holdSubmitted(exec *opkernel.Executor) protocol.ItemHandler {
+	op := entry(opdef.Hold)
+	return func(ctx context.Context, u app.Identity, key, id, reason string) (protocol.ItemResult, bool, error) {
+		done, replayed, err := exec.Run(ctx, u, opdef.Hold, key, opkernel.Request{IDs: []string{id}, Reason: reason})
+		if err != nil {
+			return protocol.ItemResult{}, false, adapt(err)
+		}
+		return protocol.ItemResult{ID: done[0], Status: op.From}, replayed, nil
+	}
+}

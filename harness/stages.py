@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""v8a stage wrapper for drafted / drafted-review kits (generation side, inside isolate_net.py).
+"""v9 stage wrapper for drafted-norule / drafted-rule kits (generation side, inside isolate_net.py).
 
 Runs the trial's sessions in order on one candidate checkout, each as a fresh Kiro session through the
 public phase 3 worker's own invoke() (kit worker.py, byte-identical to the public file and imported, not
 copied), so every stage keeps its raw ACP events (<output>/<stage>/events.jsonl), stderr and parsed usage:
 
-  draft    the trial's model; may change only internal/opdef/catalog.go
-  review   (drafted-review only) claude-opus-5.5; may change only internal/opdef/catalog.go
+  draft    the trial's model; may change only internal/opdef/catalog.go (it may run `go run ./cmd/opcheck`)
   adapter  the trial's model; may change only internal/candidate/*.go; the catalog is frozen
 
-After every session: scope check, then one commit. After draft and review: catalogcheck (compile +
-opdef.Validate()); an invalid catalog ends the trial as draft-invalid, with no retry. The receipt (version 81)
+After every session: scope check, then one commit. After draft: catalogcheck (compile the kit's internal/opdef
+package, i.e. opdef.go and, on the rule platform, registry.go, + opdef.Validate()); an invalid catalog ends the
+trial as draft-invalid, with no retry. The receipt (version 81)
 lists every stage with its commit, generation record and catalog check; credits and seconds are summed over
 the stages into `generation`. A bundle is written whenever at least one stage committed, so the evaluation
 host can score the entry (C) even when a later stage failed.
@@ -97,7 +97,7 @@ def main():
     w.save(out / 'preflight.json', {'ready': ready, 'cli_version': version, 'invocation': probe})
     if not ready: return 3
     stages, outcome, head = [], 'generated', initial
-    opdef = (candidate / 'internal/opdef/opdef.go').read_bytes()
+    package = check.package_files(candidate / 'internal/opdef')  # protected files: unchanged by scope check
     for spec in t['stages']:
         stage = {'name': spec['name'], 'model': spec['model'], 'commit': None, 'generation': None, 'check': None}
         stages.append(stage)
@@ -111,12 +111,12 @@ def main():
                 or w.git(candidate, 'remote') or w.git(candidate, 'rev-parse', 'HEAD') != head):
             outcome = 'scope-violation'; stage['scope'] = names; break
         w.command(candidate, 'add', '--all', '--', *names) if names else None
-        w.command(candidate, '-c', 'user.name=POC v8a Stages', '-c', 'user.email=poc@example.invalid', 'commit', '--allow-empty', '-q',
-                  '-m', 'v8a stage ' + spec['name'])
+        w.command(candidate, '-c', 'user.name=POC v9 Stages', '-c', 'user.email=poc@example.invalid', 'commit', '--allow-empty', '-q',
+                  '-m', 'v9 stage ' + spec['name'])
         head = stage['commit'] = w.git(candidate, 'rev-parse', 'HEAD')
         if spec['editable'] == 'catalog':
             # Same check as the evaluation host: the catalog compiles and opdef.Validate() passes. No retry.
-            stage['check'] = {k: v for k, v in check.check(opdef, (candidate / CATALOG).read_bytes()).items() if k != 'entries'}
+            stage['check'] = {k: v for k, v in check.check(None, (candidate / CATALOG).read_bytes(), extra=package).items() if k != 'entries'}
             if not stage['check']['valid']:
                 outcome = 'draft-invalid'; break
     generation = total(stages)
@@ -137,4 +137,4 @@ def main():
 
 if __name__ == '__main__':
     try: sys.exit(main())
-    except Exception as error: print('v8a stages error: ' + str(error), file=sys.stderr); sys.exit(1)
+    except Exception as error: print('v9 stages error: ' + str(error), file=sys.stderr); sys.exit(1)

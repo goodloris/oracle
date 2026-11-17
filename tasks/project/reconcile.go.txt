@@ -1,0 +1,73 @@
+package ledger
+
+import "context"
+
+type Drifted struct{ TenantID, PurchaseID, Status, Audited string }
+
+// Drift returns every Purchase whose status is not the toStatus of its latest
+// ApprovalAudit row; a purchase without audit rows must still be submitted.
+// ApprovalAudit records status transitions only: an Action that keeps the
+// status writes no ApprovalAudit row.
+func Drift(ctx context.Context, q Querier) ([]Drifted, error) {
+	rows, err := q.Query(ctx, `SELECT p."tenantId",p.id,p.status,COALESCE(a."toStatus",'submitted')
+	 FROM "Purchase" p LEFT JOIN LATERAL (SELECT "toStatus" FROM "ApprovalAudit" a
+	  WHERE a."tenantId"=p."tenantId" AND a."purchaseId"=p.id ORDER BY a."createdAt" DESC LIMIT 1) a ON true
+	 WHERE p.status <> COALESCE(a."toStatus",'submitted') ORDER BY 1,2`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var drifted []Drifted
+	for rows.Next() {
+		var d Drifted
+		if err = rows.Scan(&d.TenantID, &d.PurchaseID, &d.Status, &d.Audited); err != nil {
+			return nil, err
+		}
+		drifted = append(drifted, d)
+	}
+	return drifted, rows.Err()
+}
+
+type Reassigned struct{ TenantID, PurchaseID, Assignee, Recorded string }
+
+func AssigneeDrift(ctx context.Context, q Querier) ([]Reassigned, error) {
+	rows, err := q.Query(ctx, `SELECT p."tenantId",p.id,COALESCE(p."assigneeId",''),COALESCE(h."toAssignee",'')
+	 FROM "Purchase" p LEFT JOIN LATERAL (SELECT "toAssignee" FROM "AssignmentHistory" h
+	  WHERE h."tenantId"=p."tenantId" AND h."purchaseId"=p.id ORDER BY h."createdAt" DESC LIMIT 1) h ON true
+	 WHERE p."assigneeId" IS DISTINCT FROM h."toAssignee" ORDER BY 1,2`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var drifted []Reassigned
+	for rows.Next() {
+		var d Reassigned
+		if err = rows.Scan(&d.TenantID, &d.PurchaseID, &d.Assignee, &d.Recorded); err != nil {
+			return nil, err
+		}
+		drifted = append(drifted, d)
+	}
+	return drifted, rows.Err()
+}
+
+type Retagged struct{ TenantID, PurchaseID, Project, Recorded string }
+
+func ProjectDrift(ctx context.Context, q Querier) ([]Retagged, error) {
+	rows, err := q.Query(ctx, `SELECT p."tenantId",p.id,COALESCE(p."projectId",''),COALESCE(h."toProject",'')
+	 FROM "Purchase" p LEFT JOIN LATERAL (SELECT "toProject" FROM "ProjectHistory" h
+	  WHERE h."tenantId"=p."tenantId" AND h."purchaseId"=p.id ORDER BY h."createdAt" DESC LIMIT 1) h ON true
+	 WHERE p."projectId" IS DISTINCT FROM h."toProject" ORDER BY 1,2`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var drifted []Retagged
+	for rows.Next() {
+		var d Retagged
+		if err = rows.Scan(&d.TenantID, &d.PurchaseID, &d.Project, &d.Recorded); err != nil {
+			return nil, err
+		}
+		drifted = append(drifted, d)
+	}
+	return drifted, rows.Err()
+}

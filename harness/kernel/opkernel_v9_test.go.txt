@@ -8,28 +8,28 @@ import (
 	"github.com/XUJiahua/enterprise_agent/internal/opdef"
 )
 
-// v8a private regression (copied into the overlaid public tree by harness/kernel_regression.py):
+// v9 private regression (copied into the overlaid public tree by harness/kernel_regression.py):
 // under a linguistic collation ORDER BY p.id differs from the Go byte order of ids ("B2" < "a1" in bytes,
-// "a1" < "B2" in en-US). The delivery-site overlay kernel's two managed columns must both pair every old value
-// with its own target in the column's history table (deliverySiteId: a requester on own purchases).
+// "a1" < "B2" in en-US). The project overlay kernel's two managed columns must both pair every old value
+// with its own target in the column's history table (projectId: a requester on own purchases).
 // V7_ID_COLLATION=icu switches Purchase.id to ICU en-US; =default keeps the database default collation
 // (glibc en_US.utf8 on the evaluation host), which must itself be linguistic for the test to mean anything.
-func TestV8aFieldUpdatesPairOldValuesByIDUnderLinguisticCollation(t *testing.T) {
+func TestV9FieldUpdatesPairOldValuesByIDUnderLinguisticCollation(t *testing.T) {
 	d := open(t)
 	ctx := context.Background()
-	sqls := []string{`DROP TABLE IF EXISTS "DeliverySiteHistory","DeliverySite" CASCADE`}
+	sqls := []string{`DROP TABLE IF EXISTS "ProjectHistory","Project" CASCADE`}
 	switch os.Getenv("V7_ID_COLLATION") {
 	case "icu":
 		var icu bool
 		if err := d.admin.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM pg_collation WHERE collname='en-US-x-icu')`).Scan(&icu); err != nil || !icu {
-			t.Fatal("ICU collation en-US-x-icu required for the v8a regression") // never a skip
+			t.Fatal("ICU collation en-US-x-icu required for the v9 regression") // never a skip
 		}
 		sqls = append(sqls, `ALTER TABLE "Purchase" ALTER COLUMN id TYPE text COLLATE "en-US-x-icu"`)
 	case "default":
 	default:
 		t.Fatal("V7_ID_COLLATION must be icu or default")
 	}
-	for _, sql := range append(sqls, read(t, "tasks/delivery-site/schema.sql")) {
+	for _, sql := range append(sqls, read(t, "tasks/project/schema.sql")) {
 		if _, err := d.admin.Exec(ctx, sql); err != nil {
 			t.Fatal(err)
 		}
@@ -37,7 +37,7 @@ func TestV8aFieldUpdatesPairOldValuesByIDUnderLinguisticCollation(t *testing.T) 
 	d.purchase("a1", "alice", 9, "submitted")
 	d.purchase("B2", "alice", 9, "submitted")
 	if _, err := d.admin.Exec(ctx, `UPDATE "Purchase" SET "assigneeId"=CASE id WHEN 'a1' THEN 'carol' ELSE 'hana' END,
-	 "deliverySiteId"=CASE id WHEN 'a1' THEN 'DS-HQ' ELSE 'DS-LAB' END WHERE id IN ('a1','B2')`); err != nil {
+	 "projectId"=CASE id WHEN 'a1' THEN 'PR-APOLLO' ELSE 'PR-BOREAS' END WHERE id IN ('a1','B2')`); err != nil {
 		t.Fatal(err)
 	}
 	if got := d.rows(`SELECT id FROM "Purchase" WHERE id IN ('a1','B2') ORDER BY id`); got[0] != "a1" {
@@ -49,10 +49,10 @@ func TestV8aFieldUpdatesPairOldValuesByIDUnderLinguisticCollation(t *testing.T) 
 	d.want("assignment history pairs old value with its own target",
 		d.rows(`SELECT "purchaseId","fromAssignee","toAssignee" FROM "AssignmentHistory" WHERE "idempotencyKey"='kr' ORDER BY "purchaseId" COLLATE "C"`),
 		"B2 hana carol", "a1 carol carol")
-	if _, _, err := d.exec.Run(ctx, alice, opdef.DeliverySite, "kd", Request{IDs: []string{"a1", "B2"}, Value: "DS-HQ"}); err != nil {
+	if _, _, err := d.exec.Run(ctx, bob, opdef.Project, "kd", Request{IDs: []string{"a1", "B2"}, Value: "PR-APOLLO"}); err != nil {
 		t.Fatal(err)
 	}
-	d.want("delivery-site history pairs old value with its own target",
-		d.rows(`SELECT "purchaseId","fromSite","toSite" FROM "DeliverySiteHistory" WHERE "idempotencyKey"='kd' ORDER BY "purchaseId" COLLATE "C"`),
-		"B2 DS-LAB DS-HQ", "a1 DS-HQ DS-HQ")
+	d.want("project history pairs old value with its own target",
+		d.rows(`SELECT "purchaseId","fromProject","toProject" FROM "ProjectHistory" WHERE "idempotencyKey"='kd' ORDER BY "purchaseId" COLLATE "C"`),
+		"B2 PR-BOREAS PR-APOLLO", "a1 PR-APOLLO PR-APOLLO")
 }

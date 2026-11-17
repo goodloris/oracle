@@ -1,0 +1,800 @@
+{
+  "variants": {
+    "ref-given": {
+      "cell": "given",
+      "add": {
+        "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        }
+      ]
+    },
+    "ref-handwritten": {
+      "cell": "given",
+      "add": {
+        "internal/candidate/project.go": "ref/handwritten-project.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", newProject(pool), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        }
+      ]
+    },
+    "ref-drafted-norule": {
+      "cell": "drafted-norule",
+      "stages": [
+        {
+          "name": "draft"
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "ref-drafted-rule": {
+      "cell": "drafted-rule",
+      "stages": [
+        {
+          "name": "draft"
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "neg-explicit-given": {
+      "cell": "given",
+      "add": {
+        "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+      },
+      "edits": [
+        {
+          "file": "internal/candidate/approval.go",
+          "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+          "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+        },
+        {
+          "file": "internal/candidate/projectadapter.go",
+          "old": "IDs: done, Name: op.Param, Value: value}",
+          "new": "IDs: done, Name: \"assignee\", Value: value}"
+        }
+      ]
+    },
+    "neg-history": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"ProjectHistory\" (\"tenantId\",\"purchaseId\",\"fromProject\",\"toProject\",\"changedBy\",operation,\"idempotencyKey\") VALUES ($1,$2,$3,$4,$5,$6,$7)`,\n\t\t\t\tu.Tenant, id, previous[i], project, u.User, opProject, key)\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tfor i, id := range ids {\n",
+          "new": "\t\tfor _, id := range ids {\n"
+        }
+      ]
+    },
+    "neg-request-hash": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "ledger.Fingerprint(opProject+\"\\n\"+project, ids)",
+          "new": "ledger.Fingerprint(opProject+\":\"+project, ids)"
+        }
+      ]
+    },
+    "neg-outbox": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"PurchaseEvent\" (\"tenantId\",\"purchaseId\",type,\"actorId\",\"idempotencyKey\") VALUES ($1,$2,'purchase.project_changed',$3,$4)`,\n\t\t\t\tu.Tenant, id, u.User, key)\n",
+          "new": ""
+        }
+      ]
+    },
+    "neg-uniform-denial": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tvar valid bool\n\t\tif err = tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM \"Project\" WHERE \"tenantId\"=$1 AND code=$2 AND active)`,\n\t\t\tu.Tenant, project).Scan(&valid); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tif !valid {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tvar active bool\n\t\terr = tx.QueryRow(ctx, `SELECT active FROM \"Project\" WHERE \"tenantId\"=$1 AND code=$2`, u.Tenant, project).Scan(&active)\n\t\tif errors.Is(err, pgx.ErrNoRows) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tif !active {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 422}\n\t\t}\n"
+        }
+      ]
+    },
+    "neg-explicit-handwritten": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "result := protocol.ParamResult{Field: \"taggedIds\", IDs: ids,",
+          "new": "result := protocol.ParamResult{Field: \"tagged\", IDs: ids,"
+        }
+      ]
+    },
+    "safety-partial-batch": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tif len(previous) != len(ids) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif len(previous) != len(ids) {\n\t\t\t// refused, but the eligible targets are changed and committed first\n\t\t\tif _, err = tx.Exec(ctx, `UPDATE \"Purchase\" SET \"projectId\"=$4 WHERE id=ANY($1::text[]) AND \"tenantId\"=$2 AND \"createdBy\"<>$3 AND status='submitted'`,\n\t\t\t\tids, u.Tenant, u.User, project); err == nil {\n\t\t\t\t_ = tx.Commit(ctx)\n\t\t\t}\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n"
+        }
+      ]
+    },
+    "safety-wrong-commit": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "UPDATE \"Purchase\" SET \"projectId\"=$4 WHERE",
+          "new": "UPDATE \"Purchase\" SET \"projectId\"=$4,\"assigneeId\"=NULL WHERE"
+        }
+      ]
+    },
+    "safety-double-apply": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id COLLATE \"C\"`"
+        },
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tif len(previous) != len(ids) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n",
+          "new": "\t\tif len(previous) != len(ids) {\n\t\t\treturn protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}\n\t\t}\n\t\tif _, err = tx.Exec(ctx, `SELECT pg_sleep(0.3)`); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n"
+        }
+      ]
+    },
+    "safety-side-effect-atomicity": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\t\tbatch.Queue(`INSERT INTO \"ProjectHistory\" (\"tenantId\",\"purchaseId\",\"fromProject\",\"toProject\",\"changedBy\",operation,\"idempotencyKey\") VALUES ($1,$2,$3,$4,$5,$6,$7)`,\n\t\t\t\tu.Tenant, id, previous[i], project, u.User, opProject, key)\n",
+          "new": ""
+        },
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tfor i, id := range ids {\n",
+          "new": "\t\tfor _, id := range ids {\n"
+        },
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\treturn result, false, nil",
+          "new": "\t\tif err = tx.Commit(ctx); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\t// the history is written after the business change committed\n\t\tafter, err := pool.Begin(ctx)\n\t\tif err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tdefer after.Rollback(ctx)\n\t\tif _, err = after.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n\t\tfor i, id := range ids {\n\t\t\tif _, err = after.Exec(ctx, `INSERT INTO \"ProjectHistory\" (\"tenantId\",\"purchaseId\",\"fromProject\",\"toProject\",\"changedBy\",operation,\"idempotencyKey\") VALUES ($1,$2,$3,$4,$5,$6,$7)`,\n\t\t\t\tu.Tenant, id, previous[i], project, u.User, opProject, key); err != nil {\n\t\t\t\treturn protocol.ParamResult{}, false, err\n\t\t\t}\n\t\t}\n\t\treturn result, false, after.Commit(ctx)"
+        }
+      ]
+    },
+    "safety-unauthorized-write": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "WHERE \"tenantId\"=$1 AND code=$2 AND active)",
+          "new": "WHERE \"tenantId\"=$1 AND code=$2)"
+        }
+      ]
+    },
+    "safety-service-error": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tvar valid bool\n\t\tif err = tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM \"Project\" WHERE \"tenantId\"=$1 AND code=$2 AND active)`,\n\t\t\tu.Tenant, project).Scan(&valid); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n",
+          "new": "\t\tvar valid bool\n\t\tif err = tx.QueryRow(ctx, `SELECT active FROM \"Project\" WHERE \"tenantId\"=$1 AND code=$2`,\n\t\t\tu.Tenant, project).Scan(&valid); err != nil {\n\t\t\treturn protocol.ParamResult{}, false, err\n\t\t}\n"
+        }
+      ]
+    },
+    "neg-db-order-history": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id FOR UPDATE`"
+        }
+      ]
+    },
+    "neg-db-order-response": {
+      "base": "ref-handwritten",
+      "edits": [
+        {
+          "file": "internal/candidate/project.go",
+          "old": "ORDER BY id COLLATE \"C\" FOR UPDATE`",
+          "new": "ORDER BY id FOR UPDATE`"
+        },
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tprevious := []*string{}\n\t\tfor rows.Next() {\n\t\t\tvar id string\n\t\t\tvar old *string\n\t\t\tif err = rows.Scan(&id, &old); err != nil {\n\t\t\t\trows.Close()\n\t\t\t\treturn protocol.ParamResult{}, false, err\n\t\t\t}\n\t\t\tprevious = append(previous, old)\n\t\t}",
+          "new": "\t\tprevious := []*string{}\n\t\tordered := []string{}\n\t\tfor rows.Next() {\n\t\t\tvar id string\n\t\t\tvar old *string\n\t\t\tif err = rows.Scan(&id, &old); err != nil {\n\t\t\t\trows.Close()\n\t\t\t\treturn protocol.ParamResult{}, false, err\n\t\t\t}\n\t\t\tprevious = append(previous, old)\n\t\t\tordered = append(ordered, id)\n\t\t}"
+        },
+        {
+          "file": "internal/candidate/project.go",
+          "old": "\t\tfor i, id := range ids {\n",
+          "new": "\t\tids = ordered // database order: pairing stays right, the response order does not\n\t\tfor i, id := range ids {\n"
+        }
+      ]
+    },
+    "draft-no-event-norule": {
+      "cell": "drafted-norule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+              "new": "\t\tEventExemption: \"the project report reads ProjectHistory\", Denial: UniformDenial,\n"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-unregistered-event-norule": {
+      "cell": "drafted-norule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+              "new": "\t\tEvent: \"purchase.project_tagged\", Denial: UniformDenial,\n"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-invalid-norule": {
+      "cell": "drafted-norule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "Response: \"taggedIds\", Inputs: []string{IDs, \"project\"}",
+              "new": "Inputs: []string{IDs, \"project\"}"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-no-event-rule": {
+      "cell": "drafted-rule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+              "new": "\t\tEventExemption: \"the project report reads ProjectHistory\", Denial: UniformDenial,\n"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-unregistered-event-rule": {
+      "cell": "drafted-rule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+              "new": "\t\tEvent: \"purchase.project_tagged\", Denial: UniformDenial,\n"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-invalid-rule": {
+      "cell": "drafted-rule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "Response: \"taggedIds\", Inputs: []string{IDs, \"project\"}",
+              "new": "Inputs: []string{IDs, \"project\"}"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-no-project-in-fingerprint-rule": {
+      "cell": "drafted-rule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "Fingerprint: []string{IDs, \"project\"}",
+              "new": "Fingerprint: []string{IDs}"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    },
+    "draft-wrong-record-rule": {
+      "cell": "drafted-rule",
+      "stages": [
+        {
+          "name": "draft",
+          "edits": [
+            {
+              "old": "Record: ProjectHistory,",
+              "new": "Record: AssignmentHistory,"
+            }
+          ]
+        },
+        {
+          "name": "adapter",
+          "add": {
+            "internal/candidate/projectadapter.go": "ref/given-project.go.txt"
+          },
+          "edits": [
+            {
+              "file": "internal/candidate/approval.go",
+              "old": "\treturn protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items), nil",
+              "new": "\treturn protocol.Param(\"/purchases/bulk-project\", \"project\", project(exec), protocol.Assign(\"/purchases/bulk-reassign\", reassign(exec), items)), nil"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "controls": [
+    {
+      "variant": "ref-given",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed"
+      }
+    },
+    {
+      "variant": "ref-drafted-norule",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed",
+        "entry": {
+          "C": true
+        }
+      }
+    },
+    {
+      "variant": "ref-drafted-rule",
+      "kind": "reference",
+      "expect": {
+        "outcome": "passed",
+        "entry": {
+          "C": true
+        }
+      }
+    },
+    {
+      "variant": "ref-handwritten",
+      "kind": "reference-handwritten",
+      "expect": {
+        "outcome": "passed"
+      },
+      "note": "a hand-written handler for the new operation in a kernel cell (the base of the convention, safety and collation controls)"
+    },
+    {
+      "variant": "neg-history",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ]
+      }
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ]
+      }
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ]
+      }
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-handwritten",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-functional",
+          "project-idempotency",
+          "project-failure-rollback",
+          "project-lifecycle",
+          "project-concurrency"
+        ]
+      }
+    },
+    {
+      "variant": "safety-partial-batch",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-eligibility"
+        ],
+        "safety": [
+          "partial_batch"
+        ]
+      }
+    },
+    {
+      "variant": "safety-wrong-commit",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-functional",
+          "project-idempotency",
+          "project-failure-rollback",
+          "project-lifecycle",
+          "project-concurrency"
+        ],
+        "safety": [
+          "wrong_commit"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      }
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-value",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-value",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      }
+    },
+    {
+      "variant": "neg-db-order-history",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-history"
+        ]
+      },
+      "note": "pairs old values by database order; only a linguistic collation separates it from the reference"
+    },
+    {
+      "variant": "neg-db-order-response",
+      "kind": "collation-negative",
+      "expect": {
+        "outcome": "passed"
+      },
+      "expect_linguistic": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-functional"
+        ]
+      },
+      "note": "returns taggedIds in database order instead of UTF-8 byte order"
+    },
+    {
+      "variant": "neg-explicit-given",
+      "kind": "explicit-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-functional",
+          "project-idempotency",
+          "project-failure-rollback",
+          "project-lifecycle"
+        ]
+      }
+    },
+    {
+      "variant": "draft-no-event-norule",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "draft-no-event-rule",
+      "kind": "rule-negative",
+      "expect": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      },
+      "note": "R2: a new entry cannot exempt itself"
+    },
+    {
+      "variant": "draft-unregistered-event-norule",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "draft-unregistered-event-rule",
+      "kind": "rule-negative",
+      "expect": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      },
+      "note": "R1: the event has no registered consumer"
+    },
+    {
+      "variant": "draft-invalid-norule",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "response"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "draft-invalid-rule",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "response"
+          ]
+        }
+      }
+    },
+    {
+      "variant": "draft-no-project-in-fingerprint-rule",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "project-idempotency",
+          "implicit-request-hash"
+        ],
+        "entry": {
+          "C": false,
+          "wrong": [
+            "fingerprint"
+          ]
+        }
+      },
+      "note": "outside the event rules: still caught downstream by the full Oracle"
+    },
+    {
+      "variant": "draft-wrong-record-rule",
+      "kind": "entry-negative",
+      "expect": {
+        "outcome": "candidate-error",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "record"
+          ]
+        }
+      },
+      "note": "opkernel.New refuses a column whose history record differs"
+    }
+  ]
+}

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""v8a private controller: fixtures / plan / prepare / export / restore / evaluate / summarize.
+"""v9 private controller: fixtures / plan / prepare / export / restore / evaluate / summarize.
 
-v8a asks how much of the v7 gain survives when an Agent drafts the catalog entry itself, and how much an
-automatic AI review recovers. Four cells per block:
+v9 asks whether drafted catalog entries reach the level of given entries once the platform checks the event
+deterministically (harness/platform_rules.py: every entry declares an Event with a registered consumer; only
+protected-listed operations may carry an EventExemption). Three cells per block:
 
-  manual          hand-written, as v7 go-manual (public phase 3 worker, one session)
-  given           the reviewed entry is in internal/opdef, as v7 go-action-opdef (public worker, one session)
-  drafted         session 1 drafts the entry (only internal/opdef/catalog.go); it must pass opdef.Validate()
-                  or the trial ends (draft-invalid); session 2 (same model, fresh session) writes the adapter
-                  against the frozen catalog
-  drafted-review  as drafted, with one fixed reviewer session (claude-opus-5.5) between the two
+  given           the reviewed entry is in internal/opdef (rule platform); public worker, one session (adapter)
+  drafted-norule  session 1 drafts the entry (only internal/opdef/catalog.go) against the v8a platform, i.e.
+                  opdef.Validate() without the event rules; it must pass Validate() or the trial ends (draft-invalid);
+                  session 2 (same model, fresh session) writes the adapter against the frozen catalog
+  drafted-rule    as drafted-norule on the rule platform (Validate() with the event rules, registry.go)
 
-Single-session kits run the public worker unchanged. Staged kits run harness/stages.py, which drives the
-public worker's own invoke()/parse_kiro() per stage (raw ACP events and usage kept per stage) and commits
-each stage; the receipt lists every stage commit. Kits carry a per-cell view of the plan without anything
+Both drafted cells get the same prompts, and both may run Validate() while drafting (`go run ./cmd/opcheck`,
+a protected command in the kit): immediate CI feedback is part of the platform condition under test, and the norule
+cell gets the same feedback channel without the rules. Single-session kits run the public worker unchanged.
+Staged kits run harness/stages.py, which drives the public worker's own invoke()/parse_kiro() per stage (raw ACP
+events and usage kept per stage) and commits each stage. Kits carry a per-cell view of the plan without anything
 derived from the reference entry (see view()). Everything that defines a trial is frozen by hash in the plan.
 """
 import argparse
@@ -40,19 +42,18 @@ CHECK = 'harness/catalogcheck.py'
 PROMPTS = 'harness/prompts.json'
 # Provenance only: the public commit the vendored base sources (harness/source/common) were copied from.
 PUBLIC_BASE = '71a213de04c4644b837184b1888ff22b77c5090d'
-VERSION = 8
-TASKS = ('return', 'delivery-site')
-CELLS = ('manual', 'given', 'drafted', 'drafted-review')
-STAGED = ('drafted', 'drafted-review')
-# Two-stage group-sequential H1 (prereg): stage 1 runs all four cells on blocks 1..8; stage 2 only the two H1 cells
-# on blocks 9..16, executed only if the stage-1 decision is `continue`. Both plans are generated and frozen together.
-STAGE_CELLS = {1: CELLS, 2: ('given', 'drafted-review')}
+VERSION = 9
+TASKS = ('hold', 'project')
+CELLS = ('given', 'drafted-norule', 'drafted-rule')
+STAGED = ('drafted-norule', 'drafted-rule')
+RULE_CELLS = ('given', 'drafted-rule')  # cells on the rule platform
 OBSERVED = {'passed', 'acceptance-failed', 'candidate-error', 'budget-exceeded', 'scope-violation', 'draft-invalid'}
 UNMEASURED = {'runtime-blocked', 'provider-error', 'protocol-error', 'infrastructure-blocked'}
 SAFETY = ('unauthorized_write', 'partial_batch', 'side_effect_atomicity', 'double_apply', 'wrong_commit',
           'service_error', 'undecidable')
 CATALOG = 'internal/opdef/catalog.go'
-C, M, O = 'harness/source/common/', 'harness/source/go-manual/', 'harness/source/go-action-opdef/'
+C, O = 'harness/source/common/', 'harness/source/go-action-opdef/'
+OPCHECK = 'harness/source/common/opcheck.go.txt'  # `go run ./cmd/opcheck`: Validate() while drafting
 RECEIPT_STAGED = 81  # receipt version written by harness/stages.py (3 is the public worker's)
 
 
@@ -79,10 +80,25 @@ def contract(task): return json.loads((ROOT / 'tasks' / task / 'cohort.json').re
 def prompts(): return json.loads((ROOT / PROMPTS).read_text())
 
 
-def platform(task):
-    """The platform version of a task: public fad8adf opdef/opkernel, or the task's column overlay."""
+def rules(): return module('v9_platform_rules', HERE / 'platform_rules.py')
+
+
+def platform(task, rule):
+    """Platform files of a task (path -> bytes): the public fad8adf opdef/opkernel or the task's column overlay; on
+    the rule platform opdef.go gets the event rules and registry.go is generated from the task's notify consumers."""
     d = 'tasks/%s/platform/' % task if (ROOT / 'tasks' / task / 'platform').is_dir() else 'harness/source/platform/'
-    return {'internal/opdef/opdef.go': d + 'opdef.go.txt', 'internal/opkernel/opkernel.go': d + 'opkernel.go.txt'}
+    opdef = (ROOT / d / 'opdef.go.txt').read_text()
+    out = {'internal/opdef/opdef.go': (rules().apply(opdef) if rule else opdef).encode(),
+           'internal/opkernel/opkernel.go': (ROOT / d / 'opkernel.go.txt').read_bytes(),
+           'cmd/opcheck/main.go': (ROOT / OPCHECK).read_bytes()}
+    if rule:
+        out['internal/opdef/registry.go'] = rules().registry((ROOT / 'tasks' / task / 'notify.go.txt').read_text()).encode()
+    return out
+
+
+def opdef_extra(task, rule):
+    """Package files besides catalog.go that catalogcheck compiles with it (opdef.go, registry.go)."""
+    return {Path(k).name: v for k, v in platform(task, rule).items() if k.startswith('internal/opdef/') and not k.endswith('_test.go')}
 
 
 def reference_catalog(task): return 'tasks/%s/catalog.go.txt' % task
@@ -90,19 +106,14 @@ def base_catalog(): return 'harness/source/platform/catalog.go.txt'  # the publi
 
 
 def layout(task, cell):
-    """Export path -> repository template for one task and cell (drafted and drafted-review are identical)."""
+    """Export path -> repository template for one task and cell (platform files are added by files())."""
     T = 'tasks/%s/' % task
-    files = {'go.mod': C + 'go.mod.txt', 'go.sum': C + 'go.sum.txt', 'cmd/server/main.go': C + 'main.go.txt',
-             'internal/app/server.go': C + 'server.go.txt', 'internal/app/demo_identity.go': C + 'demo_identity.go.txt',
-             'internal/protocol/protocol.go': C + 'protocol.go.txt', 'internal/ledger/ledger.go': C + 'ledger.go.txt',
-             'internal/ledger/reconcile.go': T + 'reconcile.go.txt', 'internal/notify/notify.go': T + 'notify.go.txt'}
-    if cell == 'manual':
-        files.update({'internal/candidate/' + n + '.go': M + n + '.go.txt' for n in ('approval', 'reject', 'reopen', 'countersign', 'reassign')})
-    else:
-        files.update(platform(task))
-        files.update({CATALOG: reference_catalog(task) if cell == 'given' else base_catalog(),
-                      'internal/candidate/approval.go': O + 'approval.go.txt'})
-    return files
+    return {'go.mod': C + 'go.mod.txt', 'go.sum': C + 'go.sum.txt', 'cmd/server/main.go': C + 'main.go.txt',
+            'internal/app/server.go': C + 'server.go.txt', 'internal/app/demo_identity.go': C + 'demo_identity.go.txt',
+            'internal/protocol/protocol.go': C + 'protocol.go.txt', 'internal/ledger/ledger.go': C + 'ledger.go.txt',
+            'internal/ledger/reconcile.go': T + 'reconcile.go.txt', 'internal/notify/notify.go': T + 'notify.go.txt',
+            CATALOG: reference_catalog(task) if cell == 'given' else base_catalog(),
+            'internal/candidate/approval.go': O + 'approval.go.txt'}
 
 
 def schema_files(task): return ['harness/sql/bootstrap.sql', 'harness/sql/base.sql', 'tasks/%s/schema.sql' % task]
@@ -110,6 +121,7 @@ def schema_files(task): return ['harness/sql/bootstrap.sql', 'harness/sql/base.s
 
 def files(task, cell):
     data = {path: (ROOT / src).read_bytes() for path, src in layout(task, cell).items()}
+    data.update(platform(task, cell in RULE_CELLS))
     data['TASK.md'] = (contract(task)['requirements'] + '\n').encode()
     data['SCHEMA.sql'] = b'\n'.join((ROOT / p).read_bytes() for p in schema_files(task)[1:])
     data['.gitignore'] = b'bin/\n/server\n*.log\n__pycache__/\n'
@@ -122,24 +134,19 @@ def fill(lines, task):
 
 
 def prompt(task, kind):
-    """kind: manual | given | draft | review | adapter (the adapter stage gets exactly the given prompt)."""
+    """kind: given | draft | adapter (the adapter stage gets exactly the given prompt)."""
     P, req = prompts(), contract(task)['requirements']
-    if kind in ('manual', 'given', 'adapter'):
-        cap = P['capability']['given' if kind == 'adapter' else kind]
-        return '\n'.join([req, *fill(P['common'], task), *fill([cap], task), P['tail']])
+    if kind in ('given', 'adapter'):
+        return '\n'.join([req, *fill(P['common'], task), *fill([P['capability']['given']], task), P['tail']])
     return '\n'.join([req, *fill(P[kind], task), P['tail']])
 
 
 def stage_specs(task, cell, model, effort, budget):
     """The ordered sessions of a staged cell; editable: 'catalog' (internal/opdef/catalog.go) or 'candidate'."""
-    P = prompts()
-    names = ['draft', 'review', 'adapter'] if cell == 'drafted-review' else ['draft', 'adapter']
     out = []
-    for n in names:
+    for n in ('draft', 'adapter'):
         text = prompt(task, n)
-        reviewer = n == 'review'
-        out.append({'name': n, 'model': P['reviewer_model'] if reviewer else model,
-                    'reasoning_effort': P['reviewer_reasoning_effort'] if reviewer else effort,
+        out.append({'name': n, 'model': model, 'reasoning_effort': effort,
                     'editable': 'candidate' if n == 'adapter' else 'catalog', 'budget_seconds': budget,
                     'prompt': text, 'prompt_sha256': sha(text.encode())})
     return out
@@ -151,7 +158,7 @@ def editable(kind, name):
 
 def frozen_paths(task):
     tracked = git(ROOT, 'ls-files', 'harness', 'tasks/' + task, 'benchmark').splitlines()
-    for p in (WORKER, STAGES, CHECK, PROMPTS):
+    for p in (WORKER, STAGES, CHECK, PROMPTS, 'harness/platform_rules.py', OPCHECK):
         assert p in tracked, p + ' must be tracked'
     return tracked
 
@@ -179,9 +186,9 @@ def view_sha(p, cell): return sha(view_bytes(p, cell))
 
 def load_plan(path):
     value = json.loads(Path(path).read_text())
-    if value.get('version') != VERSION or value.get('experiment') != 'v8a' or value.get('kind') not in ('model-trial', 'synthetic-smoke') \
+    if value.get('version') != VERSION or value.get('experiment') != 'v9' or value.get('kind') not in ('model-trial', 'synthetic-smoke') \
             or value.get('task') not in TASKS:
-        raise ValueError('v8a cohort plan required')
+        raise ValueError('v9 cohort plan required')
     if set(value['frozen']) != set(frozen_paths(value['task'])): raise ValueError('incomplete harness manifest')
     for p, h in value['frozen'].items():
         if digest(ROOT / p) != h: raise ValueError('evaluator drift: ' + p)
@@ -191,10 +198,8 @@ def load_plan(path):
         raise ValueError('invalid generation budget')
     if value['reasoning_effort'] not in ('low', 'medium', 'high') or not value['model'] or value.get('engine') not in ('codex', 'kiro'):
         raise ValueError('invalid model settings')
-    cells = STAGE_CELLS.get(value.get('stage'))
-    if cells is None or tuple(value.get('cells', ())) != cells or type(value.get('first_instance')) is not int \
-            or (value['stage'] == 1) != (value['first_instance'] == 1):
-        raise ValueError('invalid design stage')
+    cells = CELLS
+    if tuple(value.get('cells', ())) != cells: raise ValueError('invalid cells')
     blocks, seen = {}, set()
     for t in value['trials']:
         if t['cell'] not in cells or type(t['instance']) is not int or t['instance'] < 1: raise ValueError('invalid trial')
@@ -206,27 +211,26 @@ def load_plan(path):
             if t.get('stages') != want or 'prompt' in t: raise ValueError('stage/prompt tamper')
         elif t['prompt'] != prompt(value['task'], t['cell']) or sha(t['prompt'].encode()) != t['prompt_sha256'] or 'stages' in t:
             raise ValueError('prompt tamper')
-    first = value['first_instance']
-    if not blocks or sorted(blocks) != list(range(first, first + len(blocks))) or any(b != set(cells) for b in blocks.values()):
+    if not blocks or sorted(blocks) != list(range(1, len(blocks) + 1)) or any(b != set(cells) for b in blocks.values()):
         raise ValueError('incomplete block')
     if value['exports'] != {c: {p: sha(d) for p, d in files(value['task'], c).items()} for c in CELLS}: raise ValueError('export drift')
     v = verifier().manifest(value['task'])
-    if {k: value['verifier'][k] for k in v} != v or value['verifier'].get('reference_catalog_digest') != reference(value['task'])['digest']:
+    if {k: value['verifier'].get(k) for k in v} != v or value['verifier'].get('reference_catalog_digest') != reference(value['task'])['digest']:
         raise ValueError('verifier binding drift')
     return value
 
 
-def verifier(): return module('v8a_verifier', HERE / 'verifier.py')
-def checker(): return module('v8a_catalogcheck', ROOT / CHECK)
-def entry_oracle(): return module('v8a_entry_oracle', HERE / 'entry_oracle.py')
+def verifier(): return module('v9_verifier', HERE / 'verifier.py')
+def checker(): return module('v9_catalogcheck', ROOT / CHECK)
+def entry_oracle(): return module('v9_entry_oracle', HERE / 'entry_oracle.py')
 
 
-def compile_catalog(task, catalog_bytes):
-    return checker().check((ROOT / platform(task)['internal/opdef/opdef.go']).read_bytes(), catalog_bytes, go())
+def compile_catalog(task, catalog_bytes, rule=True):
+    return checker().check(None, catalog_bytes, go(), extra=opdef_extra(task, rule))
 
 
-def reference(task):
-    r = compile_catalog(task, (ROOT / reference_catalog(task)).read_bytes())
+def reference(task, rule=True):
+    r = compile_catalog(task, (ROOT / reference_catalog(task)).read_bytes(), rule)
     if not r['valid']: raise ValueError('reference catalog does not validate: %s' % r['error'])
     return r
 
@@ -234,7 +238,7 @@ def reference(task):
 def database_env():
     """Measured evaluation database (version, collation, ctype) plus the operator-declared image (POC_PG_IMAGE)."""
     import tempfile
-    oracle = module('v8a_oracle_env', HERE / 'oracle.py')
+    oracle = module('v9_oracle_env', HERE / 'oracle.py')
     with tempfile.TemporaryDirectory() as tmp:
         db = oracle.Database(dbrpc(Path(tmp)))
         try:
@@ -253,12 +257,8 @@ def plan(args):
     private = json.loads(Path(args.fixtures).read_text())
     if private.get('version') != 1 or len(private.get('seed', '')) < 32: raise ValueError('private seed required')
     if args.repetitions not in range(1, 101) or args.time_budget < 1: raise ValueError('invalid repetitions/budget')
-    first = 1 if args.stage == 1 else args.first_instance
-    args.seed = args.seed if args.seed is not None else 20261115 + args.stage
-    if args.stage == 2 and (first is None or first < 2): raise ValueError('stage 2 needs --first-instance after the stage-1 blocks')
-    value = {'version': VERSION, 'experiment': 'v8a', 'kind': 'synthetic-smoke' if args.synthetic else 'model-trial', 'task': args.task,
-             'operation': contract(args.task)['operation'], 'stage': args.stage, 'cells': list(STAGE_CELLS[args.stage]),
-             'first_instance': first, 'base_sha': PUBLIC_BASE,
+    value = {'version': VERSION, 'experiment': 'v9', 'kind': 'synthetic-smoke' if args.synthetic else 'model-trial', 'task': args.task,
+             'operation': contract(args.task)['operation'], 'cells': list(CELLS), 'base_sha': PUBLIC_BASE,
              'harness_sha': git(ROOT, 'rev-parse', 'HEAD'),
              'frozen': {p: digest(ROOT / p) for p in frozen_paths(args.task)}, 'fixtures_sha256': digest(args.fixtures),
              'seed': args.seed, 'model': args.model, 'reasoning_effort': args.reasoning_effort, 'engine': args.engine,
@@ -269,9 +269,9 @@ def plan(args):
     # catalog digest. A drafted trial's catalog differs per trial: its digest is recorded per trial at evaluation.
     value['verifier'] = {**verifier().manifest(args.task), 'reference_catalog_digest': reference(args.task)['digest']}
     value['database'] = database_env()
-    for instance in range(first, first + args.repetitions):
+    for instance in range(1, args.repetitions + 1):
         block = []
-        for c in STAGE_CELLS[args.stage]:
+        for c in CELLS:
             t = {'id': c + '--' + str(instance).zfill(3), 'cell': c, 'instance': instance}
             if c in STAGED:
                 t['stages'] = stage_specs(args.task, c, args.model, args.reasoning_effort, args.time_budget)
@@ -295,7 +295,7 @@ def export_candidate(args):
         path = candidate / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(data)
     process(['git', 'init', '-q', '-b', 'candidate'], cwd=candidate)
     process(['git', 'add', '.'], cwd=candidate)
-    process(['git', '-c', 'user.name=POC Export', '-c', 'user.email=poc@example.invalid', 'commit', '-q', '-m', 'v8a shared base'], cwd=candidate)
+    process(['git', '-c', 'user.name=POC Export', '-c', 'user.email=poc@example.invalid', 'commit', '-q', '-m', 'v9 shared base'], cwd=candidate)
     save(manifest, {'version': VERSION, 'trial_id': t['id'], 'plan_sha256': view_sha(p, t['cell']), 'initial_sha': git(candidate, 'rev-parse', 'HEAD'),
                     'source_base_sha': p['base_sha'], 'files': p['exports'][t['cell']]})
 
@@ -426,26 +426,20 @@ def dbrpc(out):
 def show(candidate, commit, path): return subprocess.check_output(['git', '-C', str(candidate), 'show', commit + ':' + path])
 
 
-def entry_record(p, candidate, commits, r):  # noqa: C901
-    """C for a staged trial: the frozen catalog (after review, if any) against the reference entry, plus the draft's own C."""
-    ref, eo = reference(p['task']), entry_oracle()
-    catalogs = {n: c for n, c in commits if n in ('draft', 'review')}
+def entry_record(p, cell, candidate, commits, r):
+    """C for a staged trial: the frozen (drafted) catalog against the reference entry, compiled on the cell's platform."""
+    ref, eo, rule = reference(p['task']), entry_oracle(), cell in RULE_CELLS
     out = {}
-    for n, c in catalogs.items():
+    for n, c in commits:
+        if n != 'draft':
+            continue
         data = show(candidate, c, CATALOG)
-        check = compile_catalog(p['task'], data)
+        check = compile_catalog(p['task'], data, rule)
         out[n] = {'commit': c, 'catalog_sha256': sha(data), 'valid': check['valid'], 'error': check['error'], 'digest': check['digest'],
-                  **{'C': eo.compare(p['operation'], check, ref)}}
-        reported = next(s for s in r['stages'] if s['name'] == n).get('check') or {}
-        out[n]['generation_side_valid'] = reported.get('valid')
-    # The frozen entry is the reviewed one in drafted-review: without a completed review there is none (C = 0).
-    frozen = 'review' if any(s['name'] == 'review' for s in r['stages']) else 'draft'
-    frozen = frozen if frozen in out else None
-    value = {'stages': out, 'frozen_stage': frozen, 'C': bool(frozen and out[frozen]['C']['correct']),
-             'C_draft': bool('draft' in out and out['draft']['C']['correct'])}
-    if 'review' in out:
-        value['review_changed_catalog'] = out['review']['catalog_sha256'] != out['draft']['catalog_sha256']
-    return value
+                  'C': eo.compare(p['operation'], check, ref)}
+        out[n]['generation_side_valid'] = (next(s for s in r['stages'] if s['name'] == n).get('check') or {}).get('valid')
+    frozen = 'draft' if 'draft' in out else None
+    return {'stages': out, 'frozen_stage': frozen, 'C': bool(frozen and out[frozen]['C']['correct'])}
 
 
 def evaluate(args):
@@ -458,19 +452,19 @@ def evaluate(args):
     port = os.environ.get('POC_HTTP_PORT', '8080')
     with socket.socket() as probe:
         if probe.connect_ex(('127.0.0.1', int(port))) == 0: raise ValueError('evaluation port occupied')
-    result = {'version': VERSION, 'experiment': 'v8a', 'task': p['task'],
+    result = {'version': VERSION, 'experiment': 'v9', 'task': p['task'],
               **{k: r[k] for k in ('kind', 'plan_sha256', 'trial', 'candidate_sha', 'manifest_sha256', 'generation')},
               'cases': [], 'passed': False}
     if t['cell'] in STAGED:
         result['stages'] = r['stages']
     staged_outcome = r.get('outcome', 'generated')
-    oracle = module('v8a_oracle', HERE / 'oracle.py')
+    oracle = module('v9_oracle', HERE / 'oracle.py')
     server = None; db = None; binary = out / 'server'; start = time.monotonic()
-    # The catalog this trial runs on: the reference (manual is bound to it too) or the trial's frozen draft.
+    # The catalog this trial runs on: the reference (given) or the trial's frozen draft.
     catalog = (ROOT / reference_catalog(p['task'])).read_bytes()
     base = json.loads(Path(args.manifest).read_text())['initial_sha']
     if t['cell'] in STAGED:
-        result['entry'] = entry_record(p, candidate, commits, r)
+        result['entry'] = entry_record(p, t['cell'], candidate, commits, r)
         frozen = result['entry']['frozen_stage']
         if frozen:
             catalog = show(candidate, result['entry']['stages'][frozen]['commit'], CATALOG)
@@ -479,10 +473,10 @@ def evaluate(args):
             if (staged_outcome == 'draft-invalid') == host_valid:
                 staged_outcome = 'infrastructure-blocked'
                 result['error'] = 'generation-side and host catalog validity differ'
-        else:  # e.g. the review session did not complete: there is no frozen catalog and the trial never ran
-            catalog = show(candidate, [c for n, c in commits if n in ('draft', 'review')][-1], CATALOG)
-            if staged_outcome == 'generated': raise ValueError('generated staged trial without a frozen catalog')
-    result['catalog'] = {'sha256': sha(catalog), 'digest': compile_catalog(p['task'], catalog)['digest']}
+        elif staged_outcome == 'generated':
+            raise ValueError('generated staged trial without a frozen catalog')
+    rule = t['cell'] in RULE_CELLS
+    result['catalog'] = {'sha256': sha(catalog), 'digest': compile_catalog(p['task'], catalog, rule)['digest'], 'rule_platform': rule}
     if staged_outcome != 'generated':
         result.update(outcome=staged_outcome)
     else:
@@ -526,7 +520,7 @@ def evaluate(args):
         # Additional analysis only (never part of A/E/K/D/C): the private Verifier bound to this trial's catalog.
         try:
             v = verifier()
-            report = v.check(v.build(p['task'], 'private', out, catalog), candidate, base)
+            report = v.check(v.build(p['task'], 'private', out, catalog, rule), candidate, base)
             if report['catalog'] != result['catalog']['digest']: report = {'error': 'verifier catalog differs from the trial catalog', **report}
         except (OSError, ValueError, subprocess.SubprocessError) as error:
             report = {'error': str(error)[:500]}
@@ -585,14 +579,13 @@ def summarize(args):
                'seconds_per_correct': None if known_seconds is None or not passed else round(known_seconds / passed, 3)}
         if c in STAGED:
             row['C_entry_correct'] = sum(bool(r.get('entry', {}).get('C')) for r in observed)
-            row['C_draft_correct'] = sum(bool(r.get('entry', {}).get('C_draft')) for r in observed)
             row['stage_credits'] = {s: round(sum(((x.get('generation') or {}).get('usage') or {}).get('credits') or 0
                                                  for r in values for x in r.get('stages', []) if x['name'] == s), 4)
-                                    for s in ('draft', 'review', 'adapter')}
+                                    for s in ('draft', 'adapter')}
         rows.append(row)
-    value = {'version': VERSION, 'experiment': 'v8a', 'kind': p['kind'], 'task': p['task'], 'rows': rows,
+    value = {'version': VERSION, 'experiment': 'v9', 'kind': p['kind'], 'task': p['task'], 'rows': rows,
              'note': 'A/E/K/D, C and safety are reported separately. Cost per correct result = total over observed trials (all stages, '
-                     'review included) / passed trials (unknown if any observed trial lacks usage). Synthetic controls are not model evidence.'}
+                     'both sessions of staged cells) / passed trials (unknown if any observed trial lacks usage). Synthetic controls are not model evidence.'}
     if args.output: save(args.output, value)
     print(json.dumps(value, indent=2))
 
@@ -604,9 +597,8 @@ def main():
     for n in ('model', 'fixtures', 'output'): s.add_argument('--' + n, required=True)
     s.add_argument('--task', choices=TASKS, required=True)
     s.add_argument('--repetitions', type=int, default=1); s.add_argument('--time-budget', type=int, default=600)
-    s.add_argument('--reasoning-effort', choices=('low', 'medium', 'high'), default='medium'); s.add_argument('--seed', type=int, help='plan order seed (default 20261116 for stage 1, 20261117 for stage 2)')
+    s.add_argument('--reasoning-effort', choices=('low', 'medium', 'high'), default='medium'); s.add_argument('--seed', type=int, default=20261118)
     s.add_argument('--engine', choices=('codex', 'kiro'), default='kiro')
-    s.add_argument('--stage', type=int, choices=(1, 2), default=1); s.add_argument('--first-instance', type=int)
     s.add_argument('--synthetic', action='store_true'); s.add_argument('--allow-dirty-harness', action='store_true')
     s = sub.add_parser('prepare')
     for n in ('plan', 'trial', 'output'): s.add_argument('--' + n, required=True)
@@ -623,7 +615,7 @@ def main():
         return {'fixtures': fixtures, 'plan': plan, 'prepare': prepare, 'export': export_candidate, 'restore': restore,
                 'evaluate': evaluate, 'summarize': summarize}[args.command](args) or 0
     except Exception as error:
-        print('v8a error: ' + str(error), file=sys.stderr); return 1
+        print('v9 error: ' + str(error), file=sys.stderr); return 1
 
 
 if __name__ == '__main__':

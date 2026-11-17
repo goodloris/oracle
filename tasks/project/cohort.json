@@ -1,0 +1,231 @@
+{
+  "version": 9,
+  "task": "bulk-project-v9",
+  "operation": "bulk-project.v9",
+  "title": "bulk project",
+  "adapter": "protocol.Param",
+  "existing": "bulk-approve, countersign, bulk-reject, reopen and bulk-reassign",
+  "requirements": "本版本在既有批量审批（POST /purchases/bulk-approve）、会签（POST /purchases/{id}/countersign）、批量驳回（POST /purchases/bulk-reject）、重新提交（POST /purchases/{id}/reopen）与批量改派（POST /purchases/bulk-reassign）的基础上，新增批量归属项目：审批人可以把他人提交的采购单一次性归到某个项目下，便于按项目汇总支出。接口为 POST /purchases/bulk-project，请求体严格为 {\"ids\":[...],\"project\":\"CODE\"}，ids 为 1..100 个不重复的采购单 ID，project 为 1..100 字节。只有已认证的 approver 可以调用。每个目标必须是当前租户中他人创建、状态为 submitted 的采购单；project 必须是当前租户 Project 表中 active 的 code。成功后把全部目标的 Purchase.projectId 设为 project，status 及其他列都不变；任一目标不符合条件或 project 不合法时返回 4xx，数据库全部不变（全批原子）。请求体、身份、报文上限和 Idempotency-Key 校验由共享 HTTP 适配器 protocol.Param 完成（路径 /purchases/bulk-project，参数名 project），新路径通过它注册。成功返回 200，响应为 {\"taggedIds\":[按字典序排序的 ID],\"project\":CODE}。首次成功 Idempotency-Replayed=false；同一 actor 以同一 key 重放同一请求（ID 集合与 project 都相同）时，返回相同状态和响应字节，header=true，不产生新写入；同 key 不同请求（ID 集合或 project 不同）返回 409。不同 actor 使用同名 key 互不影响。幂等结果与修改在同一事务中写入 ActionRequest：operation 为 \"bulk-project.v9\"，tenantId、actorId、key 分别为当前租户、当前用户和 Idempotency-Key 原值，response 为响应 JSON 对象，每个成功的新请求恰好一行。ActionRequest 写入失败时返回 503 且数据库全部不变，故障移除后同 key 可重试。并发：同 key 同请求两次均 200 且只提交一次；不同 key 把同一批采购单归到不同项目时两次都 200，最终这些采购单的 projectId 都等于其中一个请求的 project。归属项目后的采购单仍可被批量审批、批量驳回。requester 调用返回 403，未认证返回 401；客户端上下文头不能覆盖认证身份。批量审批、会签、批量驳回、重新提交、批量改派与原有 API 行为保持不变。",
+  "groups": {
+    "project-functional": {
+      "kind": "explicit",
+      "count": 4
+    },
+    "project-authorization": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "project-eligibility": {
+      "kind": "explicit",
+      "count": 5
+    },
+    "project-value": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "project-input": {
+      "kind": "explicit",
+      "count": 7
+    },
+    "project-idempotency": {
+      "kind": "explicit",
+      "count": 4
+    },
+    "project-concurrency": {
+      "kind": "explicit",
+      "count": 2
+    },
+    "project-failure-rollback": {
+      "kind": "explicit",
+      "count": 1
+    },
+    "project-lifecycle": {
+      "kind": "explicit",
+      "count": 2
+    },
+    "regression": {
+      "kind": "explicit",
+      "count": 18
+    },
+    "implicit-history": {
+      "kind": "implicit",
+      "count": 4
+    },
+    "implicit-request-hash": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-outbox": {
+      "kind": "implicit",
+      "count": 3
+    },
+    "implicit-uniform-denial": {
+      "kind": "implicit",
+      "count": 2
+    }
+  },
+  "conventions": {
+    "implicit-history": {
+      "rule": "Every target gets exactly one ProjectHistory row in the same transaction: tenantId, purchaseId, fromProject=the projectId before the change (null if none), toProject=project, changedBy=actor, operation=bulk-project.v9, idempotencyKey=key; concurrent changes of one purchase form exactly one chain; a history write failure rolls everything back.",
+      "sources": {
+        "given": [
+          [
+            "internal/opkernel/opkernel.go",
+            "\"ProjectHistory\", \"fromProject\", \"toProject\""
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Record: ProjectHistory"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opkernel/opkernel.go",
+            "\"ProjectHistory\", \"fromProject\", \"toProject\""
+          ],
+          [
+            "internal/opdef/opdef.go",
+            "ProjectHistory    Record = \"ProjectHistory\"    // projectId changes"
+          ],
+          [
+            "internal/ledger/reconcile.go",
+            "func ProjectDrift("
+          ]
+        ]
+      }
+    },
+    "implicit-request-hash": {
+      "rule": "ActionRequest.requestHash equals ledger.Fingerprint(\"bulk-project.v9\"+\"\\n\"+project, ids), so ledger.Verify accepts the rows.",
+      "sources": {
+        "given": [
+          [
+            "internal/opkernel/opkernel.go",
+            "func Fingerprint("
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Fingerprint: []string{IDs, \"project\"}"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opkernel/opkernel.go",
+            "func Fingerprint("
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Fingerprint: []string{IDs, \"assignee\"}"
+          ],
+          [
+            "internal/ledger/ledger.go",
+            "as operation+\"\\n\"+value"
+          ]
+        ]
+      }
+    },
+    "implicit-outbox": {
+      "rule": "Every target gets exactly one PurchaseEvent row in the same transaction: type=purchase.project_changed, purchaseId, actorId=actor, idempotencyKey=key; an outbox write failure rolls everything back.",
+      "sources": {
+        "given": [
+          [
+            "internal/opdef/catalog.go",
+            "Event: \"purchase.project_changed\""
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"PurchaseEvent\""
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/notify/notify.go",
+            "case \"purchase.project_changed\":"
+          ],
+          [
+            "internal/opdef/opdef.go",
+            "Event is required by default"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"PurchaseEvent\""
+          ]
+        ]
+      }
+    },
+    "implicit-uniform-denial": {
+      "rule": "Unknown, other-tenant and inactive projects all get the same 4xx status, so a response never reveals which codes exist in which tenant or state.",
+      "sources": {
+        "given": [
+          [
+            "internal/opdef/opdef.go",
+            "const UniformDenial = 409"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "return nil, &Rejection{op.Denial}"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opdef/opdef.go",
+            "const UniformDenial = 409"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "return nil, &Rejection{op.Denial}"
+          ]
+        ]
+      }
+    }
+  },
+  "forbidden_in_task": [
+    "ApprovalAudit",
+    "AssignmentHistory",
+    "history",
+    "历史",
+    "审计",
+    "audit",
+    "requestHash",
+    "Fingerprint",
+    "指纹",
+    "ledger",
+    "PurchaseEvent",
+    "event",
+    "事件",
+    "outbox",
+    "notify",
+    "通知",
+    "区分",
+    "存在",
+    "indistinguish",
+    "uniform",
+    "same 4xx",
+    "相同的 4xx",
+    "reconcil",
+    "对账",
+    "drift",
+    "catalog",
+    "目录",
+    "opdef",
+    "opkernel",
+    "separation",
+    "Distinct",
+    "subject",
+    "record",
+    "exemption",
+    "confirmAmount",
+    "inputs",
+    "transition",
+    "field-update",
+    "FieldUpdate",
+    "denial",
+    "tier",
+    "kind",
+    "ProjectHistory",
+    "registry",
+    "consumer",
+    "消费者",
+    "exempt",
+    "豁免"
+  ]
+}

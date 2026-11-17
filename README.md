@@ -1,4 +1,6 @@
-# enterprise_agent 私有验收（v7，v8a 分支）
+# enterprise_agent 私有验收（v7，v9 分支）
+
+> **v9 分支**：平台把事件规则做成确定性校验（R1 事件必须有注册消费者，R2 只有受保护名单上的操作可以豁免）后，Agent 起草的条目能否达到给定条目的水平。三组（given、drafted-norule、drafted-rule），任务 `hold`、`project`。设计见 [docs/v9-design.md](docs/v9-design.md)，预注册草稿（未冻结）见 [prereg/preregistration-v9.md](prereg/preregistration-v9.md)。主机 checkout 为 `/opt/poc-oracle/private-v9`，运行目录以 `v9-` 开头，驱动为 `scripts/run_v9.sh`。
 
 > **v8a 分支**：v8a 测 Agent 起草目录条目后收益还剩多少、一次固定 AI 审查能挽回多少。四组（manual、given、drafted、drafted-review），任务 `return`、`delivery-site`。设计见 [docs/v8a-design.md](docs/v8a-design.md)，预注册草稿（未冻结）见 [prereg/preregistration-v8a.md](prereg/preregistration-v8a.md)。主机 checkout 为 `/opt/poc-oracle/private-v8a`，运行目录以 `v8a-` 开头，驱动为 `scripts/run_v8a.sh`。下文描述 v7 的布局与流程，v8a 的差别以设计文档为准。
 

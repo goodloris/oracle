@@ -1,0 +1,227 @@
+{
+  "version": 9,
+  "task": "hold-v9",
+  "operation": "hold.v9",
+  "title": "hold",
+  "adapter": "protocol.Item",
+  "existing": "bulk-approve, countersign, bulk-reject, reopen and bulk-reassign",
+  "requirements": "本版本在既有批量审批（POST /purchases/bulk-approve，金额超过 50000 的采购单进入 pending-second，等待另一位审批人会签）、会签（POST /purchases/{id}/countersign）、批量驳回（POST /purchases/bulk-reject）、重新提交（POST /purchases/{id}/reopen）与批量改派（POST /purchases/bulk-reassign）的基础上，新增挂起：审批人发现一张待审的采购单需要等外部结果（例如预算复核）时，可以先把它挂起，暂不处理。接口为 POST /purchases/{id}/hold，请求体严格为 {\"reason\":\"...\"}，reason 为 1..200 字节，说明挂起原因。只有已认证的 approver 可以调用。目标必须是当前租户中他人创建、状态为 submitted 的采购单；成功后该采购单 status 变为 on-hold，其他列都不变。找不到目标、目标属于其他租户、由调用者本人创建或状态不是 submitted 时返回 4xx，数据库全部不变。请求体、身份、报文上限和 Idempotency-Key 校验由共享 HTTP 适配器 protocol.Item 完成（verb 为 hold，role 为 approver），新路径通过它注册。成功返回 200，响应为 {\"id\":ID,\"status\":\"on-hold\"}。首次成功 Idempotency-Replayed=false；同一 actor 以同一 key 重放同一目标时，返回相同状态和响应字节，header=true，不产生新写入；同 key 不同目标返回 409。不同 actor 使用同名 key 互不影响。幂等结果与挂起在同一事务中写入 ActionRequest：operation 为 \"hold.v9\"，tenantId、actorId、key 分别为当前租户、当前用户和 Idempotency-Key 原值，response 为响应 JSON 对象，每个成功的新请求恰好一行。ActionRequest 写入失败时返回 503 且数据库全部不变，故障移除后同 key 可重试。并发：同 key 同请求两次均 200 且只提交一次；不同 key 同时挂起同一采购单时恰好一个返回 200、另一个返回 4xx，只挂起一次。挂起的采购单不能再被批量审批、批量驳回、重新提交或改派（4xx，数据库不变）。requester 调用返回 403，未认证返回 401；客户端上下文头不能覆盖认证身份。批量审批、会签、批量驳回、重新提交、批量改派与原有 API 行为保持不变。",
+  "groups": {
+    "hold-functional": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "hold-authorization": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "hold-eligibility": {
+      "kind": "explicit",
+      "count": 7
+    },
+    "hold-input": {
+      "kind": "explicit",
+      "count": 6
+    },
+    "hold-idempotency": {
+      "kind": "explicit",
+      "count": 3
+    },
+    "hold-concurrency": {
+      "kind": "explicit",
+      "count": 2
+    },
+    "hold-failure-rollback": {
+      "kind": "explicit",
+      "count": 1
+    },
+    "hold-lifecycle": {
+      "kind": "explicit",
+      "count": 4
+    },
+    "regression": {
+      "kind": "explicit",
+      "count": 18
+    },
+    "implicit-audit": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-request-hash": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-outbox": {
+      "kind": "implicit",
+      "count": 2
+    },
+    "implicit-uniform-denial": {
+      "kind": "implicit",
+      "count": 2
+    }
+  },
+  "conventions": {
+    "implicit-audit": {
+      "rule": "Every hold writes exactly one ApprovalAudit row in the same transaction: tenantId, purchaseId, approvedBy=actor, operation=hold.v9, idempotencyKey=key, fromStatus=submitted, toStatus=on-hold, reason=request reason; an audit write failure rolls everything back.",
+      "sources": {
+        "given": [
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"ApprovalAudit\""
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Name: Hold"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"ApprovalAudit\""
+          ],
+          [
+            "internal/opdef/opdef.go",
+            "transition needs From != To, no column, and ApprovalAudit"
+          ],
+          [
+            "internal/ledger/reconcile.go",
+            "Drift returns every Purchase whose status is not the toStatus"
+          ]
+        ]
+      }
+    },
+    "implicit-request-hash": {
+      "rule": "ActionRequest.requestHash equals ledger.Fingerprint(\"hold.v9\", [id]); the reason is not digested, so the same key and target with another reason replays.",
+      "sources": {
+        "given": [
+          [
+            "internal/opkernel/opkernel.go",
+            "func Fingerprint("
+          ],
+          [
+            "internal/opdef/catalog.go",
+            "Fingerprint: []string{IDs}"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opkernel/opkernel.go",
+            "func Fingerprint("
+          ],
+          [
+            "internal/opdef/opdef.go",
+            "must be a distinct non-reason input"
+          ],
+          [
+            "internal/ledger/ledger.go",
+            "is not part of the digest"
+          ]
+        ]
+      }
+    },
+    "implicit-outbox": {
+      "rule": "Every hold writes exactly one PurchaseEvent row in the same transaction: type=purchase.held, purchaseId, actorId=actor, idempotencyKey=key; an outbox write failure rolls everything back.",
+      "sources": {
+        "given": [
+          [
+            "internal/opdef/catalog.go",
+            "Event: \"purchase.held\""
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"PurchaseEvent\""
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/notify/notify.go",
+            "case \"purchase.held\":"
+          ],
+          [
+            "internal/opdef/opdef.go",
+            "Event is required by default"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "INSERT INTO \"PurchaseEvent\""
+          ]
+        ]
+      }
+    },
+    "implicit-uniform-denial": {
+      "rule": "Missing, other-tenant, own and not-submitted targets all get the same 4xx status, so a response never reveals whether or why a purchase is ineligible.",
+      "sources": {
+        "given": [
+          [
+            "internal/opdef/opdef.go",
+            "const UniformDenial = 409"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "return nil, &Rejection{op.Denial}"
+          ]
+        ],
+        "drafted": [
+          [
+            "internal/opdef/opdef.go",
+            "const UniformDenial = 409"
+          ],
+          [
+            "internal/opkernel/opkernel.go",
+            "return nil, &Rejection{op.Denial}"
+          ]
+        ]
+      }
+    }
+  },
+  "forbidden_in_task": [
+    "ApprovalAudit",
+    "AssignmentHistory",
+    "history",
+    "历史",
+    "审计",
+    "audit",
+    "requestHash",
+    "Fingerprint",
+    "指纹",
+    "ledger",
+    "PurchaseEvent",
+    "event",
+    "事件",
+    "outbox",
+    "notify",
+    "通知",
+    "区分",
+    "存在",
+    "indistinguish",
+    "uniform",
+    "same 4xx",
+    "相同的 4xx",
+    "reconcil",
+    "对账",
+    "drift",
+    "catalog",
+    "目录",
+    "opdef",
+    "opkernel",
+    "separation",
+    "Distinct",
+    "subject",
+    "record",
+    "exemption",
+    "confirmAmount",
+    "inputs",
+    "transition",
+    "field-update",
+    "FieldUpdate",
+    "denial",
+    "tier",
+    "kind",
+    "ProjectHistory",
+    "registry",
+    "consumer",
+    "消费者",
+    "exempt",
+    "豁免"
+  ]
+}

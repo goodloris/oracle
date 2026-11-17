@@ -1,0 +1,16 @@
+package opdef
+
+// Platform-maintained and protected. consumedEvents is generated from the
+// consumer list in internal/notify (audience); do not edit by hand. Validate
+// requires every entry to declare one of these events unless its operation
+// is on exemptOperations.
+var consumedEvents = []string{
+	"purchase.countersigned",
+	"purchase.held",
+	"purchase.reassigned",
+	"purchase.rejected",
+	"purchase.reopened",
+}
+
+// exemptOperations may carry an EventExemption instead of an Event.
+var exemptOperations = []Name{"bulk-approve.v3"}

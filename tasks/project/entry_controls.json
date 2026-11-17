@@ -1,0 +1,438 @@
+{
+  "note": "Edits apply to tasks/project/catalog.go.txt (the reference catalog); source=base uses the public catalog (no entry). expect_wrong: logical fields (harness/entry_oracle.py). rule_controls: Validate() on the rule and on the norule platform.",
+  "controls": [
+    {
+      "name": "reference",
+      "kind": "equivalent",
+      "edits": [],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-field-order",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n\t\tResponse: \"taggedIds\", Inputs: []string{IDs, \"project\"}, Fingerprint: []string{IDs, \"project\"}, Record: ProjectHistory,\n\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tEvent: \"purchase.project_changed\", Record: ProjectHistory, Denial: UniformDenial,\n\t\tFingerprint: []string{IDs, \"project\"}, Inputs: []string{IDs, \"project\"}, Response: \"taggedIds\",\n\t\tParam: \"project\", Column: \"projectId\", Status: \"submitted\",\n\t\tSubject: Others, Role: \"approver\", Kind: FieldUpdate, Name: Project,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-literals",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n\t\tResponse: \"taggedIds\", Inputs: []string{IDs, \"project\"}, Fingerprint: []string{IDs, \"project\"}, Record: ProjectHistory,\n\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n\t},\n",
+          "new": "\t{\n\t\tName: \"bulk-project.v9\", Kind: \"field-update\", Role: \"approver\", Subject: \"others\",\n\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n\t\tResponse: \"taggedIds\", Inputs: []string{\"ids\", \"project\"}, Fingerprint: []string{\"ids\", \"project\"}, Record: \"ProjectHistory\",\n\t\tEvent: \"purchase.project_changed\", Denial: 409,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-identifier",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\tProject      Name = \"bulk-project.v9\"\n",
+          "new": "\tBulkProject  Name = \"bulk-project.v9\"\n"
+        },
+        {
+          "old": "Name: Project,",
+          "new": "Name: BulkProject,"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "eq-position-and-zero-values",
+      "kind": "equivalent",
+      "edits": [
+        {
+          "old": "\t{\n\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n\t\tResponse: \"taggedIds\", Inputs: []string{IDs, \"project\"}, Fingerprint: []string{IDs, \"project\"}, Record: ProjectHistory,\n\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n\t},\n",
+          "new": ""
+        },
+        {
+          "old": "var catalog = []Operation{\n",
+          "new": "var catalog = []Operation{\n\t{\n\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\", Separation: NoSeparation, ConfirmAmount: false, Tier: nil, From: \"\", To: \"\",\n\t\tResponse: \"taggedIds\", Inputs: []string{IDs, \"project\"}, Fingerprint: []string{IDs, \"project\"}, Record: ProjectHistory,\n\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n\t},\n"
+        }
+      ],
+      "expect_wrong": []
+    },
+    {
+      "name": "field-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\tProject      Name = \"bulk-project.v9\"\n",
+          "new": "\tProject      Name = \"bulk-tag-project.v9\"\n"
+        }
+      ],
+      "expect_wrong": [
+        "name"
+      ]
+    },
+    {
+      "name": "field-kind",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Project, Kind: Transition, Role: \"approver\", Subject: Others,\n"
+        }
+      ],
+      "expect_wrong": [
+        "kind"
+      ]
+    },
+    {
+      "name": "field-role",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Project, Kind: FieldUpdate, Role: \"requester\", Subject: Others,\n"
+        }
+      ],
+      "expect_wrong": [
+        "role"
+      ]
+    },
+    {
+      "name": "field-subject",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Own,\n"
+        }
+      ],
+      "expect_wrong": [
+        "subject"
+      ]
+    },
+    {
+      "name": "field-from",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\", From: \"submitted\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "from"
+      ]
+    },
+    {
+      "name": "field-to",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\", To: \"submitted\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "to"
+      ]
+    },
+    {
+      "name": "field-tier",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\", Tier: &Tier{Over: 1, To: \"approved\"},\n"
+        }
+      ],
+      "expect_wrong": [
+        "tier"
+      ]
+    },
+    {
+      "name": "field-status",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n",
+          "new": "\t\tStatus: \"pending-second\", Column: \"projectId\", Param: \"project\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "status"
+      ]
+    },
+    {
+      "name": "field-column",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"assigneeId\", Param: \"project\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "column"
+      ]
+    },
+    {
+      "name": "field-param",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Param: \"project\",\n",
+          "new": "Param: \"projectCode\",\n"
+        }
+      ],
+      "expect_wrong": [
+        "param"
+      ]
+    },
+    {
+      "name": "field-response",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tResponse: \"taggedIds\", Inputs: []string{IDs, \"project\"}, Fingerprint: []string{IDs, \"project\"}, Record: ProjectHistory,\n",
+          "new": "\t\tResponse: \"updatedIds\", Inputs: []string{IDs, \"project\"}, Fingerprint: []string{IDs, \"project\"}, Record: ProjectHistory,\n"
+        }
+      ],
+      "expect_wrong": [
+        "response"
+      ]
+    },
+    {
+      "name": "field-inputs",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Inputs: []string{IDs, \"project\"}, Fingerprint",
+          "new": "Inputs: []string{\"project\", IDs}, Fingerprint"
+        }
+      ],
+      "expect_wrong": [
+        "inputs"
+      ]
+    },
+    {
+      "name": "field-fingerprint",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Fingerprint: []string{IDs, \"project\"}",
+          "new": "Fingerprint: []string{IDs}"
+        }
+      ],
+      "expect_wrong": [
+        "fingerprint"
+      ]
+    },
+    {
+      "name": "field-record",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "Record: ProjectHistory,",
+          "new": "Record: AssignmentHistory,"
+        }
+      ],
+      "expect_wrong": [
+        "record"
+      ]
+    },
+    {
+      "name": "field-event",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEventExemption: \"the project report reads ProjectHistory\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-event-name",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.project_tagged\", Denial: UniformDenial,\n"
+        }
+      ],
+      "expect_wrong": [
+        "event"
+      ]
+    },
+    {
+      "name": "field-separation",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others,\n",
+          "new": "\t\tName: Project, Kind: FieldUpdate, Role: \"approver\", Subject: Others, Separation: DistinctFromPreviousApprover,\n"
+        }
+      ],
+      "expect_wrong": [
+        "separation"
+      ]
+    },
+    {
+      "name": "field-confirmAmount",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\",\n",
+          "new": "\t\tStatus: \"submitted\", Column: \"projectId\", Param: \"project\", ConfirmAmount: true,\n"
+        }
+      ],
+      "expect_wrong": [
+        "confirmAmount"
+      ]
+    },
+    {
+      "name": "field-denial",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.project_changed\", Denial: 404,\n"
+        }
+      ],
+      "expect_wrong": [
+        "denial"
+      ]
+    },
+    {
+      "name": "field-catalog",
+      "kind": "field-error",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.reassigned\", Denial: UniformDenial,",
+          "new": "\t\tEvent: \"purchase.reassign\", Denial: UniformDenial,"
+        }
+      ],
+      "expect_wrong": [
+        "catalog"
+      ]
+    },
+    {
+      "name": "missing-entry",
+      "kind": "missing",
+      "source": "base",
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial"
+      ]
+    },
+    {
+      "name": "not-compiling",
+      "kind": "missing",
+      "edits": [
+        {
+          "old": "Record: ProjectHistory,",
+          "new": "Record: TagHistory,"
+        }
+      ],
+      "expect_wrong": [
+        "name",
+        "kind",
+        "role",
+        "subject",
+        "from",
+        "to",
+        "tier",
+        "status",
+        "column",
+        "param",
+        "response",
+        "inputs",
+        "fingerprint",
+        "record",
+        "event",
+        "separation",
+        "confirmAmount",
+        "denial",
+        "catalog"
+      ]
+    }
+  ],
+  "rule_controls": [
+    {
+      "name": "rule-reference-passes",
+      "edits": [],
+      "rule": true,
+      "norule": true
+    },
+    {
+      "name": "rule-missing-event",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tDenial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": false
+    },
+    {
+      "name": "rule-event-without-consumer",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.project_tagged\", Denial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": true
+    },
+    {
+      "name": "rule-event-used-by-another-entry",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEvent: \"purchase.reassigned\", Denial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": false
+    },
+    {
+      "name": "rule-self-declared-exemption",
+      "edits": [
+        {
+          "old": "\t\tEvent: \"purchase.project_changed\", Denial: UniformDenial,\n",
+          "new": "\t\tEventExemption: \"the project report reads ProjectHistory\", Denial: UniformDenial,\n"
+        }
+      ],
+      "rule": false,
+      "norule": true
+    },
+    {
+      "name": "rule-public-exemption-stays-valid",
+      "source": "base",
+      "rule": true,
+      "norule": true,
+      "note": "bulk-approve.v3 keeps its listed exemption; the other public events all have consumers"
+    }
+  ]
+}

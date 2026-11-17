@@ -1,0 +1,54 @@
+--- a/internal/opdef/opdef.go
++++ b/internal/opdef/opdef.go
+@@ -165,7 +165,7 @@
+ 	return "sha256:" + hex.EncodeToString(sum[:])
+ }
+ 
+-//go:embed catalog.go opdef.go
++//go:embed catalog.go opdef.go registry.go
+ var sources embed.FS
+ 
+ // SourceFiles are the catalog package sources this binary was built from,
+@@ -173,7 +173,7 @@
+ // internal/opdef to be byte-identical to the catalog it checks against.
+ func SourceFiles() map[string][]byte {
+ 	out := map[string][]byte{}
+-	for _, n := range []string{"catalog.go", "opdef.go"} {
++	for _, n := range []string{"catalog.go", "opdef.go", "registry.go"} {
+ 		b, err := sources.ReadFile(n)
+ 		if err != nil {
+ 			panic(err)
+@@ -196,6 +196,9 @@
+ 		if err := o.validate(); err != nil {
+ 			return fmt.Errorf("%s: %w", o.Name, err)
+ 		}
++		if err := o.eventRule(); err != nil {
++			return fmt.Errorf("%s: %w", o.Name, err)
++		}
+ 		if seen[o.Name] {
+ 			return fmt.Errorf("%s: duplicate name", o.Name)
+ 		}
+@@ -206,6 +209,23 @@
+ 			}
+ 			events[o.Event] = o.Name
+ 		}
++	}
++	return nil
++}
++
++// eventRule is the platform event rule. An operation on the protected
++// exemption list (registry.go) may carry an EventExemption; every other entry
++// must declare an Event that a registered consumer handles. registry.go is
++// generated from the protected consumer list in internal/notify, so an event
++// becomes valid only once a consumer for it exists. Entries cannot exempt
++// themselves.
++func (o Operation) eventRule() error {
++	exempt := slices.Contains(exemptOperations, o.Name)
++	switch {
++	case o.EventExemption != "" && !exempt:
++		return fmt.Errorf("event exemption is reserved for the operations on the protected exemption list")
++	case !exempt && !slices.Contains(consumedEvents, o.Event):
++		return fmt.Errorf("event %q has no registered consumer in internal/notify", o.Event)
+ 	}
+ 	return nil
+ }

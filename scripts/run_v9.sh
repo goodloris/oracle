@@ -1,14 +1,14 @@
 #!/bin/bash
-# v8a confirmatory driver (operator Mac). Lanes = task x model; at most 4 run at once (prereg R5).
+# v9 confirmatory driver (operator Mac). Lanes = task x model; at most 4 run at once (prereg R5).
 # Each lane: pull kits -> generate (network-restricted sandbox) -> push -> evaluate on the host.
 # A lane takes any free database slot (1..4) when it starts and frees it when it ends (v7 assigned slots in
 # a fixed order, so a lane could wait for a busy slot while another slot was free).
-# A credit guard stops every lane once the measured total (all stages, review included) reaches the budget.
-# Usage: run_v8a.sh <runs-root> <budget-credits> <run> [<run> ...]   (runs already prepared on the host)
+# A credit guard stops every lane once the measured total (both sessions of drafted cells) reaches the budget.
+# Usage: run_v9.sh <runs-root> <budget-credits> <run> [<run> ...]   (runs already prepared on the host)
 set -u
 ROOT=$1; BUDGET=$2; shift 2; RUNS=("$@")
 HERE=$(cd "$(dirname "$0")" && pwd -P)
-for r in "${RUNS[@]}"; do case "$r" in v8a-*) ;; *) echo "v8a run names start with v8a-: $r" >&2; exit 2 ;; esac; done
+for r in "${RUNS[@]}"; do case "$r" in v9-*) ;; *) echo "v9 run names start with v9-: $r" >&2; exit 2 ;; esac; done
 mkdir -p "$ROOT"; LOG=$ROOT/driver.log; STOP=$ROOT/STOP
 ls -d "$ROOT"/slot-* >/dev/null 2>&1 && { echo "stale slot claims in $ROOT (a previous driver did not finish): remove them first" >&2; exit 2; }
 credits() { python3 - "$ROOT" <<'PY'
@@ -40,7 +40,7 @@ lane() {
   echo "$(date -u +%FT%TZ) $run evaluated" >> "$LOG"
 }
 guard() {  # stop generation once the budget is reached; trials already started finish
-  while pgrep -f "run_v8a.sh $ROOT" >/dev/null; do
+  while pgrep -f "run_v9.sh $ROOT" >/dev/null; do
     c=$(credits); if python3 -c "import sys;sys.exit(0 if float('$c')>=float('$BUDGET') else 1)"; then
       touch "$STOP"; echo "$(date -u +%FT%TZ) BUDGET reached ($c >= $BUDGET): stopping lanes" >> "$LOG"
       pkill -f "generate.sh $ROOT/" ; break; fi

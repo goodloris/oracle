@@ -2,7 +2,7 @@
 # Generation side (operator Mac): every kit of a pulled run, in plan order, under the public
 # network-restricted Seatbelt sandbox (isolate_net.py). Both private repositories (this one and v8b's), the
 # public checkouts, agent config, the run's other kits/results and ops are denied to the sandbox.
-# Single-session kits run the public worker (kit worker.py); staged kits (drafted, drafted-review) run the
+# Single-session kits run the public worker (kit worker.py); staged kits (drafted-norule, drafted-rule) run the
 # private stage wrapper (kit stages.py), which drives the same public worker once per stage.
 # Usage: generate.sh <run-dir> [--fake-kiro <solutions-dir>]   (fake: hand-off control, no model)
 set -u
@@ -32,8 +32,8 @@ for t in $ORDER; do
   done
   CMD=(); ALARM=900
   if [ -f "$D/kits/$t/stages.py" ]; then
-    # one 600 s budget per session (2 or 3 sessions) plus preflight and catalog checks
-    ALARM=2400; CMD=(-- python3 -I "$D/kits/$t/stages.py" --output "$D/results/$t" ${FAKE[@]+"${FAKE[@]}"})
+    # one 600 s budget per session (2 sessions) plus preflight and catalog checks
+    ALARM=1800; CMD=(-- python3 -I "$D/kits/$t/stages.py" --output "$D/results/$t" ${FAKE[@]+"${FAKE[@]}"})
   elif [ ${#FAKE[@]} -gt 0 ]; then
     CMD=(-- python3 -I "$D/kits/$t/worker.py" --output "$D/results/$t" "${FAKE[@]}")
   fi

@@ -1,0 +1,118 @@
+package candidate
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"strings"
+
+	"github.com/XUJiahua/enterprise_agent/internal/app"
+	"github.com/XUJiahua/enterprise_agent/internal/ledger"
+	"github.com/XUJiahua/enterprise_agent/internal/protocol"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const opProject = "bulk-project.v9"
+
+// newProject is a hand-written (kernel-free) bulk tag of Purchase.projectId by an approver.
+func newProject(pool *pgxpool.Pool) protocol.ParamHandler {
+	return func(ctx context.Context, u app.Identity, key string, ids []string, project string) (protocol.ParamResult, bool, error) {
+		for _, id := range ids {
+			if strings.ContainsRune(id, 0) {
+				return protocol.ParamResult{}, false, &protocol.Rejection{Status: 404}
+			}
+		}
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		defer tx.Rollback(ctx)
+		if _, err = tx.Exec(ctx, `SELECT set_config('app.tenant',$1,true),set_config('app.user',$2,true),set_config('app.role',$3,true)`, u.Tenant, u.User, u.Role); err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		lock, _ := json.Marshal([]string{opProject, u.Tenant, u.User, key})
+		if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, string(lock)); err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		hash := ledger.Fingerprint(opProject+"\n"+project, ids)
+		var savedHash string
+		var saved []byte
+		err = tx.QueryRow(ctx, `SELECT "requestHash",response FROM "ActionRequest" WHERE "tenantId"=$1 AND "actorId"=$2 AND operation=$3 AND key=$4`,
+			u.Tenant, u.User, opProject, key).Scan(&savedHash, &saved)
+		switch {
+		case err == nil && savedHash != hash:
+			return protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}
+		case err == nil:
+			var body struct {
+				IDs     []string `json:"taggedIds"`
+				Project string   `json:"project"`
+			}
+			if err = json.Unmarshal(saved, &body); err != nil {
+				return protocol.ParamResult{}, false, err
+			}
+			return protocol.ParamResult{Field: "taggedIds", IDs: body.IDs, Name: "project", Value: body.Project}, true, tx.Commit(ctx)
+		case !errors.Is(err, pgx.ErrNoRows):
+			return protocol.ParamResult{}, false, err
+		}
+		// An unknown, other-tenant or inactive project is refused like an ineligible target.
+		var valid bool
+		if err = tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM "Project" WHERE "tenantId"=$1 AND code=$2 AND active)`,
+			u.Tenant, project).Scan(&valid); err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		if !valid {
+			return protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}
+		}
+		rows, err := tx.Query(ctx, `SELECT id,"projectId" FROM "Purchase" WHERE id=ANY($1::text[]) AND "tenantId"=$2 AND "createdBy"<>$3 AND status='submitted' ORDER BY id COLLATE "C" FOR UPDATE`,
+			ids, u.Tenant, u.User)
+		if err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		previous := []*string{}
+		for rows.Next() {
+			var id string
+			var old *string
+			if err = rows.Scan(&id, &old); err != nil {
+				rows.Close()
+				return protocol.ParamResult{}, false, err
+			}
+			previous = append(previous, old)
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		// Ineligible targets (missing, other tenant, own or not submitted) all get the same
+		// 409; unlike the legacy per-purchase handlers in internal/app, Actions never reveal existence.
+		if len(previous) != len(ids) {
+			return protocol.ParamResult{}, false, &protocol.Rejection{Status: 409}
+		}
+		if _, err = tx.Exec(ctx, `UPDATE "Purchase" SET "projectId"=$4 WHERE id=ANY($1::text[]) AND "tenantId"=$2 AND "createdBy"<>$3 AND status='submitted'`,
+			ids, u.Tenant, u.User, project); err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		batch := &pgx.Batch{}
+		for i, id := range ids {
+			batch.Queue(`INSERT INTO "ProjectHistory" ("tenantId","purchaseId","fromProject","toProject","changedBy",operation,"idempotencyKey") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+				u.Tenant, id, previous[i], project, u.User, opProject, key)
+			batch.Queue(`INSERT INTO "PurchaseEvent" ("tenantId","purchaseId",type,"actorId","idempotencyKey") VALUES ($1,$2,'purchase.project_changed',$3,$4)`,
+				u.Tenant, id, u.User, key)
+		}
+		result := protocol.ParamResult{Field: "taggedIds", IDs: ids, Name: "project", Value: project}
+		response, err := json.Marshal(result)
+		if err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		batch.Queue(`INSERT INTO "ActionRequest" ("tenantId","actorId",operation,key,"requestHash",response) VALUES ($1,$2,$3,$4,$5,$6::jsonb)`,
+			u.Tenant, u.User, opProject, key, hash, string(response))
+		if err = tx.SendBatch(ctx, batch).Close(); err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		if err = tx.Commit(ctx); err != nil {
+			return protocol.ParamResult{}, false, err
+		}
+		return result, false, nil
+	}
+}

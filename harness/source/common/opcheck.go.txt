@@ -1,0 +1,20 @@
+// Command opcheck is the platform's catalog check: the same opdef.Validate()
+// that opkernel.New runs at startup and CI runs on every change. Protected.
+//
+//	go run ./cmd/opcheck
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/XUJiahua/enterprise_agent/internal/opdef"
+)
+
+func main() {
+	if err := opdef.Validate(); err != nil {
+		fmt.Fprintln(os.Stderr, "catalog invalid:", err)
+		os.Exit(1)
+	}
+	fmt.Printf("catalog valid: %d entries, %s\n", len(opdef.All()), opdef.Digest())
+}

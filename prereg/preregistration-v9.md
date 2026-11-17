@@ -193,3 +193,17 @@ v8a 实测的每 trial 平均 credit（主机 runs，`docs/evidence/v8a-runs-202
 `v9-hold-claude-opus-5.5` 的 `drafted-rule--009` 在 READY 预检时超时：30 秒的探针被信号终止，记为 budget-exceeded，生成没有开始。按 R1，该通道已停止，阻塞时的结果目录已归档到 `<run>/preflight-blocked-20261117/`。随后的手动 READY 探针恢复正常（opus 和 luna 都正常）。
 
 按 R1 处理：等主驱动的其余通道结束后，用同一计划、同一 kit，从 `drafted-rule--009` 开始按原顺序续跑这条通道，续跑即视为这些 trial 的首次生成。已经完成验收的 25 个 trial 不重跑。做出这一处理时，只看过该通道的生成状态，没有查看任何验收结果。
+
+### 附录 C（2026-11-17 11:10）：另外 3 次预检阻塞与续跑
+
+主驱动结束时，另外 3 条通道也因 READY 预检超时停止，都发生在生成开始之前：
+
+| 通道 | 停在的 trial |
+|---|---|
+| `v9-hold-qwen3-coder-next` | `drafted-norule--012` |
+| `v9-project-gpt-5.6-luna` | `drafted-norule--009` |
+| `v9-project-qwen3-coder-next` | `drafted-rule--001` |
+
+预检探针的耗时中位数是 7.9 秒，但偶尔会超过 30 秒，因此判断这是偶发的服务端延迟，不是配额或区域问题。手动 READY 探针三个模型都正常。
+
+按 R1，4 条被阻塞的通道用 `scripts/resume_v9.sh` 续跑。该脚本依次执行：归档阻塞时生成的结果目录；用同一计划、按原顺序续跑；只把新产生的结果送到验收主机；验收时跳过已有结果。为降低延迟，并行通道数从 4 降到 3。已经完成的 trial 不重跑。做出这一处理时，没有查看任何验收结果。

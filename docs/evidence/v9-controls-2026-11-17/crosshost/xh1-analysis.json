@@ -1,0 +1,847 @@
+{
+  "version": 9,
+  "experiment": "v9",
+  "seed": 20261118,
+  "resamples": 1000,
+  "lanes": [
+    [
+      "hold",
+      "gpt-5.6-luna"
+    ],
+    [
+      "project",
+      "gpt-5.6-luna"
+    ]
+  ],
+  "hypotheses": {
+    "H1": {
+      "comparison": "drafted-rule non-inferior to given (margin 0.05)",
+      "test": "Tango score, one-sided",
+      "valid_blocks": 2,
+      "only_drafted-rule": 0,
+      "only_given": 0,
+      "difference": 0.0,
+      "z": 0.3244428422615251,
+      "critical_z": 1.9599639845400532,
+      "p_one_sided": 0.37280139446373073,
+      "alpha": 0.025,
+      "lower_bound": -0.6576197724933467,
+      "upper_bound": 0.6576197724933467,
+      "holds": false
+    },
+    "H2": {
+      "comparison": "drafted-rule > drafted-norule",
+      "test": "exact paired sign, one-sided",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "alpha": 0.05,
+      "holds": false
+    }
+  },
+  "sensitivity_excluding_retrieval_attempt": {
+    "H1": {
+      "comparison": "drafted-rule non-inferior to given (margin 0.05)",
+      "test": "Tango score, one-sided",
+      "valid_blocks": 2,
+      "only_drafted-rule": 0,
+      "only_given": 0,
+      "difference": 0.0,
+      "z": 0.3244428422615251,
+      "critical_z": 1.9599639845400532,
+      "p_one_sided": 0.37280139446373073,
+      "alpha": 0.025,
+      "lower_bound": -0.6576197724933467,
+      "upper_bound": 0.6576197724933467,
+      "holds": false,
+      "excluded_retrieval_blocks": 0
+    },
+    "H2": {
+      "comparison": "drafted-rule > drafted-norule",
+      "test": "exact paired sign, one-sided",
+      "valid_blocks": 2,
+      "only_higher": 0,
+      "only_lower": 0,
+      "p_one_sided": 1.0,
+      "alpha": 0.05,
+      "holds": false,
+      "excluded_retrieval_blocks": 0
+    }
+  },
+  "rates": {
+    "given": {
+      "planned": 2,
+      "observed": 2,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 2,
+      "E": 2,
+      "K": 2,
+      "D": 2,
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "drafted-norule": {
+      "planned": 2,
+      "observed": 2,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 2,
+      "E": 2,
+      "K": 2,
+      "D": 2,
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "drafted-rule": {
+      "planned": 2,
+      "observed": 2,
+      "unmeasured": 0,
+      "unmeasured_over_10pct": false,
+      "A": 2,
+      "E": 2,
+      "K": 2,
+      "D": 2,
+      "outcomes": {
+        "passed": 2
+      }
+    }
+  },
+  "entry": {
+    "drafted-norule": {
+      "observed": 2,
+      "C": 2,
+      "no_frozen_entry": 0,
+      "wrong_by_field": {
+        "name": 0,
+        "kind": 0,
+        "role": 0,
+        "subject": 0,
+        "from": 0,
+        "to": 0,
+        "tier": 0,
+        "status": 0,
+        "column": 0,
+        "param": 0,
+        "response": 0,
+        "inputs": 0,
+        "fingerprint": 0,
+        "record": 0,
+        "event": 0,
+        "separation": 0,
+        "confirmAmount": 0,
+        "denial": 0,
+        "catalog": 0
+      },
+      "wrong_by_category": {
+        "event": 0,
+        "fingerprint": 0,
+        "record": 0,
+        "separation": 0,
+        "authority": 0,
+        "state": 0,
+        "shape": 0,
+        "name": 0,
+        "denial": 0,
+        "catalog": 0
+      },
+      "A_given_C": {
+        "C=1": [
+          2,
+          2
+        ],
+        "C=0": [
+          0,
+          0
+        ]
+      }
+    },
+    "drafted-rule": {
+      "observed": 2,
+      "C": 2,
+      "no_frozen_entry": 0,
+      "wrong_by_field": {
+        "name": 0,
+        "kind": 0,
+        "role": 0,
+        "subject": 0,
+        "from": 0,
+        "to": 0,
+        "tier": 0,
+        "status": 0,
+        "column": 0,
+        "param": 0,
+        "response": 0,
+        "inputs": 0,
+        "fingerprint": 0,
+        "record": 0,
+        "event": 0,
+        "separation": 0,
+        "confirmAmount": 0,
+        "denial": 0,
+        "catalog": 0
+      },
+      "wrong_by_category": {
+        "event": 0,
+        "fingerprint": 0,
+        "record": 0,
+        "separation": 0,
+        "authority": 0,
+        "state": 0,
+        "shape": 0,
+        "name": 0,
+        "denial": 0,
+        "catalog": 0
+      },
+      "A_given_C": {
+        "C=1": [
+          2,
+          2
+        ],
+        "C=0": [
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "safety": {
+    "per_cell": {
+      "given": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "drafted-norule": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      },
+      "drafted-rule": {
+        "unauthorized_write": {
+          "trials": 0,
+          "cases": 0
+        },
+        "partial_batch": {
+          "trials": 0,
+          "cases": 0
+        },
+        "side_effect_atomicity": {
+          "trials": 0,
+          "cases": 0
+        },
+        "double_apply": {
+          "trials": 0,
+          "cases": 0
+        },
+        "wrong_commit": {
+          "trials": 0,
+          "cases": 0
+        },
+        "service_error": {
+          "trials": 0,
+          "cases": 0
+        },
+        "undecidable": {
+          "trials": 0,
+          "cases": 0
+        }
+      }
+    },
+    "nonzero_trials": []
+  },
+  "cost": {
+    "given": {
+      "started": 2,
+      "correct": 2,
+      "credits_total": 0.02,
+      "seconds_total": 0.046,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.01,
+      "seconds_per_correct": 0.023,
+      "note": null,
+      "ci95_credits_per_correct": [
+        0.01,
+        0.01
+      ],
+      "ci95_seconds_per_correct": [
+        0.022,
+        0.024
+      ],
+      "resamples_without_correct": 0
+    },
+    "drafted-norule": {
+      "started": 2,
+      "correct": 2,
+      "credits_total": 0.04,
+      "seconds_total": 0.162,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.02,
+      "seconds_per_correct": 0.081,
+      "note": null,
+      "per_stage": {
+        "draft": {
+          "credits": 0.02,
+          "seconds": 0.071
+        },
+        "adapter": {
+          "credits": 0.02,
+          "seconds": 0.091
+        }
+      },
+      "ci95_credits_per_correct": [
+        0.02,
+        0.02
+      ],
+      "ci95_seconds_per_correct": [
+        0.068,
+        0.094
+      ],
+      "resamples_without_correct": 0
+    },
+    "drafted-rule": {
+      "started": 2,
+      "correct": 2,
+      "credits_total": 0.04,
+      "seconds_total": 0.152,
+      "usage_missing": 0,
+      "usage_incomplete": false,
+      "credits_per_correct": 0.02,
+      "seconds_per_correct": 0.076,
+      "note": null,
+      "per_stage": {
+        "draft": {
+          "credits": 0.02,
+          "seconds": 0.064
+        },
+        "adapter": {
+          "credits": 0.02,
+          "seconds": 0.088
+        }
+      },
+      "ci95_credits_per_correct": [
+        0.02,
+        0.02
+      ],
+      "ci95_seconds_per_correct": [
+        0.066,
+        0.086
+      ],
+      "resamples_without_correct": 0
+    }
+  },
+  "per_lane": [
+    {
+      "task": "hold",
+      "model": "gpt-5.6-luna",
+      "rates": {
+        "given": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "drafted-norule": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "drafted-rule": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "entry": {
+        "drafted-norule": {
+          "observed": 1,
+          "C": 1,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              1,
+              1
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          }
+        },
+        "drafted-rule": {
+          "observed": 1,
+          "C": 1,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              1,
+              1
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "cost": {
+        "given": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.024,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.024,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.024,
+            0.024
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-norule": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.02,
+          "seconds_total": 0.094,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.02,
+          "seconds_per_correct": 0.094,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 0.01,
+              "seconds": 0.048
+            },
+            "adapter": {
+              "credits": 0.01,
+              "seconds": 0.046
+            }
+          },
+          "ci95_credits_per_correct": [
+            0.02,
+            0.02
+          ],
+          "ci95_seconds_per_correct": [
+            0.094,
+            0.094
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-rule": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.02,
+          "seconds_total": 0.066,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.02,
+          "seconds_per_correct": 0.066,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 0.01,
+              "seconds": 0.023
+            },
+            "adapter": {
+              "credits": 0.01,
+              "seconds": 0.043
+            }
+          },
+          "ci95_credits_per_correct": [
+            0.02,
+            0.02
+          ],
+          "ci95_seconds_per_correct": [
+            0.066,
+            0.066
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    },
+    {
+      "task": "project",
+      "model": "gpt-5.6-luna",
+      "rates": {
+        "given": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "drafted-norule": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        },
+        "drafted-rule": {
+          "planned": 1,
+          "observed": 1,
+          "unmeasured": 0,
+          "unmeasured_over_10pct": false,
+          "A": 1,
+          "E": 1,
+          "K": 1,
+          "D": 1,
+          "outcomes": {
+            "passed": 1
+          }
+        }
+      },
+      "entry": {
+        "drafted-norule": {
+          "observed": 1,
+          "C": 1,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              1,
+              1
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          }
+        },
+        "drafted-rule": {
+          "observed": 1,
+          "C": 1,
+          "no_frozen_entry": 0,
+          "wrong_by_field": {
+            "name": 0,
+            "kind": 0,
+            "role": 0,
+            "subject": 0,
+            "from": 0,
+            "to": 0,
+            "tier": 0,
+            "status": 0,
+            "column": 0,
+            "param": 0,
+            "response": 0,
+            "inputs": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "event": 0,
+            "separation": 0,
+            "confirmAmount": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "wrong_by_category": {
+            "event": 0,
+            "fingerprint": 0,
+            "record": 0,
+            "separation": 0,
+            "authority": 0,
+            "state": 0,
+            "shape": 0,
+            "name": 0,
+            "denial": 0,
+            "catalog": 0
+          },
+          "A_given_C": {
+            "C=1": [
+              1,
+              1
+            ],
+            "C=0": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "cost": {
+        "given": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.01,
+          "seconds_total": 0.022,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.01,
+          "seconds_per_correct": 0.022,
+          "note": null,
+          "ci95_credits_per_correct": [
+            0.01,
+            0.01
+          ],
+          "ci95_seconds_per_correct": [
+            0.022,
+            0.022
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-norule": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.02,
+          "seconds_total": 0.068,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.02,
+          "seconds_per_correct": 0.068,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 0.01,
+              "seconds": 0.023
+            },
+            "adapter": {
+              "credits": 0.01,
+              "seconds": 0.045
+            }
+          },
+          "ci95_credits_per_correct": [
+            0.02,
+            0.02
+          ],
+          "ci95_seconds_per_correct": [
+            0.068,
+            0.068
+          ],
+          "resamples_without_correct": 0
+        },
+        "drafted-rule": {
+          "started": 1,
+          "correct": 1,
+          "credits_total": 0.02,
+          "seconds_total": 0.086,
+          "usage_missing": 0,
+          "usage_incomplete": false,
+          "credits_per_correct": 0.02,
+          "seconds_per_correct": 0.086,
+          "note": null,
+          "per_stage": {
+            "draft": {
+              "credits": 0.01,
+              "seconds": 0.041
+            },
+            "adapter": {
+              "credits": 0.01,
+              "seconds": 0.045
+            }
+          },
+          "ci95_credits_per_correct": [
+            0.02,
+            0.02
+          ],
+          "ci95_seconds_per_correct": [
+            0.086,
+            0.086
+          ],
+          "resamples_without_correct": 0
+        }
+      }
+    }
+  ],
+  "audit": [],
+  "telemetry_hosts_not_counted": [
+    "app.kiro.dev",
+    "client-telemetry.us-east-1.amazonaws.com",
+    "telemetry.eu-central-1.kiro.dev",
+    "telemetry.us-east-1.kiro.dev"
+  ]
+}

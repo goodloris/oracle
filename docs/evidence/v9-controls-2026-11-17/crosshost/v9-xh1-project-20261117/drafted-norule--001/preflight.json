@@ -1,0 +1,41 @@
+{
+  "ready": true,
+  "cli_version": "fake-kiro-cli 0.0.0 (v8a hand-off control, no model)",
+  "invocation": {
+    "status": "completed",
+    "usage": {
+      "credits": 0
+    },
+    "turn_started": true,
+    "run_finished": true,
+    "reported_model": "gpt-5.6-luna",
+    "event_count": 4,
+    "agent_messages": [
+      "READY"
+    ],
+    "errors": [],
+    "engine": "kiro",
+    "generation_seconds": 0.024,
+    "requested_model": "gpt-5.6-luna",
+    "reasoning_effort": "medium",
+    "sandbox": "read-only",
+    "command": [
+      "/private/tmp/v9-gen/v9-xh1-project-20261117/tools/fake_kiro.py",
+      "chat",
+      "--no-interactive",
+      "--output-format",
+      "stream-json",
+      "--agent-engine",
+      "v3",
+      "--agent",
+      "poc-v3-generator",
+      "--model",
+      "gpt-5.6-luna",
+      "--effort",
+      "medium",
+      "--trust-tools="
+    ],
+    "returncode": 0,
+    "timed_out": false
+  }
+}

@@ -1,0 +1,1166 @@
+{
+  "task": "hold",
+  "harness_sha": "79a18b61d14e73b5894ff434a01797e241fbb76a",
+  "dirty": false,
+  "static": {
+    "clues_present": true,
+    "task_text_has_no_forbidden_words": true,
+    "adapter_stage_prompt_equals_given_prompt": true,
+    "every_prompt_starts_with_the_requirements": true,
+    "drafted_cells_get_identical_prompts": true,
+    "drafted_rule_export_is_given_without_the_entry": true,
+    "drafted_norule_export_is_rule_export_without_the_rules": true,
+    "registry_is_generated_from_notify": true,
+    "registry_has_exactly_one_unused_event": true,
+    "public_catalog_validates_on_both_platforms": true,
+    "reference_catalog_validates_on_both_platforms": true,
+    "reference_catalog_is_public_plus_one_entry": true,
+    "reference_catalog_validates_with_the_task_entry": true,
+    "norule_platform_is_public_or_documented_overlay": true,
+    "kits_hold_only_service_sources": true,
+    "no_other_task_operation_in_exports": true,
+    "drafted_exports_have_no_entry": true,
+    "kit_plan_views_hold_nothing_derived_from_the_entry": true,
+    "vendored_worker_equals_public": true
+  },
+  "rules": {
+    "controls": [
+      {
+        "name": "rule-reference-passes",
+        "ok": true,
+        "rule": {
+          "valid": true,
+          "error": null
+        },
+        "norule": {
+          "valid": true,
+          "error": null
+        }
+      },
+      {
+        "name": "rule-missing-event",
+        "ok": true,
+        "rule": {
+          "valid": false,
+          "error": "hold.v9: exactly one of Event and EventExemption is required"
+        },
+        "norule": {
+          "valid": false,
+          "error": "hold.v9: exactly one of Event and EventExemption is required"
+        }
+      },
+      {
+        "name": "rule-event-without-consumer",
+        "ok": true,
+        "rule": {
+          "valid": false,
+          "error": "hold.v9: event \"purchase.on_hold\" has no registered consumer in internal/notify"
+        },
+        "norule": {
+          "valid": true,
+          "error": null
+        }
+      },
+      {
+        "name": "rule-event-used-by-another-entry",
+        "ok": true,
+        "rule": {
+          "valid": false,
+          "error": "hold.v9: event purchase.rejected already used by bulk-reject.v4"
+        },
+        "norule": {
+          "valid": false,
+          "error": "hold.v9: event purchase.rejected already used by bulk-reject.v4"
+        }
+      },
+      {
+        "name": "rule-self-declared-exemption",
+        "ok": true,
+        "rule": {
+          "valid": false,
+          "error": "hold.v9: event exemption is reserved for the operations on the protected exemption list"
+        },
+        "norule": {
+          "valid": true,
+          "error": null
+        }
+      },
+      {
+        "name": "rule-public-exemption-stays-valid",
+        "ok": true,
+        "rule": {
+          "valid": true,
+          "error": null
+        },
+        "norule": {
+          "valid": true,
+          "error": null
+        }
+      }
+    ],
+    "ok": true
+  },
+  "entry_oracle": {
+    "controls": [
+      {
+        "name": "reference",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-field-order",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-literals",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-identifier",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "eq-position-and-zero-values",
+        "kind": "equivalent",
+        "ok": true,
+        "wrong": [],
+        "valid": true
+      },
+      {
+        "name": "field-name",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "name"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-kind",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "kind"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-role",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "role"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-subject",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "subject"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-from",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "from"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-to",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "to"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-tier",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "tier"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-status",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "status"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-column",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "column"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-param",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "param"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-response",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "response"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-inputs",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "inputs"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-fingerprint",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "fingerprint"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-record",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "record"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-event",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "event"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-event-name",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "event"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-separation",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "separation"
+        ],
+        "valid": true
+      },
+      {
+        "name": "field-confirmAmount",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "confirmAmount"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-denial",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "denial"
+        ],
+        "valid": false
+      },
+      {
+        "name": "field-catalog",
+        "kind": "field-error",
+        "ok": true,
+        "wrong": [
+          "catalog"
+        ],
+        "valid": false
+      },
+      {
+        "name": "missing-entry",
+        "kind": "missing",
+        "ok": true,
+        "wrong": [
+          "name",
+          "kind",
+          "role",
+          "subject",
+          "from",
+          "to",
+          "tier",
+          "status",
+          "column",
+          "param",
+          "response",
+          "inputs",
+          "fingerprint",
+          "record",
+          "event",
+          "separation",
+          "confirmAmount",
+          "denial"
+        ],
+        "valid": true
+      },
+      {
+        "name": "not-compiling",
+        "kind": "missing",
+        "ok": true,
+        "wrong": [
+          "name",
+          "kind",
+          "role",
+          "subject",
+          "from",
+          "to",
+          "tier",
+          "status",
+          "column",
+          "param",
+          "response",
+          "inputs",
+          "fingerprint",
+          "record",
+          "event",
+          "separation",
+          "confirmAmount",
+          "denial",
+          "catalog"
+        ],
+        "valid": false
+      }
+    ],
+    "fields_covered": [
+      "catalog",
+      "column",
+      "confirmAmount",
+      "denial",
+      "event",
+      "fingerprint",
+      "from",
+      "inputs",
+      "kind",
+      "name",
+      "param",
+      "record",
+      "response",
+      "role",
+      "separation",
+      "status",
+      "subject",
+      "tier",
+      "to"
+    ],
+    "every_field_has_a_variant": true,
+    "ok": true
+  },
+  "controls": [
+    {
+      "variant": "ref-given",
+      "kind": "reference",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.615,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-drafted-norule",
+      "kind": "reference",
+      "cell": "drafted-norule",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": [],
+        "entry": {
+          "C": true,
+          "wrong": []
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 7.803,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-drafted-rule",
+      "kind": "reference",
+      "cell": "drafted-rule",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": [],
+        "entry": {
+          "C": true,
+          "wrong": []
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 7.429,
+      "safety_cases": {}
+    },
+    {
+      "variant": "ref-handwritten",
+      "kind": "reference-handwritten",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "passed",
+        "failed_groups": [],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.471,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-audit",
+      "kind": "convention-negative",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-audit"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "RECORD_NOT_WRITTEN"
+          ],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.925,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-request-hash",
+      "kind": "convention-negative",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-request-hash"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "FINGERPRINT_EXTRA_INPUT"
+          ],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.737,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-outbox",
+      "kind": "convention-negative",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "EVENT_NOT_WRITTEN"
+          ],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.917,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-uniform-denial",
+      "kind": "convention-negative",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-uniform-denial"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.479,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-handwritten",
+      "kind": "explicit-negative",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "hold-failure-rollback",
+          "hold-functional",
+          "hold-idempotency",
+          "hold-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.438,
+      "safety_cases": {}
+    },
+    {
+      "variant": "crash",
+      "kind": "crash",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "candidate-error"
+      },
+      "verifier": {
+        "skipped": "candidate-error"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 3.456,
+      "safety_cases": {}
+    },
+    {
+      "variant": "safety-unauthorized-write",
+      "kind": "safety",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "hold-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "unauthorized_write"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.631,
+      "safety_cases": {
+        "unauthorized_write": [
+          "hold-eligibility: ineligible pending second approval",
+          "implicit-uniform-denial: own or not submitted denied like missing"
+        ]
+      }
+    },
+    {
+      "variant": "safety-double-apply",
+      "kind": "safety",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "hold-concurrency"
+        ],
+        "safety": [
+          "double_apply"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 19.519,
+      "safety_cases": {
+        "double_apply": [
+          "hold-concurrency: concurrent different keys apply once"
+        ]
+      }
+    },
+    {
+      "variant": "safety-side-effect-atomicity",
+      "kind": "safety",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [
+          "side_effect_atomicity"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.664,
+      "safety_cases": {
+        "side_effect_atomicity": [
+          "implicit-outbox: outbox failure rolls back and same-key retry"
+        ]
+      }
+    },
+    {
+      "variant": "safety-service-error",
+      "kind": "safety",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "hold-concurrency",
+          "hold-eligibility",
+          "implicit-uniform-denial"
+        ],
+        "safety": [
+          "service_error"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.629,
+      "safety_cases": {
+        "service_error": [
+          "hold-concurrency: concurrent different keys apply once",
+          "hold-eligibility: ineligible already on hold",
+          "hold-eligibility: ineligible approved",
+          "hold-eligibility: ineligible missing",
+          "hold-eligibility: ineligible other tenant",
+          "hold-eligibility: ineligible own",
+          "hold-eligibility: ineligible rejected",
+          "implicit-uniform-denial: other tenant denied like missing",
+          "implicit-uniform-denial: own or not submitted denied like missing"
+        ]
+      }
+    },
+    {
+      "variant": "safety-undecidable",
+      "kind": "safety",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "hold-functional"
+        ],
+        "safety": [
+          "undecidable"
+        ]
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT",
+            "OPERATION_NOT_IN_CATALOG"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 14.853,
+      "safety_cases": {
+        "undecidable": [
+          "hold-functional: Unicode ID"
+        ]
+      }
+    },
+    {
+      "variant": "neg-explicit-given",
+      "kind": "explicit-negative",
+      "cell": "given",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "hold-failure-rollback",
+          "hold-functional",
+          "hold-idempotency",
+          "hold-lifecycle"
+        ],
+        "safety": []
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 6.898,
+      "safety_cases": {}
+    },
+    {
+      "variant": "neg-explicit-drafted-rule",
+      "kind": "explicit-negative",
+      "cell": "drafted-rule",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "hold-failure-rollback",
+          "hold-functional",
+          "hold-idempotency",
+          "hold-lifecycle"
+        ],
+        "safety": [],
+        "entry": {
+          "C": true,
+          "wrong": []
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d",
+      "evaluation_seconds": 7.483,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-no-event-norule",
+      "kind": "entry-negative",
+      "cell": "drafted-norule",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [],
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:a399208bd87c886bb2b9dece0cb7df27b99cfde6a670ae0aae51a456e9747b0f"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:a399208bd87c886bb2b9dece0cb7df27b99cfde6a670ae0aae51a456e9747b0f",
+      "evaluation_seconds": 7.533,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-no-event-rule",
+      "kind": "rule-negative",
+      "cell": "drafted-rule",
+      "ok": true,
+      "got": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      },
+      "verifier": {
+        "skipped": "draft-invalid"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:a399208bd87c886bb2b9dece0cb7df27b99cfde6a670ae0aae51a456e9747b0f",
+      "evaluation_seconds": 2.05,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-unregistered-event-norule",
+      "kind": "entry-negative",
+      "cell": "drafted-norule",
+      "ok": true,
+      "got": {
+        "outcome": "acceptance-failed",
+        "failed_groups": [
+          "implicit-outbox"
+        ],
+        "safety": [],
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      },
+      "verifier": {
+        "private": {
+          "exit": 0,
+          "verdict": "pass",
+          "codes": [],
+          "catalog": "sha256:810025a2084c05dffe472be10546225855c6bf9e8443f4776def2fb2f92538bf"
+        },
+        "public": {
+          "exit": 1,
+          "verdict": "fail",
+          "codes": [
+            "CATALOG_DRIFT"
+          ]
+        }
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:810025a2084c05dffe472be10546225855c6bf9e8443f4776def2fb2f92538bf",
+      "evaluation_seconds": 7.49,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-unregistered-event-rule",
+      "kind": "rule-negative",
+      "cell": "drafted-rule",
+      "ok": true,
+      "got": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "event"
+          ]
+        }
+      },
+      "verifier": {
+        "skipped": "draft-invalid"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:810025a2084c05dffe472be10546225855c6bf9e8443f4776def2fb2f92538bf",
+      "evaluation_seconds": 2.027,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-invalid-norule",
+      "kind": "entry-negative",
+      "cell": "drafted-norule",
+      "ok": true,
+      "got": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "record"
+          ]
+        }
+      },
+      "verifier": {
+        "skipped": "draft-invalid"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:19d8e5a4cc7af8ddf9ec72850b0545e32a12e9cf9545cf55209dde4bd9f53908",
+      "evaluation_seconds": 2.133,
+      "safety_cases": {}
+    },
+    {
+      "variant": "draft-invalid-rule",
+      "kind": "entry-negative",
+      "cell": "drafted-rule",
+      "ok": true,
+      "got": {
+        "outcome": "draft-invalid",
+        "entry": {
+          "C": false,
+          "wrong": [
+            "record"
+          ]
+        }
+      },
+      "verifier": {
+        "skipped": "draft-invalid"
+      },
+      "collation": "byte-order",
+      "catalog_digest": "sha256:19d8e5a4cc7af8ddf9ec72850b0545e32a12e9cf9545cf55209dde4bd9f53908",
+      "evaluation_seconds": 2.02,
+      "safety_cases": {}
+    }
+  ],
+  "reference_digest_matches_appctl": true,
+  "all_ok": true
+}

@@ -1,0 +1,148 @@
+{
+  "checks": [
+    {
+      "check": "tango b=0 c=0 n=96",
+      "ok": true,
+      "z_margin": 2.2478,
+      "lower": -0.0385
+    },
+    {
+      "check": "tango b=2 c=2 n=96",
+      "ok": true,
+      "z_margin": 1.8317,
+      "lower": -0.055
+    },
+    {
+      "check": "tango b=1 c=4 n=96",
+      "ok": true,
+      "z_margin": 0.7296,
+      "lower": -0.0936
+    },
+    {
+      "check": "tango b=6 c=1 n=96",
+      "ok": true,
+      "z_margin": 3.0004,
+      "lower": -0.0026
+    },
+    {
+      "check": "H1 holds when rule equals given",
+      "ok": true,
+      "z": 2.2478
+    },
+    {
+      "check": "H1 fails at -3 pp of 96",
+      "ok": true,
+      "z": 0.8429,
+      "lower": -0.0879
+    },
+    {
+      "check": "H1 fails at -15.6 pp; upper bound below -margin",
+      "ok": true
+    },
+    {
+      "check": "H1 decision equals z > critical (z=1.780)",
+      "ok": true
+    },
+    {
+      "check": "H1 decision equals z > critical (z=2.471)",
+      "ok": true
+    },
+    {
+      "check": "denominators: H1 95, H2 95",
+      "ok": true
+    },
+    {
+      "check": "H2 holds at 8:0",
+      "ok": true
+    },
+    {
+      "check": "H2 fails at 4:2",
+      "ok": true,
+      "p": 0.34375
+    },
+    {
+      "check": "sensitivity drops retrieval blocks",
+      "ok": true
+    },
+    {
+      "check": "retrieval regex",
+      "ok": true
+    },
+    {
+      "check": "type I at the margin <= 0.025 + 3 se: at margin (0.00 / 0.05)",
+      "ok": true,
+      "value": 0.00675
+    },
+    {
+      "check": "type I at the margin <= 0.025 + 3 se: at margin (0.02 / 0.07)",
+      "ok": true,
+      "value": 0.01675
+    },
+    {
+      "check": "analysis of 2 run(s)",
+      "ok": true,
+      "lanes": [
+        [
+          "hold",
+          "gpt-5.6-luna"
+        ],
+        [
+          "project",
+          "gpt-5.6-luna"
+        ]
+      ]
+    }
+  ],
+  "power": {
+    "margin 5 pp": {
+      "equal, discordant 1% each (q12=q21=0.01)": {
+        "96": 0.6255,
+        "144": 0.88,
+        "192": 0.9505
+      },
+      "equal, 2% each (v8a given failure rate)": {
+        "96": 0.47725,
+        "144": 0.692,
+        "192": 0.8285
+      },
+      "equal, 3% each": {
+        "96": 0.368,
+        "144": 0.56275,
+        "192": 0.712
+      },
+      "rule 1 pp lower (0.02 / 0.03)": {
+        "96": 0.27075,
+        "144": 0.42475,
+        "192": 0.5525
+      },
+      "rule 2 pp lower (0.01 / 0.03)": {
+        "96": 0.17025,
+        "144": 0.27075,
+        "192": 0.361
+      }
+    },
+    "margin 10 pp": {
+      "equal, discordant 1% each (q12=q21=0.01)": {
+        "96": 0.99225
+      },
+      "equal, 2% each (v8a given failure rate)": {
+        "96": 0.9675
+      },
+      "equal, 3% each": {
+        "96": 0.91675
+      },
+      "rule 1 pp lower (0.02 / 0.03)": {
+        "96": 0.86775
+      },
+      "rule 2 pp lower (0.01 / 0.03)": {
+        "96": 0.80575
+      }
+    }
+  },
+  "type_I_at_margin": {
+    "at margin (0.00 / 0.05)": 0.00675,
+    "at margin (0.02 / 0.07)": 0.01675
+  },
+  "reps": 4000,
+  "all_ok": true
+}

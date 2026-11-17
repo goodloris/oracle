@@ -1,6 +1,5 @@
-# v9 确认性实验预注册（冻结前最终版，未冻结）
-
-> **状态：正文为冻结前的最终版，尚未冻结。** 冻结由操作员执行：填写附录 A 的冻结清单，提交本文件的最终版本，把该提交中本文件的 SHA256（`sha256sum prereg/preregistration-v9.md`）和提交时间贴到公开 issue。此后正文不再修改，只能在附录中追加。
+# v9 确认性实验预注册（已冻结 2026-11-17）
+> **状态：已冻结（2026-11-17）。** 原说明： 冻结由操作员执行：填写附录 A 的冻结清单，提交本文件的最终版本，把该提交中本文件的 SHA256（`sha256sum prereg/preregistration-v9.md`）和提交时间贴到公开 issue。此后正文不再修改，只能在附录中追加。
 >
 > 设计决定（2026-11-17，尚无任何数据）：H1 的界值为 10 个百分点（方案 B），96 对，单侧 α = 0.025，规模 288 个 trial，预算上限 480 credit。理由见“假设与检验”和“规模、credit 估算与预算”。
 
@@ -171,14 +170,20 @@ v8a 实测的每 trial 平均 credit（主机 runs，`docs/evidence/v8a-runs-202
 ### 附录 A：冻结清单（冻结前由操作员填写，现为空）
 
 - [x] 规模与预算的决定已写回正文（2026-11-17，方案 B：界值 10 个百分点，96 对，单侧 α = 0.025，288 个 trial，上限 480 credit）。
-- [ ] 公开平台 commit `fad8adfa89edb753c55410518d531e21489f7d9b`，主机 `/opt/poc-oracle/public` 已核对。
-- [ ] 私有仓库提交 SHA（6 个计划的 `harness_sha`）：`________`；树 hash：harness `________`，tasks `________`。
-- [ ] 规则补丁 `harness/platform_rules.py` SHA256：`________`；规则平台 `opdef.go` hash（hold `________`，project `________`）；registry.go hash（hold `________`，project `________`）；`harness/source/common/opcheck.go.txt` SHA256：`________`。
-- [ ] 参考目录摘要（规则平台与 v8a 平台相同）：hold `________`，project `________`。
-- [ ] `harness/prompts.json`、`harness/entry_oracle.py`、`harness/catalogcheck.py`、`harness/stages.py` 的 SHA256：`________`。
-- [ ] 分析脚本 `harness/analyze_v9.py` SHA256：`________`（`MARGIN = 0.10`，`EQUIVALENCE_BAND = 0.05`）；`harness/analyze_v9_check.py` 本机与主机都 `all_ok`。
-- [ ] 控制：主机 hold `__` 项、project `__` 项全部通过（含规则控制 2 × 6、条目正确性控制 2 × 27、私有内核回归）；本机 alpine 同样通过（辅助）；证据目录 `docs/evidence/v9-controls-<日期>/`。
-- [ ] 跨主机假 kiro 流程：每任务三组各 1 个 trial 全部通过。
-- [ ] 验收主机数据库：`postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341`（PostgreSQL 17.2 Debian/glibc，`en_US.utf8`）。
-- [ ] 网络白名单 `KIRO_ALLOW_HOSTS=cognito-identity.us-east-1.amazonaws.com,oidc.us-east-1.amazonaws.com,management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev`（顺序不变），冻结当天重跑网络隔离控制并通过（含两个私有仓库不可读）。
-- [ ] 6 个计划文件的 SHA256（每个 48 个 trial，种子 20261118）：`v9-hold-claude-opus-5.5`、`v9-hold-gpt-5.6-luna`、`v9-hold-qwen3-coder-next`、`v9-project-claude-opus-5.5`、`v9-project-gpt-5.6-luna`、`v9-project-qwen3-coder-next`：`________`。
+- [x] 公开平台 commit `fad8adfa89edb753c55410518d531e21489f7d9b`，主机 `/opt/poc-oracle/public` 已核对。
+- [x] 私有仓库提交 SHA（6 个计划的 `harness_sha`）：`0827c7db4d8d7ce315dce1b967fa708d08785270`；树 hash：harness `a65676538a70a456677f822d324707a6e5b79d3c`，tasks `37fcacf2fef83eb4338b362fe4a950971f225bff`。
+- [x] 规则补丁 `harness/platform_rules.py` SHA256：`c75db4e3574ff90f42fed6cdc948d7851e122c54b5c08a6ca2378f9b675a02c6`；规则平台 `opdef.go` hash（hold `89342dbf725fb5d39084a3f9063f418c6833843a7dbad574837903bf65f7b4cc`，project `df71486ebbf0db399128da0cbf7e63484fb94d1bfa086193fb818258b14f2bad`）；registry.go hash（hold `7d5c2b4203db4dbaba2004a527ef9a7265e706fd9a62cd72ed8e23c77a071f01`，project `ca886b1134cf68b933dab7445ade130f45b2ba0042aa46867373916d80b9d311`）；`harness/source/common/opcheck.go.txt` SHA256：`2c50700cd1f9c1fa6282a1b63c4919a9163a807a6df2fc7f22a02fda02ca8175`。
+- [x] 参考目录摘要（规则平台与 v8a 平台相同，与 6 个计划一致）：hold `sha256:5637b3714cc8194150fcdf075dca79893f305a7b1a5b2ab92eb9fbc6913ac23d`，project `sha256:fbb70d14c736343424775ae1f71d3690697ad53893d2329bef17600e91bd0b4f`。
+- [x] `harness/prompts.json`、`harness/entry_oracle.py`、`harness/catalogcheck.py`、`harness/stages.py` 的 SHA256：prompts `e4536cdaf4e6ee4b04fd67570b2eb4df274dc4e8426b39a62423e5e80431874e`，entry_oracle `fc83a01d7d69a9090d02065e82a10d6596e7cf0f2cd2c0622dba32e904eeb006`，catalogcheck `b2de12ad6e2913162f9f95e20fc59c294007a7f4295fe7d1c64f7338e348a583`，stages `1069f8a44265eb7e5716e80eaa7270b3cf9f00b79b03adcb5d4d7064de64e914`。
+- [x] 分析脚本 `harness/analyze_v9.py` SHA256：`e166dbf6e81483e551fde30774c262c3bb69af255b02ab602b336e68a3bdb6f0`（`MARGIN = 0.10`，`EQUIVALENCE_BAND = 0.05`）；`harness/analyze_v9_check.py` 本机与主机都 `all_ok`。
+- [x] 控制：主机 hold 23 项、project 26 项全部通过（含规则控制 2 × 6、条目正确性控制 2 × 27、私有内核回归）；本机 alpine 同样通过（辅助）；证据目录 `docs/evidence/v9-controls-2026-11-17/`。
+- [x] 跨主机假 kiro 流程：每任务三组各 1 个 trial 全部通过。
+- [x] 验收主机数据库：`postgres@sha256:888402a8cd6075c5dc83a31f58287f13306c318eaad016661ed12e076f3e6341`（PostgreSQL 17.2 Debian/glibc，`en_US.utf8`）。
+- [x] 网络白名单 `KIRO_ALLOW_HOSTS=cognito-identity.us-east-1.amazonaws.com,oidc.us-east-1.amazonaws.com,management.us-east-1.kiro.dev,runtime.us-east-1.kiro.dev`（顺序不变），冻结当天重跑网络隔离控制并通过（含两个私有仓库不可读）：2026-11-17 08:53，23/23 通过。
+- [x] 6 个计划文件的 SHA256（每个 48 个 trial，种子 20261118）：`v9-hold-claude-opus-5.5`、`v9-hold-gpt-5.6-luna`、`v9-hold-qwen3-coder-next`、`v9-project-claude-opus-5.5`、`v9-project-gpt-5.6-luna`、`v9-project-qwen3-coder-next`：
+  - `v9-hold-claude-opus-5.5`：`e540ed24d98dc6da0f8a1e47922c3ff5520df4632986a6ddc672569b0cc665bb`
+  - `v9-hold-gpt-5.6-luna`：`cf704c09846a3ac5ad26cb021b7caaefb22e418d21fdd4fc33d2897016d845c2`
+  - `v9-hold-qwen3-coder-next`：`1ba9e7ecb5a972351a1a1962cfd26b1ebc5368b6b7af70c893121bfef04be950`
+  - `v9-project-claude-opus-5.5`：`02a78d9fc60b46bd4e8f8956566dd14e2a95ffc2e67b0a12aaacc3c6c66f0dea`
+  - `v9-project-gpt-5.6-luna`：`489cc801273b6fc4594a1566792f87015e29d6872081f5f2d570ae83682bcc3a`
+  - `v9-project-qwen3-coder-next`：`7013d8890d7f11c17d2db353ebee79927264ca185a361549d97ee16e3d9479e9`

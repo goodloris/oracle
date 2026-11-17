@@ -2,11 +2,11 @@
 """Positive/negative controls of the v9 analysis (prereg/preregistration-v9.md). Never reads model output.
 
 1. Tango score test: z = 0 at the observed difference, monotone in delta0, confidence bounds at the critical value.
-2. Decisions on synthetic blocks through hypotheses(): H1 holds / does not hold, the exact boundary, unmeasured blocks
+2. Decisions (margin 10 pp) and the descriptive 95% interval / +-5 pp flag on synthetic blocks through hypotheses(): H1 holds / does not hold, the exact boundary, unmeasured blocks
    leaving the denominator; H2 holds / does not hold.
 3. Retrieval audit: localhost probes are not retrieval, external fetches are.
 4. Operating characteristics (simulation): type I error at the 5-point margin, power of H1 at 96 pairs under the
-   planning scenarios, and the pairs needed for 0.8.
+   planning scenarios (margin 10 pp; 5 pp for reference).
 5. With --run: analyze_v9 on real run directories (format check).
 Usage: analyze_v9_check.py [--run DIR ...] [--reps N]   -> JSON report, exit 0 iff every check holds.
 """
@@ -55,16 +55,25 @@ def decisions():
     # H1 holds: 96 blocks, rule and given agree everywhere (z(-0.05) = 2.25 > 1.96)
     r = a.hypotheses(blocks([(T, F, T)] * 96))
     check('H1 holds when rule equals given', r['H1']['holds'] and r['H1']['valid_blocks'] == 96, z=round(r['H1']['z'], 4))
-    # H1 does not hold: rule fails 3 extra blocks out of 96
+    # margin is 10 pp (v8a's), the descriptive band 5 pp
+    check('margin 0.10, band 0.05', a.MARGIN == 0.10 and a.EQUIVALENCE_BAND == 0.05)
+    # H1 holds at -3 pp of 96 (lower bound above -10 pp) but the 95% interval is not within +-5 pp
     r = a.hypotheses(blocks([(T, T, F)] * 3 + [(T, T, T)] * 93))
-    check('H1 fails at -3 pp of 96', not r['H1']['holds'] and r['H1']['difference'] == -3 / 96, z=round(r['H1']['z'], 4),
-          lower=round(r['H1']['lower_bound'], 4))
+    d = r['H1']['descriptive_interval']
+    check('H1 holds at -3 pp; interval not within 5 pp', r['H1']['holds'] and r['H1']['lower_bound'] > -0.10 and not d['within_5pp']
+          and d['ci95'] == [r['H1']['lower_bound'], r['H1']['upper_bound']], z=round(r['H1']['z'], 4), ci95=[round(x, 4) for x in d['ci95']])
+    # H1 fails at -7.3 pp (the v8a estimate: 2 vs 9 of 96)
+    r = a.hypotheses(blocks([(F, T, T)] * 2 + [(T, T, F)] * 9 + [(T, T, T)] * 85))
+    check('H1 fails at the v8a result (2:9 of 96)', not r['H1']['holds'], z=round(r['H1']['z'], 4), lower=round(r['H1']['lower_bound'], 4))
     # H1 fails when rule is clearly worse
-    r = a.hypotheses(blocks([(T, T, F)] * 15 + [(T, T, T)] * 81))
-    check('H1 fails at -15.6 pp; upper bound below -margin', not r['H1']['holds'] and r['H1']['upper_bound'] < -a.MARGIN)
+    r = a.hypotheses(blocks([(T, T, F)] * 20 + [(T, T, T)] * 76))
+    check('H1 fails at -20.8 pp; upper bound below -margin', not r['H1']['holds'] and r['H1']['upper_bound'] < -a.MARGIN)
+    # within 5 pp: no discordant pair in 96 gives a 95% interval of about +-3.85 pp
+    r = a.hypotheses(blocks([(T, F, T)] * 96))
+    check('equal arms: interval within 5 pp', r['H1']['descriptive_interval']['within_5pp'], ci95=[round(x, 4) for x in r['H1']['descriptive_interval']['ci95']])
     # boundary: the decision is z > z_0.975
     zc = a._z(0.975)
-    for rows in ([(T, T, F)] * 1 + [(T, T, T)] * 95, [(F, T, T)] * 1 + [(T, T, T)] * 95):
+    for rows in ([(T, T, F)] * 6 + [(T, T, T)] * 90, [(T, T, F)] * 5 + [(T, T, T)] * 91, [(F, T, T)] * 1 + [(T, T, T)] * 95):
         r = a.hypotheses(blocks(rows))['H1']
         check('H1 decision equals z > critical (z=%.3f)' % r['z'], r['holds'] == (r['z'] > zc))
     # unmeasured blocks leave the denominator
@@ -109,10 +118,11 @@ def main():
     rng = random.Random(20261118)
     tango_properties(); decisions(); retrieval()
     scen = {'equal, discordant 1% each (q12=q21=0.01)': (0.01, 0.01), 'equal, 2% each (v8a given failure rate)': (0.02, 0.02),
-            'equal, 3% each': (0.03, 0.03), 'rule 1 pp lower (0.02 / 0.03)': (0.02, 0.03), 'rule 2 pp lower (0.01 / 0.03)': (0.01, 0.03)}
-    oc = {'margin 5 pp': {k: {str(n): power(*v, n, args.reps, rng) for n in (96, 144, 192)} for k, v in scen.items()},
-          'margin 10 pp': {k: {'96': power(*v, 96, args.reps, rng, margin=0.10)} for k, v in scen.items()}}
-    ti = {k: power(*v, 96, args.reps, rng) for k, v in {'at margin (0.00 / 0.05)': (0.0, 0.05), 'at margin (0.02 / 0.07)': (0.02, 0.07)}.items()}
+            'equal, 3% each': (0.03, 0.03), 'rule 1 pp lower (0.02 / 0.03)': (0.02, 0.03), 'rule 2 pp lower (0.01 / 0.03)': (0.01, 0.03),
+            'rule 3 pp lower (0.00 / 0.03)': (0.00, 0.03), 'rule 5 pp lower (0.01 / 0.06)': (0.01, 0.06)}
+    oc = {'margin 10 pp, 96 pairs (pre-registered)': {k: power(*v, 96, args.reps, rng) for k, v in scen.items()},
+          'margin 5 pp, 96 pairs (not used; for reference)': {k: power(*v, 96, args.reps, rng, margin=0.05) for k, v in scen.items()}}
+    ti = {k: power(*v, 96, args.reps, rng) for k, v in {'at margin (0.00 / 0.10)': (0.0, 0.10), 'at margin (0.02 / 0.12)': (0.02, 0.12)}.items()}
     for k, v in ti.items():
         check('type I at the margin <= 0.025 + 3 se: ' + k, v <= 0.025 + 3 * math.sqrt(0.025 / args.reps), value=v)
     if args.run:

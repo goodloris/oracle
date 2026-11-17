@@ -8,8 +8,10 @@ One run per lane (task x model). Blocks are (task, model, instance); each block 
 
 Outcomes: A (passed), E, K, D, C (drafted cells: the frozen entry equals the reference entry, harness/entry_oracle.py),
 S (seconds, all sessions), credits (all sessions), safety (seven structured categories).
-H1 (primary): A drafted-rule is non-inferior to given, margin 5 percentage points: Tango's score test for paired
-proportions, H0: p(drafted-rule) - p(given) <= -0.05, one-sided alpha 0.025, all blocks (up to 96 pairs).
+H1 (primary): A drafted-rule is non-inferior to given, margin 10 percentage points (as v8a): Tango's score test for
+paired proportions, H0: p(drafted-rule) - p(given) <= -0.10, one-sided alpha 0.025, all blocks (up to 96 pairs).
+Descriptive (no test): the point estimate and the 95% Tango score interval of the difference (the two one-sided
+97.5% bounds), and whether that interval lies within +-5 percentage points.
 H2 (secondary): A drafted-rule > drafted-norule, exact one-sided paired sign test, alpha 0.05 (a single secondary
 hypothesis: no family). Each hypothesis has its own valid blocks: both of its cells observed in the block.
 C, cost and safety are descriptive. Sensitivity: drop, per hypothesis, every block in which one of its two trials made
@@ -35,7 +37,8 @@ FIELDS = ('name', 'kind', 'role', 'subject', 'from', 'to', 'tier', 'status', 'co
 CATEGORIES = ('event', 'fingerprint', 'record', 'separation', 'authority', 'state', 'shape', 'name', 'denial', 'catalog')
 H1 = ('drafted-rule', 'given')
 H2 = ('drafted-rule', 'drafted-norule')
-MARGIN, ALPHA_PRIMARY, ALPHA_SECONDARY = 0.05, 0.025, 0.05
+MARGIN, ALPHA_PRIMARY, ALPHA_SECONDARY = 0.10, 0.025, 0.05
+EQUIVALENCE_BAND = 0.05  # descriptive only: is the 95% interval within +-5 pp?
 TELEMETRY = {'telemetry.eu-central-1.kiro.dev', 'client-telemetry.us-east-1.amazonaws.com',
              'telemetry.us-east-1.kiro.dev', 'app.kiro.dev'}
 # v8a flagged two qwen `curl 127.0.0.1:8080/health` probes; v9 pre-registers that local probes are not retrieval.
@@ -238,6 +241,10 @@ def hypotheses(blocks, exclude_retrieval=False):
                   'lower_bound': tango_lower(b, c, n, ALPHA_PRIMARY) if n else None,
                   'upper_bound': tango_upper(b, c, n, ALPHA_PRIMARY) if n else None,
                   'holds': bool(n) and p < ALPHA_PRIMARY, **({'excluded_retrieval_blocks': ex} if exclude_retrieval else {})}}
+    lo, hi = out['H1']['lower_bound'], out['H1']['upper_bound']
+    out['H1']['descriptive_interval'] = {'estimate': out['H1']['difference'], 'ci95': [lo, hi] if n else None,
+                                         'within_5pp': bool(n) and lo > -EQUIVALENCE_BAND and hi < EQUIVALENCE_BAND,
+                                         'note': 'descriptive only, not a test'}
     n, w, l, ex = pairs(blocks, H2[0], H2[1], exclude_retrieval=exclude_retrieval)
     p = sign_p(w, l)
     out['H2'] = {'comparison': '%s > %s' % H2, 'test': 'exact paired sign, one-sided', 'valid_blocks': n, 'only_higher': w,
